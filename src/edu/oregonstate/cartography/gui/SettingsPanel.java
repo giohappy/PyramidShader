@@ -381,7 +381,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         localHypsoPanel.setLayout(new java.awt.GridBagLayout());
 
-        jLabel1.setText("Low Pass Filter Size");
+        jLabel1.setText("High Pass Filter Size");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;

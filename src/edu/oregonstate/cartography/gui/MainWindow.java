@@ -1,6 +1,9 @@
 package edu.oregonstate.cartography.gui;
 
 import edu.oregonstate.cartography.app.FileUtils;
+import edu.oregonstate.cartography.geometryexport.ShapeExporter;
+import edu.oregonstate.cartography.geometryimport.GeometryCollectionImporter;
+import edu.oregonstate.cartography.geometryimport.ShapeImporter;
 import edu.oregonstate.cartography.grid.ESRIASCIIGridExporter;
 import edu.oregonstate.cartography.grid.EsriASCIIGridReader;
 import edu.oregonstate.cartography.grid.Grid;
@@ -8,6 +11,8 @@ import edu.oregonstate.cartography.grid.Model;
 import static edu.oregonstate.cartography.grid.Model.ForegroundVisualization.ILLUMINATED_CONTOURS;
 import edu.oregonstate.cartography.grid.WorldFileExporter;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
+import edu.oregonstate.cartography.simplefeatures.GeometryCollection;
+import edu.oregonstate.cartography.simplefeatures.PlanObliqueShearing;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -18,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
@@ -91,6 +98,8 @@ public class MainWindow extends javax.swing.JFrame {
         javax.swing.JMenu saveContoursMenu = new javax.swing.JMenu();
         saveTIFFContoursMenuItem = new javax.swing.JMenuItem();
         savePNGContoursMenuItem = new javax.swing.JMenuItem();
+        jSeparator6 = new javax.swing.JPopupMenu.Separator();
+        planObliqueFeaturesMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
         scaleTerrainModelMenuItem = new javax.swing.JMenuItem();
         offsetTerrainModelMenuItem = new javax.swing.JMenuItem();
@@ -239,6 +248,15 @@ public class MainWindow extends javax.swing.JFrame {
         saveContoursMenu.add(savePNGContoursMenuItem);
 
         fileMenu.add(saveContoursMenu);
+        fileMenu.add(jSeparator6);
+
+        planObliqueFeaturesMenuItem.setText("Plan Oblique for Lines…");
+        planObliqueFeaturesMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                planObliqueFeaturesMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(planObliqueFeaturesMenuItem);
 
         menuBar.add(fileMenu);
 
@@ -617,6 +635,36 @@ public class MainWindow extends javax.swing.JFrame {
         offsetTerrainModelMenuItem.setEnabled(gridLoaded);
     }//GEN-LAST:event_editMenuMenuSelected
 
+    private void planObliqueFeaturesMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_planObliqueFeaturesMenuItemActionPerformed
+        try {
+            // ask the user for a file to read
+            String filePath = askFile("Select an Line Shapefile", true);
+            if (filePath == null) {
+                // user canceled
+                return;
+            }
+            GeometryCollectionImporter importer = new ShapeImporter();
+            GeometryCollection lines = importer.importData(filePath);
+            
+            // apply shearing
+            PlanObliqueShearing shearingOp = new PlanObliqueShearing(model.planObliqueAngle);
+            GeometryCollection shearedLines = shearingOp.shear(lines, model.getGeneralizedGrid());
+            
+            // ask the user for a file to save
+            filePath = askFile("Save Plan Oblique Lines", false);
+            if (filePath == null) {
+                // user canceled
+                return;
+            }
+            
+            ShapeExporter geometryExporter = new ShapeExporter();
+            geometryExporter.export(shearedLines, filePath);
+            geometryExporter.exportTableForGeometry(filePath, shearedLines, "");
+        } catch (IOException ex) {
+            Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_planObliqueFeaturesMenuItemActionPerformed
+
     /**
      * Ask the user for a file to read or write.
      *
@@ -747,11 +795,13 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JPanel imageResolutionPanel;
     private javax.swing.JSpinner imageResolutionSpinner;
     private javax.swing.JMenuItem infoMenuItem;
+    private javax.swing.JPopupMenu.Separator jSeparator6;
     private javax.swing.JMenuBar menuBar;
     private edu.oregonstate.cartography.gui.NavigableImagePanel navigableImagePanel;
     private javax.swing.JFormattedTextField offsetTerrainFormattedTextField;
     private javax.swing.JMenuItem offsetTerrainModelMenuItem;
     private javax.swing.JPanel offsetTerrainPanel;
+    private javax.swing.JMenuItem planObliqueFeaturesMenuItem;
     private javax.swing.JMenuItem saveLocalTerrainMenuItem;
     private javax.swing.JMenuItem savePNGContoursMenuItem;
     private javax.swing.JMenuItem savePNGImageMenuItem;

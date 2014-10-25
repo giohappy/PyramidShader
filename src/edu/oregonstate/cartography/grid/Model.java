@@ -209,7 +209,7 @@ public class Model implements Cloneable {
 
         float[] pos = new float[]{0.0F, 1.0F};
         Color[] col = new Color[]{
-            Color.GRAY,
+            Color.BLACK,
             Color.WHITE};
         predefinedColorRamps.add(new ColorRamp("Soft Gray", col, pos));
 

@@ -12,7 +12,6 @@ import static edu.oregonstate.cartography.gui.SettingsPanel.RenderSpeed.REGULAR;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
@@ -220,6 +219,9 @@ public class SettingsPanel extends javax.swing.JPanel {
         javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
         solidColorPanel = new TransparentMacPanel();
         solidColorButton = new edu.oregonstate.cartography.gui.ColorButton();
+        planObliquePanel = new TransparentMacPanel();
+        planObliqueSlider = new javax.swing.JSlider();
+        jLabel4 = new javax.swing.JLabel();
         javax.swing.JPanel generalizationContainer = new TransparentMacPanel();
         generalizationPanel = new TransparentMacPanel();
         javax.swing.JLabel generalizationDetailsRemovalLabel = new javax.swing.JLabel();
@@ -393,8 +395,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 0);
         localHypsoPanel.add(jLabel2, gridBagConstraints);
 
@@ -412,6 +413,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         localHypsoPanel.add(localGridStandardDeviationFilterSizeSlider, gridBagConstraints);
 
         localGridLowPassSlider.setMaximum(99);
@@ -429,6 +431,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         localHypsoPanel.add(localGridLowPassSlider, gridBagConstraints);
 
         jLabel3.setText("Local Terrain Filtering");
@@ -457,9 +460,52 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
         visualizationPanel.add(solidColorPanel, gridBagConstraints);
+
+        planObliquePanel.setLayout(new java.awt.GridBagLayout());
+
+        planObliqueSlider.setMajorTickSpacing(15);
+        planObliqueSlider.setMaximum(90);
+        planObliqueSlider.setMinorTickSpacing(5);
+        planObliqueSlider.setPaintLabels(true);
+        planObliqueSlider.setPaintTicks(true);
+        planObliqueSlider.setValue(45);
+        {
+            java.util.Hashtable labels = planObliqueSlider.createStandardLabels(15);
+            java.util.Enumeration e = labels.elements();
+            while(e.hasMoreElements()) {
+                javax.swing.JComponent comp = (javax.swing.JComponent)e.nextElement();
+                if (comp instanceof javax.swing.JLabel) {
+                    javax.swing.JLabel label = (javax.swing.JLabel)(comp);
+                    label.setText(label.getText() + "\u00b0");
+                }
+            }
+            planObliqueSlider.setLabelTable(labels);
+        }
+        planObliqueSlider.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                planObliqueSliderStateChanged(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        planObliquePanel.add(planObliqueSlider, gridBagConstraints);
+
+        jLabel4.setText("Plan Oblique Relief (experimental - not for local hypsometry)");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        planObliquePanel.add(jLabel4, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
+        visualizationPanel.add(planObliquePanel, gridBagConstraints);
 
         visualizationContainer.add(visualizationPanel);
 
@@ -1134,6 +1180,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         verticalExaggerationSlider.setValue(Math.round(m.shadingVerticalExaggeration * 10f));
         colorGradientSlider.setValues(m.colorRamp.colorPositions, m.colorRamp.colors);
         solidColorButton.setColor(m.solidColor);
+        planObliqueSlider.setValue(m.planObliqueAngle);
         updateGeneralizationInfoLabelVisiblity();
 
         localGridLowPassSlider.setValue((int) m.getLocalGridLowPassStandardDeviation());
@@ -1452,6 +1499,11 @@ public class SettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_contoursShadowLowestLineWidthSliderStateChanged
 
+    private void planObliqueSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_planObliqueSliderStateChanged
+        model.planObliqueAngle = planObliqueSlider.getValue();
+        updateImage(planObliqueSlider.getValueIsAdjusting() ? FAST : REGULAR);
+    }//GEN-LAST:event_planObliqueSliderStateChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSlider azimuthSlider;
     private javax.swing.JPanel colorGradientPanel;
@@ -1487,9 +1539,12 @@ public class SettingsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel generalizationPanel;
     private javax.swing.JPanel illuminatedContoursPanel;
     private javax.swing.JPanel illuminationPanel;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JSlider localGridLowPassSlider;
     private javax.swing.JSlider localGridStandardDeviationFilterSizeSlider;
     private javax.swing.JPanel localHypsoPanel;
+    private javax.swing.JPanel planObliquePanel;
+    private javax.swing.JSlider planObliqueSlider;
     private edu.oregonstate.cartography.gui.ColorButton solidColorButton;
     private javax.swing.JPanel solidColorPanel;
     private javax.swing.JTabbedPane tabbedPane;

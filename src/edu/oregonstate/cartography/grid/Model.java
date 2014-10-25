@@ -9,6 +9,7 @@ import edu.oregonstate.cartography.grid.operators.GridScaleOperator;
 import edu.oregonstate.cartography.grid.operators.GridScaleToRangeOperator;
 import edu.oregonstate.cartography.grid.operators.GridSlopeOperator;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
+import edu.oregonstate.cartography.grid.operators.PlanObliqueOperator;
 import edu.oregonstate.cartography.grid.operators.ShaderOperator;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -193,6 +194,11 @@ public class Model implements Cloneable {
     public int contoursTransitionAngle = 90;
 
     /**
+     * inclination angle for plan oblique relief orthogonal is 90 degrees
+     */
+    public int planObliqueAngle = 90;
+
+    /**
      * localGridModel encapsulates the settings and cashed intermediate results
      * for computing a locally filtered grid for local hypsometric tinting.
      */
@@ -368,12 +374,18 @@ public class Model implements Cloneable {
             graphics.fillRect(0, 0, destinationImage.getWidth(), destinationImage.getHeight());
             graphics.dispose();
         } else {
+            Grid planObliqueGeneralizedGrid = generalizedGrid;
+            PlanObliqueOperator planObliqueOp = new PlanObliqueOperator(planObliqueAngle, gridMinMax[0]);
+            if (planObliqueAngle > 0) {
+                planObliqueGeneralizedGrid = planObliqueOp.operate(generalizedGrid);
+            }
+
             // shading
             ShaderOperator shader = new ShaderOperator();
             shader.setIlluminationAzimuth(azimuth);
             shader.setIlluminationZenith(zenith);
             shader.setVerticalExaggeration(shadingVerticalExaggeration);
-            Grid reliefComposite = shader.operate(generalizedGrid);
+            Grid reliefComposite = shader.operate(planObliqueGeneralizedGrid);
 
             // coloring
             ColorizerOperator colorizer = new ColorizerOperator(backgroundVisualization);
@@ -383,7 +395,7 @@ public class Model implements Cloneable {
             if (backgroundVisualization.isLocal()) {
                 terrainGrid = localGridModel.getFilteredGrid();
             } else {
-                terrainGrid = generalizedGrid;
+                terrainGrid = planObliqueGeneralizedGrid;
             }
             colorizer.operate(reliefComposite, terrainGrid, destinationImage,
                     gridMinMax[0], gridMinMax[1]);

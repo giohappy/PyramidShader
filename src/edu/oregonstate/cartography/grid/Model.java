@@ -211,8 +211,13 @@ public class Model implements Cloneable {
         Color[] col = new Color[]{
             Color.BLACK,
             Color.WHITE};
-        predefinedColorRamps.add(new ColorRamp("Soft Gray", col, pos));
+        predefinedColorRamps.add(new ColorRamp("Black-White", col, pos));
 
+        col = new Color[]{
+            Color.GRAY,
+            Color.WHITE};
+        predefinedColorRamps.add(new ColorRamp("Soft Gray", col, pos));
+        
         pos = new float[]{0.5F, 1.0F};
         col = new Color[]{
             Color.BLACK,

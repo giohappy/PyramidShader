@@ -381,6 +381,9 @@ public class MainWindow extends javax.swing.JFrame {
         if (filePath != null) {
             filePath = FileUtils.forceFileNameExtension(filePath, format);
             try {
+                // render to image with the same size as the input grid
+                // instead of using navigableImagePanel.getImage(), which migh
+                // have a different size
                 BufferedImage img = model.createDestinationImage(1);
                 model.renderBackgroundImage(img);
                 ImageIO.write(img, format, new File(filePath));
@@ -572,7 +575,6 @@ public class MainWindow extends javax.swing.JFrame {
         savePNGImageMenuItem.setEnabled(gridLoaded);
         saveTIFFContoursMenuItem.setEnabled(contoursVisible);
         savePNGContoursMenuItem.setEnabled(contoursVisible);
-        planObliqueFeaturesMenuItem.setEnabled(model.planObliqueAngle != 90);
     }//GEN-LAST:event_fileMenuMenuSelected
 
     private void viewMenuMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_viewMenuMenuSelected
@@ -640,6 +642,13 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void planObliqueFeaturesMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_planObliqueFeaturesMenuItemActionPerformed
         try {
+            if (model.planObliqueAngle == 90) {
+                String msg = "Please first adjust the plan oblique relief angle.";
+                String title = "Plan Oblique Lines";
+                JOptionPane.showMessageDialog(getContentPane(), msg, title, JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
             // ask the user for a file to read
             String filePath = askFile("Select a Line Shapefile", true);
             if (filePath == null) {

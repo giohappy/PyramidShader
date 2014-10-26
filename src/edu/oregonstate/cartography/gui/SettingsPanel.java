@@ -468,10 +468,11 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         planObliqueSlider.setMajorTickSpacing(15);
         planObliqueSlider.setMaximum(90);
+        planObliqueSlider.setMinimum(15);
         planObliqueSlider.setMinorTickSpacing(5);
         planObliqueSlider.setPaintLabels(true);
         planObliqueSlider.setPaintTicks(true);
-        planObliqueSlider.setValue(45);
+        planObliqueSlider.setValue(90);
         {
             java.util.Hashtable labels = planObliqueSlider.createStandardLabels(15);
             java.util.Enumeration e = labels.elements();

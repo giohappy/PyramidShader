@@ -571,6 +571,7 @@ public class MainWindow extends javax.swing.JFrame {
         savePNGImageMenuItem.setEnabled(gridLoaded);
         saveTIFFContoursMenuItem.setEnabled(contoursVisible);
         savePNGContoursMenuItem.setEnabled(contoursVisible);
+        planObliqueFeaturesMenuItem.setEnabled(model.planObliqueAngle != 90);
     }//GEN-LAST:event_fileMenuMenuSelected
 
     private void viewMenuMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_viewMenuMenuSelected

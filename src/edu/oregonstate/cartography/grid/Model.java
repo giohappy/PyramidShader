@@ -376,7 +376,7 @@ public class Model implements Cloneable {
         } else {
             Grid planObliqueGeneralizedGrid = generalizedGrid;
             PlanObliqueOperator planObliqueOp = new PlanObliqueOperator(planObliqueAngle, gridMinMax[0]);
-            if (planObliqueAngle > 0) {
+            if (planObliqueAngle != 90) {
                 planObliqueGeneralizedGrid = planObliqueOp.operate(generalizedGrid);
             }
 

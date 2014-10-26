@@ -183,6 +183,7 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
 
+        openMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
         openMenuItem.setText("Open Terrain Model…");
         openMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -638,7 +639,7 @@ public class MainWindow extends javax.swing.JFrame {
     private void planObliqueFeaturesMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_planObliqueFeaturesMenuItemActionPerformed
         try {
             // ask the user for a file to read
-            String filePath = askFile("Select an Line Shapefile", true);
+            String filePath = askFile("Select a Line Shapefile", true);
             if (filePath == null) {
                 // user canceled
                 return;
@@ -656,7 +657,7 @@ public class MainWindow extends javax.swing.JFrame {
                 // user canceled
                 return;
             }
-            
+            filePath = FileUtils.forceFileNameExtension(filePath, "shp");
             ShapeExporter geometryExporter = new ShapeExporter();
             geometryExporter.export(shearedLines, filePath);
             geometryExporter.exportTableForGeometry(filePath, shearedLines, "");

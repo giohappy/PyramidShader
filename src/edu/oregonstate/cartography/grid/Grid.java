@@ -37,13 +37,14 @@ public final class Grid {
 
     /**
      * Copy constructor
+     *
      * @param template
      */
     public Grid(Grid template) {
         this(template.getCols(), template.getRows(), template.getCellSize());
         west = template.getWest();
         south = template.getSouth();
-        
+
         // deep clone grid array
         int nRows = template.getRows();
         int nCols = template.getCols();
@@ -77,7 +78,7 @@ public final class Grid {
      */
     public Grid(int cols, int rows, double cellSize) {
         this(cols, rows);
-        
+
         // the grid must contain at least 2 x 2 cells.
         if (cols < 3 || rows < 3) {
             throw new IllegalArgumentException("Not enough data points.");
@@ -123,6 +124,15 @@ public final class Grid {
         grid[row][col] = (float) value;
     }
 
+    private float verticalBilinearInterpol(double y, int topRow, int col) {
+        // top value
+        float topH = grid[topRow][col];
+        // bottom value
+        float bottomH = grid[topRow + 1][col];
+        double w = (getNorth() - y) / cellSize;
+        return (float) (w * (topH - bottomH) + bottomH);
+    }
+
     /**
      * Bilinear interpolation. See
      * http://www.geovista.psu.edu/sites/geocomp99/Gc99/082/gc_082.htm "What's
@@ -145,9 +155,26 @@ public final class Grid {
         final int col = (int) (dx);
         final int row = (int) ((north - y) / cellSize);
 
-        if (col < 0 || col + 1 >= cols || row < 0 || row + 1 >= rows) {
+        if (col < 0 || col > cols - 1 || row < 0 || row > rows - 1) {
             return Float.NaN;
         }
+        
+        // point on right border
+        if (col == cols - 1) {
+            // point on lower right corner
+            if (row == rows - 1) {
+                return grid[rows - 1][cols - 1];
+            }
+            return verticalBilinearInterpol(y, row, col);
+        }
+        
+        // point on lower border
+        if (row == rows - 1) {
+            float leftH = grid[row][col];
+            float rightH = grid[row][col + 1];
+            return (float)(dx * (rightH - leftH) + leftH);
+        }
+        
         final double relX = dx - col;
         final double relY = (y - south) / cellSize - rows + row + 2;
 
@@ -413,6 +440,15 @@ public final class Grid {
      */
     public double getNorth() {
         return getSouth() + (getRows() - 1) * getCellSize();
+    }
+
+    /**
+     * The eastern border of the grid
+     *
+     * @return
+     */
+    public double getEast() {
+        return getWest() + (getCols() - 1) * getCellSize();
     }
 
     /**

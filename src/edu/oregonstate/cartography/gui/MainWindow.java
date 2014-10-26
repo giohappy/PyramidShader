@@ -381,8 +381,9 @@ public class MainWindow extends javax.swing.JFrame {
         if (filePath != null) {
             filePath = FileUtils.forceFileNameExtension(filePath, format);
             try {
-                //Save the specified file as a PNG
-                ImageIO.write(navigableImagePanel.getImage(), format, new File(filePath));
+                BufferedImage img = model.createDestinationImage(1);
+                model.renderBackgroundImage(img);
+                ImageIO.write(img, format, new File(filePath));
 
                 // create world file for image file
                 String worldFilePath = WorldFileExporter.constructPath(filePath);

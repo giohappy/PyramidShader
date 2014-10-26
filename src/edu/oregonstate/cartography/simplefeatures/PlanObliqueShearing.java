@@ -31,9 +31,25 @@ public class PlanObliqueShearing {
         LineString shearedLine = new LineString();
         for (int ptID = 0; ptID < nPoints; ptID++) {
             Point pt = line.getPointN(ptID);
-            float z = grid.getBilinearInterpol(pt.getX(), pt.getY());
-            Point shearedPt = new Point(pt.getX(), pt.getY() + (z - refLevel) * k);
-            shearedLine.addPoint(shearedPt);
+            double x = pt.getX();
+            double y = pt.getY();
+            if (x < grid.getWest()) {
+                x = grid.getWest();
+            }
+            if (x > grid.getEast()) {
+                x = grid.getEast();
+            }
+            if (y > grid.getNorth()) {
+                y = grid.getNorth();
+            }
+            if (y < grid.getSouth()) {
+                y = grid.getSouth();
+            }
+            float z = grid.getBilinearInterpol(x, y);
+            Point shearedPt = new Point(x, y + (z - refLevel) * k);
+            if (!Double.isNaN(shearedPt.getX()) && !Double.isNaN(shearedPt.getY())) {
+                shearedLine.addPoint(shearedPt);
+            }
         }
         return shearedLine;
     }

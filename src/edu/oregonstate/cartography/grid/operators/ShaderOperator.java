@@ -11,8 +11,8 @@ import edu.oregonstate.cartography.grid.Grid;
 public class ShaderOperator extends ThreadedGridOperator {
 
     /**
-     * Vertical exaggeration factor applied to terrain values before computing 
-     * a shading value.
+     * Vertical exaggeration factor applied to terrain values before computing a
+     * shading value.
      */
     private double vertExaggeration = 1;
 
@@ -40,75 +40,86 @@ public class ShaderOperator extends ThreadedGridOperator {
      *
      * @param col The horizontal coordinate at which a normal must be computed.
      * @param row The vertical coordinate at which a normal must be computed.
-     * @param grid Grid with elevation values
+     * @param g Grid with elevation values
      * @param n The vector that will receive the resulting normal. Invalid upon
      * start, only used to avoid creation of a new Vector3D object.
      * @param cellSize The cell size in meters. Should not be in degrees.
      * <B>Important: row is counted from top to bottom.</B>
      */
-    private void computeTerrainNormal(int col, int row, Grid grid, Vector3D n, double cellSize) {
-        float[][] g = grid.getGrid();
+    private void computeTerrainNormal(int col, int row, float[][] g, Vector3D n, double cellSize) {
+        int nRows = g.length;
+        int nCols = g[0].length;
         
-        //Make sure the point is inside the grid and not on the border of the grid.
-        // FIXME compute shading along border
-        if (col > 0
-                && col < grid.getCols() - 1
-                && row > 0
-                && row < grid.getRows() - 1) {
-            
-            // get height values
-            float[] centralRow = g[row];
-            double elevCenter = centralRow[col];
-            double elevS = (g[row + 1][col] - elevCenter) * vertExaggeration;
-            double elevE = (centralRow[col + 1] - elevCenter) * vertExaggeration;
-            double elevN = (g[row - 1][col] - elevCenter) * vertExaggeration;
-            double elevW = (centralRow[col - 1] - elevCenter) * vertExaggeration;
-
-            // sum vector products, one for each quadrant
-            // south x east
-            // |0        |   |cellSize|
-            // |-cellSize| x |0       |
-            // |elevS    |   |elevE   |
-            double x = -cellSize * elevE;
-            double y = elevS * cellSize;
-            double z = cellSize * cellSize;
-        
-            // east x north
-            // |cellSize|   |0       |
-            // |0       | x |cellSize|
-            // |elevE   |   |elevN   |
-            x += -elevE * cellSize;
-            y += -cellSize * elevN;
-            z += cellSize * cellSize;
-
-            // north x west
-            // |0       |   |-cellSize|
-            // |cellSize| x |0        |
-            // |elevN   |   |elevW    |
-            x += cellSize * elevW;
-            y += -elevN * cellSize;
-            z += cellSize * cellSize;
-
-            // west x south
-            // |-cellSize|   |0        |
-            // |0        | x |-cellSize|
-            // |elevW    |   |elevS    |
-            x += elevW * cellSize;
-            y += cellSize * elevS;
-            z += cellSize * cellSize;
-
-            // normalize and return vector
-            double length = Math.sqrt(x * x + y * y + z * z);
-            n.x = x / length;
-            n.y = y / length;
-            n.z = z / length;
-
+        // get height values of four neighboring points
+        float[] centralRow = g[row];
+        final double elevCenter = centralRow[col];
+        final double elevS, elevE, elevN, elevW;
+        if (row == nRows - 1) {
+            // bottom border: use inverted upper neighbor
+            elevS = -(g[row - 1][col] - elevCenter) * vertExaggeration;
         } else {
-            // border pixels are stuck with a level surface.
-            n.x = 0;
-            n.y = 0;
-            n.z = Float.isNaN(g[row][col]) ? Double.NaN : 1;
+            elevS = (g[row + 1][col] - elevCenter) * vertExaggeration;
         }
+
+        if (col == nCols - 1) {
+            // right border: use inverted left neighbor
+            elevE = -(centralRow[col - 1] - elevCenter) * vertExaggeration;
+        } else {
+            elevE = (centralRow[col + 1] - elevCenter) * vertExaggeration;
+        }
+
+        if (row == 0) {
+            // top border: use inverted lower neighbor
+            elevN = -elevS;
+        } else {
+            elevN = (g[row - 1][col] - elevCenter) * vertExaggeration;
+        }
+
+        if (col == 0) {
+            // left border: use inverted right neighbor
+            elevW = -elevE;
+        } else {
+            elevW = (centralRow[col - 1] - elevCenter) * vertExaggeration;
+        }
+
+        // sum vector products, one for each quadrant
+        // south x east
+        // |0        |   |cellSize|
+        // |-cellSize| x |0       |
+        // |elevS    |   |elevE   |
+        double x = -cellSize * elevE;
+        double y = elevS * cellSize;
+        double z = cellSize * cellSize;
+
+        // east x north
+        // |cellSize|   |0       |
+        // |0       | x |cellSize|
+        // |elevE   |   |elevN   |
+        x += -elevE * cellSize;
+        y += -cellSize * elevN;
+        z += cellSize * cellSize;
+
+        // north x west
+        // |0       |   |-cellSize|
+        // |cellSize| x |0        |
+        // |elevN   |   |elevW    |
+        x += cellSize * elevW;
+        y += -elevN * cellSize;
+        z += cellSize * cellSize;
+
+        // west x south
+        // |-cellSize|   |0        |
+        // |0        | x |-cellSize|
+        // |elevW    |   |elevS    |
+        x += elevW * cellSize;
+        y += cellSize * elevS;
+        z += cellSize * cellSize;
+
+        // normalize and return vector
+        final double length = Math.sqrt(x * x + y * y + z * z);
+        n.x = x / length;
+        n.y = y / length;
+        n.z = z / length;
     }
 
     /**
@@ -138,11 +149,12 @@ public class ShaderOperator extends ThreadedGridOperator {
 
         // Loop through each grid cell
         float[][] dstGrid = dst.getGrid();
+        float[][] srcGrid = src.getGrid();
         for (int row = startRow; row < endRow; ++row) {
             float[] dstRow = dstGrid[row];
             for (int col = 0; col < cols; col++) {
                 // compute the normal of the cell
-                computeTerrainNormal(col, row, src, n, cellSize);
+                computeTerrainNormal(col, row, srcGrid, n, cellSize);
 
                 // compute the dot product of the normal and the light vector. This
                 // gives a value between -1 (surface faces directly away from
@@ -161,25 +173,25 @@ public class ShaderOperator extends ThreadedGridOperator {
     }
 
     /**
-     * @param illuminationAzimuth Counted from north in counter-clock-wise direction.
-     * Between 0 and 360 degrees.
+     * @param illuminationAzimuth Counted from north in counter-clock-wise
+     * direction. Between 0 and 360 degrees.
      */
     public void setIlluminationAzimuth(int illuminationAzimuth) {
         this.illuminationAzimuth = illuminationAzimuth;
     }
 
     /**
-     * @param illuminationZenith The vertical angle of the light direction from the zenith towards the
-     * horizon. Between 0 and 90 degrees.
+     * @param illuminationZenith The vertical angle of the light direction from
+     * the zenith towards the horizon. Between 0 and 90 degrees.
      */
     public void setIlluminationZenith(int illuminationZenith) {
         this.illuminationZenith = illuminationZenith;
     }
 
     /**
-     * 
-     * @param ve Vertical exaggeration factor applied to terrain values before computing 
-     * a shading value.
+     *
+     * @param ve Vertical exaggeration factor applied to terrain values before
+     * computing a shading value.
      */
     public void setVerticalExaggeration(double ve) {
         this.vertExaggeration = ve;

@@ -12,12 +12,18 @@ import static edu.oregonstate.cartography.grid.Model.ForegroundVisualization.ILL
 import edu.oregonstate.cartography.grid.WorldFileExporter;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
 import edu.oregonstate.cartography.simplefeatures.GeometryCollection;
+import edu.oregonstate.cartography.simplefeatures.LineString;
 import edu.oregonstate.cartography.simplefeatures.PlanObliqueShearing;
+import edu.oregonstate.cartography.simplefeatures.Point;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.RenderingHints;
+import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -640,6 +646,44 @@ public class MainWindow extends javax.swing.JFrame {
         offsetTerrainModelMenuItem.setEnabled(gridLoaded);
     }//GEN-LAST:event_editMenuMenuSelected
 
+    /** 
+     * Draw a set of lines into an image
+     * @param img
+     * @param lines
+     * @param grid 
+     */
+    private static void drawLines(BufferedImage img, GeometryCollection lines, Grid grid) {
+        Graphics2D g2 = (Graphics2D) img.getGraphics();
+        RenderingHints rh = new RenderingHints(
+                RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHints(rh);
+        g2.setStroke(new BasicStroke(3));
+        g2.setColor(Color.BLACK);
+
+        double dx = grid.getWest();
+        double sx = img.getWidth() / (grid.getEast() - grid.getWest());
+        double dy = grid.getSouth();
+        double sy = img.getHeight() / (grid.getNorth() - grid.getSouth());
+        int nLines = lines.getNumGeometries();
+        for (int lineID = 0; lineID < nLines; lineID++) {
+            LineString line = (LineString) lines.getGeometryN(lineID);
+            int nPoints = line.getNumPoints();
+            GeneralPath path = new GeneralPath();
+            Point pt = line.getFirstPoint();
+            double x = (pt.getX() - dx) * sx;
+            double y = (pt.getY() - dy) * sy;
+            path.moveTo(x, y);
+            for (int pointID = 1; pointID < nPoints; pointID++) {
+                pt = line.getPointN(pointID);
+                x = (pt.getX() - dx) * sx;
+                y = (pt.getY() - dy) * sy;
+                path.lineTo(x, img.getHeight() - y);
+            }
+            g2.draw(path);
+        }
+        g2.dispose();
+    }
+
     private void planObliqueFeaturesMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_planObliqueFeaturesMenuItemActionPerformed
         try {
             if (model.planObliqueAngle == 90) {
@@ -648,7 +692,7 @@ public class MainWindow extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(getContentPane(), msg, title, JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             // ask the user for a file to read
             String filePath = askFile("Select a Line Shapefile", true);
             if (filePath == null) {
@@ -657,10 +701,14 @@ public class MainWindow extends javax.swing.JFrame {
             }
             GeometryCollectionImporter importer = new ShapeImporter();
             GeometryCollection lines = importer.importData(filePath);
-            
+
             // apply shearing
             PlanObliqueShearing shearingOp = new PlanObliqueShearing(model.planObliqueAngle);
             GeometryCollection shearedLines = shearingOp.shear(lines, model.getGeneralizedGrid());
+
+            BufferedImage img = navigableImagePanel.getImage();
+            drawLines(img, shearedLines, model.getGeneralizedGrid());
+            navigableImagePanel.repaint();
             
             // ask the user for a file to save
             filePath = askFile("Save Plan Oblique Lines", false);
@@ -762,7 +810,7 @@ public class MainWindow extends javax.swing.JFrame {
                     double maxRatio = Math.max(heightRatio, widthRatio);
                     if (maxRatio > 1) {
                         imageScaleFactor = (int) Math.ceil(maxRatio);
-                    }               
+                    }
                     // initialize the display image
                     BufferedImage image = model.createDestinationImage(imageScaleFactor);
                     navigableImagePanel.setImage(image);

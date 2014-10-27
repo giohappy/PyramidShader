@@ -49,71 +49,43 @@ public class ShaderOperator extends ThreadedGridOperator {
     private void computeTerrainNormal(int col, int row, float[][] g, Vector3D n, double cellSize) {
         int nRows = g.length;
         int nCols = g[0].length;
-        
+
         // get height values of four neighboring points
-        float[] centralRow = g[row];
+        final float[] centralRow = g[row];
+        final double s = vertExaggeration * cellSize;
         final double elevCenter = centralRow[col];
         final double elevS, elevE, elevN, elevW;
         if (row == nRows - 1) {
             // bottom border: use inverted upper neighbor
-            elevS = -(g[row - 1][col] - elevCenter) * vertExaggeration;
+            elevS = -(g[row - 1][col] - elevCenter) * s;
         } else {
-            elevS = (g[row + 1][col] - elevCenter) * vertExaggeration;
+            elevS = (g[row + 1][col] - elevCenter) * s;
         }
 
         if (col == nCols - 1) {
             // right border: use inverted left neighbor
-            elevE = -(centralRow[col - 1] - elevCenter) * vertExaggeration;
+            elevE = -(centralRow[col - 1] - elevCenter) * s;
         } else {
-            elevE = (centralRow[col + 1] - elevCenter) * vertExaggeration;
+            elevE = (centralRow[col + 1] - elevCenter) * s;
         }
 
         if (row == 0) {
             // top border: use inverted lower neighbor
             elevN = -elevS;
         } else {
-            elevN = (g[row - 1][col] - elevCenter) * vertExaggeration;
+            elevN = (g[row - 1][col] - elevCenter) * s;
         }
 
         if (col == 0) {
             // left border: use inverted right neighbor
             elevW = -elevE;
         } else {
-            elevW = (centralRow[col - 1] - elevCenter) * vertExaggeration;
+            elevW = (centralRow[col - 1] - elevCenter) * s;
         }
 
-        // sum vector products, one for each quadrant
-        // south x east
-        // |0        |   |cellSize|
-        // |-cellSize| x |0       |
-        // |elevS    |   |elevE   |
-        double x = -cellSize * elevE;
-        double y = elevS * cellSize;
-        double z = cellSize * cellSize;
-
-        // east x north
-        // |cellSize|   |0       |
-        // |0       | x |cellSize|
-        // |elevE   |   |elevN   |
-        x += -elevE * cellSize;
-        y += -cellSize * elevN;
-        z += cellSize * cellSize;
-
-        // north x west
-        // |0       |   |-cellSize|
-        // |cellSize| x |0        |
-        // |elevN   |   |elevW    |
-        x += cellSize * elevW;
-        y += -elevN * cellSize;
-        z += cellSize * cellSize;
-
-        // west x south
-        // |-cellSize|   |0        |
-        // |0        | x |-cellSize|
-        // |elevW    |   |elevS    |
-        x += elevW * cellSize;
-        y += cellSize * elevS;
-        z += cellSize * cellSize;
+        final double x = elevW - elevE;
+        final double y = elevS - elevN;
+        final double z = 2 * cellSize * cellSize;
 
         // normalize and return vector
         final double length = Math.sqrt(x * x + y * y + z * z);

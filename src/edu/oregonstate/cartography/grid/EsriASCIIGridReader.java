@@ -271,7 +271,7 @@ public class EsriASCIIGridReader {
                     // update progress info
                     if (progressIndicator != null) {
                         int row = counter / nCols;
-                        int perc = (int) ((double) (row + 1) / nRows * 100);
+                        int perc = (int) ((row + 1d) / nRows * 100);
                         if (!progressIndicator.progress(perc)) {
                             counter = nbrValues;
                             break;

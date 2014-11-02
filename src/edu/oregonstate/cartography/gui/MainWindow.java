@@ -690,6 +690,9 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void planObliqueFeaturesMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_planObliqueFeaturesMenuItemActionPerformed
         try {
+            // erase previously drawn lines
+            navigableImagePanel.repaint();
+            
             if (model.planObliqueAngle == 90) {
                 String msg = "Please first adjust the plan oblique relief angle.";
                 String title = "Plan Oblique Lines";
@@ -718,9 +721,25 @@ public class MainWindow extends javax.swing.JFrame {
                 return;
             }
 
+            // ask the user whether occluded line segments are to be clipped
+            String[] options = new String[]{"Clip", "Do Not Clip", "Cancel"};
+            String title = "Occlusion Clipping";
+            String msg = "Clip occluded line segments?";
+            int lineClipping = JOptionPane.showOptionDialog(getContentPane(), msg, title,
+                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
+                    null, options, options[0]);
+            if (lineClipping == 2) {
+                // user canceled
+                return;
+            }
+
             // apply shearing
-            PlanObliqueShearing shearingOp = new PlanObliqueShearing(model.planObliqueAngle);
-            GeometryCollection shearedLines = shearingOp.shear(vectors, model.getGeneralizedGrid());
+            PlanObliqueShearing shearingOp = new PlanObliqueShearing(
+                    model.planObliqueAngle,
+                    model.getGeneralizedGrid(),
+                    model.getGeneralizedGrid().getMinMax()[0],
+                    lineClipping == 0);
+            GeometryCollection shearedLines = shearingOp.shear(vectors);
 
             BufferedImage img = navigableImagePanel.getImage();
             drawLines(img, shearedLines, model.getGeneralizedGrid());

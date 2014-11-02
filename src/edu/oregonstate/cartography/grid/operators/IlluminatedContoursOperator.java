@@ -295,10 +295,18 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         } else {
             a = illiminatedWidth * slope * cellSize;
         }
+        /*
         if (tanaka) {
             a *= Math.abs(Math.cos(angleDiff / 180 * Math.PI));
+        }*/
+        // a *= Math.abs(Math.sin(angleDiff / 180 * Math.PI / 2));
+         double stretchedVal;
+        if (transitionAngle == 90) {
+            a *= Math.abs(Math.cos(angleDiff / 180 * Math.PI));
+        } else {
+            stretchedVal = (angleDiff * 0.5) + 90;
+            a *= Math.abs(Math.cos(stretchedVal / 180 * Math.PI));
         }
-
         // make lines minimum width
         a = Math.max(minWidth * slope * cellSize, a);
 

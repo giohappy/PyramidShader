@@ -1,6 +1,7 @@
 package edu.oregonstate.cartography.gui;
 
 import edu.oregonstate.cartography.app.FileUtils;
+import edu.oregonstate.cartography.app.GeometryUtils;
 import edu.oregonstate.cartography.geometryexport.ShapeExporter;
 import edu.oregonstate.cartography.geometryimport.GeometryCollectionImporter;
 import edu.oregonstate.cartography.geometryimport.ShapeImporter;
@@ -24,6 +25,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -646,13 +648,15 @@ public class MainWindow extends javax.swing.JFrame {
         offsetTerrainModelMenuItem.setEnabled(gridLoaded);
     }//GEN-LAST:event_editMenuMenuSelected
 
-    /** 
+    /**
      * Draw a set of lines into an image
+     *
      * @param img
      * @param lines
-     * @param grid 
+     * @param grid
      */
     private static void drawLines(BufferedImage img, GeometryCollection lines, Grid grid) {
+        int imageHeight = img.getHeight();
         Graphics2D g2 = (Graphics2D) img.getGraphics();
         RenderingHints rh = new RenderingHints(
                 RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -672,12 +676,12 @@ public class MainWindow extends javax.swing.JFrame {
             Point pt = line.getFirstPoint();
             double x = (pt.getX() - dx) * sx;
             double y = (pt.getY() - dy) * sy;
-            path.moveTo(x, y);
+            path.moveTo(x, imageHeight - y);
             for (int pointID = 1; pointID < nPoints; pointID++) {
                 pt = line.getPointN(pointID);
                 x = (pt.getX() - dx) * sx;
                 y = (pt.getY() - dy) * sy;
-                path.lineTo(x, img.getHeight() - y);
+                path.lineTo(x, imageHeight - y);
             }
             g2.draw(path);
         }
@@ -700,16 +704,28 @@ public class MainWindow extends javax.swing.JFrame {
                 return;
             }
             GeometryCollectionImporter importer = new ShapeImporter();
-            GeometryCollection lines = importer.importData(filePath);
+            GeometryCollection vectors = importer.importData(filePath);
+
+            // test whether the vector geometry intersects with the grid
+            Rectangle2D vectorsBB = vectors.getBoundingBox();
+            Rectangle2D gridBB = model.getGeneralizedGrid().getBoundingBox();
+            if (GeometryUtils.rectanglesIntersect(gridBB, vectorsBB) == false) {
+                String msg = "<html>The shapefile geometry does not align with "
+                        + "the terrain model.<br>It is likely that the shapefile "
+                        + "and the grid use different coordinate systems.";
+                String title = "Data Misalignment";
+                JOptionPane.showMessageDialog(getContentPane(), msg, title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             // apply shearing
             PlanObliqueShearing shearingOp = new PlanObliqueShearing(model.planObliqueAngle);
-            GeometryCollection shearedLines = shearingOp.shear(lines, model.getGeneralizedGrid());
+            GeometryCollection shearedLines = shearingOp.shear(vectors, model.getGeneralizedGrid());
 
             BufferedImage img = navigableImagePanel.getImage();
             drawLines(img, shearedLines, model.getGeneralizedGrid());
             navigableImagePanel.repaint();
-            
+
             // ask the user for a file to save
             filePath = askFile("Save Plan Oblique Lines", false);
             if (filePath == null) {

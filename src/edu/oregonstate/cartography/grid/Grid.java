@@ -6,6 +6,7 @@
  */
 package edu.oregonstate.cartography.grid;
 
+import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
 
 /**
@@ -451,6 +452,15 @@ public final class Grid {
         return getWest() + (getCols() - 1) * getCellSize();
     }
 
+    /**
+     * Returns a bounding box for this grid.
+     * @return The bounding box.
+     */
+    public Rectangle2D getBoundingBox() {
+        return new Rectangle2D.Double(getWest(), getSouth(), 
+                getEast() - getWest(), getNorth() - getSouth());
+    }
+    
     /**
      * Returns true if the grid has non-zero dimensions and non-NaN position.
      *

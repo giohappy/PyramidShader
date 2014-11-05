@@ -105,7 +105,6 @@ public class SettingsPanel extends javax.swing.JPanel {
             }
         }
     }
-
     private Model model;
     private BackgroundRenderer renderer;
 
@@ -1357,12 +1356,16 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         updateImage(contoursMinLineWidthSlider.getValueIsAdjusting() ? FAST : REGULAR);
         DecimalFormat df = new DecimalFormat("0.0");
-        String t = df.format(model.contoursIlluminatedWidthLow);
+        String t = df.format(model.contoursIlluminatedWidthHigh);
         contoursIlluminatedLineWidthHighValueLabel.setText(t);
-        t = df.format(model.contoursShadowWidthLow);
+        t = df.format(model.contoursIlluminatedWidthLow);
+        contoursIlluminatedLineWidthLowValueLabel.setText(t);
+        t = df.format(model.contoursShadowWidthHigh);
         contoursShadowLineWidthHighValueLabel.setText(t);
+        t = df.format(model.contoursShadowWidthLow);
+        contoursShadowLineWidthLowValueLabel.setText(t);
         t = df.format(model.contoursMinWidth);
-        contoursMinLineWidthValueLabel.setText(t);
+        contoursMinLineWidthValueLabel.setText(t);     
     }//GEN-LAST:event_contoursMinLineWidthSliderStateChanged
 
     private void contoursGradientSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_contoursGradientSliderStateChanged
@@ -1374,7 +1377,11 @@ public class SettingsPanel extends javax.swing.JPanel {
         model.solidColor = solidColorButton.getColor();
         updateImage(REGULAR);
     }//GEN-LAST:event_solidColorButtonActionPerformed
-
+    private void updateContoursGUI(boolean illuminated) {
+        contoursIlluminatedHighestLineWidthSlider.setEnabled(illuminated);
+        contoursIlluminatedLowestLineWidthSlider.setEnabled(illuminated);
+        contoursTransitionSlider.setEnabled(illuminated);
+    }
     private void contoursComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_contoursComboBoxItemStateChanged
         if (evt.getStateChange() == ItemEvent.SELECTED) {
             switch (contoursComboBox.getSelectedIndex()) {
@@ -1385,10 +1392,12 @@ public class SettingsPanel extends javax.swing.JPanel {
                 case 1:
                     model.foregroundVisualization = ForegroundVisualization.ILLUMINATED_CONTOURS;
                     ((CardLayout) (contoursCardPanel.getLayout())).show(contoursCardPanel, "contoursSettingsCard");
+                    updateContoursGUI(true);
                     break;
                 case 2:
                     model.foregroundVisualization = ForegroundVisualization.SHADED_CONTOURS;
                     ((CardLayout) (contoursCardPanel.getLayout())).show(contoursCardPanel, "contoursSettingsCard");
+                    updateContoursGUI(false);
                     break;
             }
             updateImage(REGULAR);
@@ -1398,8 +1407,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
     private void visualizationComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_visualizationComboBoxItemStateChanged
         if (evt.getStateChange() == ItemEvent.SELECTED) {
-            model.backgroundVisualization
-                    = (ColorVisualization) visualizationComboBox.getSelectedItem();
+            model.backgroundVisualization = (ColorVisualization) visualizationComboBox.getSelectedItem();
             updateVisualizationPanelsVisibility();
             updateImage(REGULAR);
         }
@@ -1504,7 +1512,6 @@ public class SettingsPanel extends javax.swing.JPanel {
         model.planObliqueAngle = planObliqueSlider.getValue();
         updateImage(planObliqueSlider.getValueIsAdjusting() ? FAST : REGULAR);
     }//GEN-LAST:event_planObliqueSliderStateChanged
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSlider azimuthSlider;
     private javax.swing.JPanel colorGradientPanel;
@@ -1556,5 +1563,4 @@ public class SettingsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel visualizationPanel;
     private javax.swing.JSlider zenithSlider;
     // End of variables declaration//GEN-END:variables
-
 }

@@ -168,11 +168,6 @@ public class Model implements Cloneable {
     public double contoursMinWidth = 0.1;
 
     /**
-     * continuously vary contour line width with aspect angle
-     */
-    public boolean contoursTanaka = true;
-
-    /**
      * contour gray values are smoothly interpolated between illuminated and
      * shaded slope. This angle defines the range of interpolation.
      */
@@ -501,7 +496,6 @@ public class Model implements Cloneable {
                 contoursIlluminatedWidthLow,
                 contoursIlluminatedWidthHigh,
                 contoursMinWidth,
-                contoursTanaka,
                 azimuth,
                 contoursInterval,
                 contoursGradientAngle,

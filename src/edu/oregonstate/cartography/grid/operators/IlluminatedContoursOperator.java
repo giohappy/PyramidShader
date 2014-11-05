@@ -31,8 +31,6 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
     private final double illuminatedWidthHigh;
     // minimum line width
     private final double minWidth;
-    // Tanaka transition betweeen shaded and illuminated contours
-    private final boolean tanaka;
     // azimuth of illumination from north in clockwise direction in degrees
     private final double azimuth;
     // contour interval
@@ -64,7 +62,6 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      * @param illuminatedWidthLow
      * @param minWidth
      * @param illuminatedWidthHigh
-     * @param tanaka
      * @param azimuth
      * @param interval
      * @param gradientAngle
@@ -79,7 +76,6 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
             double illuminatedWidthLow,
             double illuminatedWidthHigh,
             double minWidth,
-            boolean tanaka,
             double azimuth,
             double interval,
             int gradientAngle,
@@ -93,7 +89,6 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         this.illuminatedWidthLow = illuminatedWidthLow;
         this.illuminatedWidthHigh = illuminatedWidthHigh;
         this.minWidth = minWidth;
-        this.tanaka = tanaka;
         this.azimuth = azimuth;
         this.interval = interval;
         this.gradientAngle = gradientAngle;

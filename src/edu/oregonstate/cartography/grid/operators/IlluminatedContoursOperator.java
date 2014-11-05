@@ -15,63 +15,44 @@ import javax.swing.SwingWorker;
 public class IlluminatedContoursOperator extends ThreadedGridOperator {
 
     public final int CONTOURS_TRANSPARENT = -1;
-
     // a SwingWorker for communicating progress and for checking cancel events
     private SwingWorker progress;
-
     // this image will receive the computed contour lines
     private BufferedImage image;
-
     // illuminated and shaded or only shaded contours
     private final boolean illuminated;
-
     // width of lowest shaded lines
     private final double shadowWidthLow;
-
     // width of highestshaded lines
     private final double shadowWidthHigh;
-    
     // width of lowest illuminated lines
     private final double illuminatedWidthLow;
-
     // width of highest illuminated lines
     private final double illuminatedWidthHigh;
-    
     // minimum line width
     private final double minWidth;
-
     // Tanaka transition betweeen shaded and illuminated contours
     private final boolean tanaka;
-
     // azimuth of illumination from north in clockwise direction in degrees
     private final double azimuth;
-
     // contour interval
     private final double interval;
-
     // a gradient between black and white is applied inside this transition angle
     // in degree
     private final int gradientAngle;
-
     // standard deviation of Gaussian blur filter applied to grid to create smoothGrid
     private final double aspectGaussBlur;
-
     // a low-pass version of the source grid. Created with standard deviation
     // of aspectGaussBlur
     private Grid smoothGrid;
-
     // gray value of illuminated contours
     private final int illluminatedGray;
-
     // transition angle between illuminated and shaded contour lines, usually 90 degrees
     private final int transitionAngle;
-
     // pixel buffer to render to
     private int[] imageBuffer;
-    
     // lowest elevation in grid
     private final float gridMin;
-    
     // highest elevation in grid
     private final float gridMax;
 
@@ -280,33 +261,42 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         double illumination = 90 - azimuth;
         // calculate minumum angle between illumination angle and aspect
         double angleDiff = smallestAngleDiff(illumination, aspect);
-        
+
         // compute the line widths, which vary with elevation
         double w = (gridMax - elevation) / (gridMax - gridMin);
         //double gamma = 2;
         //w = Math.pow(w, 1d / gamma);
-        double shadowWidth = shadowWidthLow * w  + shadowWidthHigh * (1d - w);
-        double illiminatedWidth = illuminatedWidthLow * w  + illuminatedWidthHigh * (1d - w);
-        
+        double shadowWidth = shadowWidthLow * w + shadowWidthHigh * (1d - w);
+        double illiminatedWidth = illuminatedWidthLow * w + illuminatedWidthHigh * (1d - w);
+
         // set 'a' based on the angle distance from the angle of illumination.
         double a;
-        if (angleDiff > transitionAngle) {
+        if (illuminated) {
+            //convert to radians
+            double trad = transitionAngle / 180. * Math.PI;
+            double arad = angleDiff / 180. * Math.PI;
+            if (angleDiff > transitionAngle) {
+                a = shadowWidth * slope * cellSize;
+                //scale angleDiff to range between transitionAngle and 180 degrees
+                double m = (Math.PI / 2) / (Math.PI - trad);
+                double c = (Math.PI / 2) - m * trad;
+                arad =arad * m + c;
+                //modulate with cosine
+                a *= Math.abs(Math.cos(arad));
+            } else {
+                a = illiminatedWidth * slope * cellSize;
+                //scale angleDiff to range between 0 and transitionAngle
+                arad = arad / trad * (Math.PI / 2);
+                //modulate with cosine
+                a *= Math.abs(Math.cos(arad));
+            }
+        } else {
+            //for shadowed contours
             a = shadowWidth * slope * cellSize;
-        } else {
-            a = illiminatedWidth * slope * cellSize;
+            //modulate with sine
+            a *= Math.abs(Math.sin(angleDiff / 180 * Math.PI / 2));
         }
-        /*
-        if (tanaka) {
-            a *= Math.abs(Math.cos(angleDiff / 180 * Math.PI));
-        }*/
-        // a *= Math.abs(Math.sin(angleDiff / 180 * Math.PI / 2));
-         double stretchedVal;
-        if (transitionAngle == 90) {
-            a *= Math.abs(Math.cos(angleDiff / 180 * Math.PI));
-        } else {
-            stretchedVal = (angleDiff * 0.5) + 90;
-            a *= Math.abs(Math.cos(stretchedVal / 180 * Math.PI));
-        }
+
         // make lines minimum width
         a = Math.max(minWidth * slope * cellSize, a);
 

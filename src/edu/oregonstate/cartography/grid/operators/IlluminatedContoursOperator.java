@@ -275,7 +275,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
                 //scale angleDiff to range between transitionAngle and 180 degrees
                 double m = (Math.PI / 2) / (Math.PI - trad);
                 double c = (Math.PI / 2) - m * trad;
-                arad =arad * m + c;
+                arad = arad * m + c;
                 //modulate with cosine
                 a *= Math.abs(Math.cos(arad));
             } else {
@@ -303,7 +303,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         }
 
         if (a > dist) {
-            if (angleDiff >= (transitionAngle + gradientAngle)) {
+            if (!illuminated || angleDiff >= (transitionAngle + gradientAngle)) {
                 // shaded side
                 return 0; // black
             } else if (angleDiff <= (transitionAngle - gradientAngle)) {

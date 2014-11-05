@@ -1030,7 +1030,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         contoursGradientLabel.setText("Gradient Angle");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridy = 15;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         contoursSettingsPanel.add(contoursGradientLabel, gridBagConstraints);
 
@@ -1060,13 +1060,13 @@ public class SettingsPanel extends javax.swing.JPanel {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridy = 15;
         contoursSettingsPanel.add(contoursGradientSlider, gridBagConstraints);
 
         contoursDespeckleLabel.setText("Despeckle");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 15;
+        gridBagConstraints.gridy = 13;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         contoursSettingsPanel.add(contoursDespeckleLabel, gridBagConstraints);
 
@@ -1081,7 +1081,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 15;
+        gridBagConstraints.gridy = 13;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         contoursSettingsPanel.add(contoursDespeckleSlider, gridBagConstraints);
 
@@ -1377,11 +1377,14 @@ public class SettingsPanel extends javax.swing.JPanel {
         model.solidColor = solidColorButton.getColor();
         updateImage(REGULAR);
     }//GEN-LAST:event_solidColorButtonActionPerformed
+    
     private void updateContoursGUI(boolean illuminated) {
         contoursIlluminatedHighestLineWidthSlider.setEnabled(illuminated);
         contoursIlluminatedLowestLineWidthSlider.setEnabled(illuminated);
         contoursTransitionSlider.setEnabled(illuminated);
+        contoursGradientSlider.setEnabled(illuminated);
     }
+    
     private void contoursComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_contoursComboBoxItemStateChanged
         if (evt.getStateChange() == ItemEvent.SELECTED) {
             switch (contoursComboBox.getSelectedIndex()) {

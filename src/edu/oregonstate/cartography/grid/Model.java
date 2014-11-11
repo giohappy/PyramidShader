@@ -166,6 +166,11 @@ public class Model implements Cloneable {
      * size)
      */
     public double contoursMinWidth = 0.1;
+    
+    /**
+     * minimum distance between contour lines (relative to cell size)
+     */
+    public double contoursMinDist = 0;
 
     /**
      * contour gray values are smoothly interpolated between illuminated and
@@ -496,6 +501,7 @@ public class Model implements Cloneable {
                 contoursIlluminatedWidthLow,
                 contoursIlluminatedWidthHigh,
                 contoursMinWidth,
+                contoursMinDist,
                 azimuth,
                 contoursInterval,
                 contoursGradientAngle,

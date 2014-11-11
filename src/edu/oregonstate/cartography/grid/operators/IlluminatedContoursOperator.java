@@ -31,6 +31,8 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
     private final double illuminatedWidthHigh;
     // minimum line width
     private final double minWidth;
+    // minimum distance between lines
+    private final double minLineDist;
     // azimuth of illumination from north in clockwise direction in degrees
     private final double azimuth;
     // contour interval
@@ -62,6 +64,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      * @param illuminatedWidthLow
      * @param minWidth
      * @param illuminatedWidthHigh
+     * @param minLineDist
      * @param azimuth
      * @param interval
      * @param gradientAngle
@@ -76,6 +79,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
             double illuminatedWidthLow,
             double illuminatedWidthHigh,
             double minWidth,
+            double minLineDist,
             double azimuth,
             double interval,
             int gradientAngle,
@@ -89,6 +93,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         this.illuminatedWidthLow = illuminatedWidthLow;
         this.illuminatedWidthHigh = illuminatedWidthHigh;
         this.minWidth = minWidth;
+        this.minLineDist = minLineDist;
         this.azimuth = azimuth;
         this.interval = Math.abs(interval);
         this.gradientAngle = gradientAngle;
@@ -291,17 +296,24 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
             lineWidth = shadowWidth * Math.abs(Math.sin(angleDiffRad / 2));
         }
 
-        // make lines minimum width
-        lineWidth = Math.max(minWidth, lineWidth);
-        // convert to units of z values
-        lineWidth *= cellSize;
-        
         // compute vertical z distance to closest contour line
+        // the sign of zDist equals the sign of the dividend (the number left of %)
         double zDist = Math.abs(elevation) % interval;
         if (zDist > interval / 2) {
             zDist = interval - zDist;
         }
 
+        // make very thin lines thicker
+        lineWidth = Math.max(minWidth, lineWidth);
+        
+        // convert line width to units of z values (e.g. meters)
+        lineWidth *= cellSize;
+        
+        // maximum possible line width
+        double maxLineWidth = interval / 2 / slopePerc - minLineDist * cellSize;
+        // make very thick lines thinner
+        lineWidth = Math.min(maxLineWidth, lineWidth);
+        
         if (lineWidth * slopePerc > zDist) {
             if (!illuminated || angleDiff >= (transitionAngle + gradientAngle)) {
                 // shaded side

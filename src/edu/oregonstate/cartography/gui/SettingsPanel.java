@@ -710,11 +710,11 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         contoursSettingsPanel.setLayout(new java.awt.GridBagLayout());
 
-        contoursIlluminatedLineWidthLabel.setText("Illuminated Line Width");
+        contoursIlluminatedLineWidthLabel.setText("Maximum Illuminated Line Width");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 6;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         contoursSettingsPanel.add(contoursIlluminatedLineWidthLabel, gridBagConstraints);
 
@@ -830,11 +830,12 @@ public class SettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 4, 0, 0);
         contoursSettingsPanel.add(contoursIlluminatedLineWidthLowValueLabel, gridBagConstraints);
 
-        contoursShadwoLineWidthSlider.setText("Shadowed Line Width");
+        contoursShadwoLineWidthSlider.setText("Maximum Shadowed Line Width");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         contoursSettingsPanel.add(contoursShadwoLineWidthSlider, gridBagConstraints);
 
         contoursShadowedHighest.setText("Highest");
@@ -1085,7 +1086,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         contoursSettingsPanel.add(contoursDespeckleSlider, gridBagConstraints);
 
-        contoursTransitionLabel.setText("Transition");
+        contoursTransitionLabel.setText("Transition Angle");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 16;

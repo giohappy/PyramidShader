@@ -246,9 +246,9 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      * Compute the gray value for the illuminated contour line image
      *
      * @param elevation Elevation of the point.
-     * @param aspect Aspect of the point
-     * @param slope Slope of the point.
-     * @param cellSize
+     * @param aspect Terrain aspect at the point in degrees.
+     * @param slope Terrain slope at the point in radians.
+     * @param cellSize Size of a grid cell. Same units as elevation parameter.
      * @return Gray value between 0 and 255.
      */
     public int computeGray(double elevation, double aspect, double slope, double cellSize) {
@@ -256,52 +256,53 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         double illumination = 90 - azimuth;
         // calculate minumum angle between illumination angle and aspect
         double angleDiff = smallestAngleDiff(illumination, aspect);
-
-        // compute the line widths, which vary with elevation
+        double angleDiffRad = angleDiff / 180. * Math.PI;
+        
+        // vary the shadowed and illuminated line widths with elevation
         double w = (gridMax - elevation) / (gridMax - gridMin);
         //double gamma = 2;
         //w = Math.pow(w, 1d / gamma);
-        double shadowWidth = shadowWidthLow * w + shadowWidthHigh * (1d - w);
-        double illiminatedWidth = illuminatedWidthLow * w + illuminatedWidthHigh * (1d - w);
+        double shadowWidth = w * (shadowWidthLow - shadowWidthHigh) + shadowWidthHigh;
 
-        // set 'a' based on the angle distance from the angle of illumination.
-        double a;
+        // compute the line width, which varies with the orientation relative
+        // to the illumination direction
+        double lineWidth;       
         if (illuminated) {
             //convert to radians
-            double trad = transitionAngle / 180. * Math.PI;
-            double arad = angleDiff / 180. * Math.PI;
+            double transitionAngleRad = transitionAngle / 180. * Math.PI;
+            
             if (angleDiff > transitionAngle) {
-                a = shadowWidth * slope * cellSize;
                 //scale angleDiff to range between transitionAngle and 180 degrees
-                double m = (Math.PI / 2) / (Math.PI - trad);
-                double c = (Math.PI / 2) - m * trad;
-                arad = arad * m + c;
+                double m = (Math.PI / 2) / (Math.PI - transitionAngleRad);
+                double c = (Math.PI / 2) - m * transitionAngleRad;
+                angleDiffRad = angleDiffRad * m + c;
                 //modulate with cosine
-                a *= Math.abs(Math.cos(arad));
+                lineWidth = shadowWidth * Math.abs(Math.cos(angleDiffRad));
             } else {
-                a = illiminatedWidth * slope * cellSize;
                 //scale angleDiff to range between 0 and transitionAngle
-                arad = arad / trad * (Math.PI / 2);
+                angleDiffRad = angleDiffRad / transitionAngleRad * (Math.PI / 2);
+                double illuminatedWidth = w * (illuminatedWidthLow - illuminatedWidthHigh) + illuminatedWidthHigh;
                 //modulate with cosine
-                a *= Math.abs(Math.cos(arad));
+                lineWidth = illuminatedWidth * Math.abs(Math.cos(angleDiffRad));
             }
         } else {
             //for shadowed contours
-            a = shadowWidth * slope * cellSize;
             //modulate with sine
-            a *= Math.abs(Math.sin(angleDiff / 180 * Math.PI / 2));
+            lineWidth = shadowWidth * Math.abs(Math.sin(angleDiffRad / 2));
         }
 
         // make lines minimum width
-        a = Math.max(minWidth * slope * cellSize, a);
-
+        lineWidth = Math.max(minWidth, lineWidth);
+        // convert to units of z values
+        lineWidth *= cellSize;
+        
         // compute vertical z distance to closest contour line
         double zDist = Math.abs(elevation) % interval;
         if (zDist > interval / 2) {
             zDist = interval - zDist;
         }
 
-        if (a > zDist) {
+        if (lineWidth * slope > zDist) {
             if (!illuminated || angleDiff >= (transitionAngle + gradientAngle)) {
                 // shaded side
                 return 0; // black

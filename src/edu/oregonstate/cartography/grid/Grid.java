@@ -292,33 +292,41 @@ public final class Grid {
     }
 
     /**
-     * Returns the slope for col in [1, cols-2] and row in [1, rows - 2]
+     * Returns the slope for col/row. Unit is rise/run in [0..1], not an angle. 
+     * To compute an angle use atan(rise/run).
      * http://help.arcgis.com/en/arcgisdesktop/10.0/help../index.html#/How_Slope_works/009z000000vz000000/
      *
-     * @param col
-     * @param row
-     * @return
+     * @param col Column index. Must be in [1, cols-2].
+     * @param row Row index. Must be in [1, rows - 2].
+     * @return Slope in [0..1].
      */
     public double getSlopeInsideGrid(int col, int row) {
-        double a = getValue(col - 1, row - 1);
-        double b = getValue(col, row - 1);
-        double c = getValue(col + 1, row - 1);
-        double d = getValue(col - 1, row);
+        final double a = getValue(col - 1, row - 1);
+        final double b = getValue(col, row - 1);
+        final double c = getValue(col + 1, row - 1);
+        final double d = getValue(col - 1, row);
 
-        double f = getValue(col + 1, row);
-        double g = getValue(col - 1, row + 1);
-        double h = getValue(col, row + 1);
-        double i = getValue(col + 1, row + 1);
+        final double f = getValue(col + 1, row);
+        final double g = getValue(col - 1, row + 1);
+        final double h = getValue(col, row + 1);
+        final double i = getValue(col + 1, row + 1);
 
         //parameters used in the slope calculation
-        double dZdX = ((c + (2 * f) + i) - (a + (2 * d) + g)) / (8 * cellSize);
-        double dZdY = ((g + (2 * h) + i) - (a + (2 * b) + c)) / (8 * cellSize);
+        final double dZdX = ((c + (2 * f) + i) - (a + (2 * d) + g)) / (8 * cellSize);
+        final double dZdY = ((g + (2 * h) + i) - (a + (2 * b) + c)) / (8 * cellSize);
         return Math.sqrt((dZdX * dZdX) + (dZdY * dZdY));
     }
 
-    // http://help.arcgis.com/en/arcgisdesktop/10.0/help../index.html#/How_Slope_works/009z000000vz000000/
+    /**
+     * Returns the slope for col/row. Unit is rise/run in [0..1], not an angle. 
+     * To compute an angle use atan(rise/run).
+     * http://help.arcgis.com/en/arcgisdesktop/10.0/help../index.html#/How_Slope_works/009z000000vz000000/
+     *
+     * @param col Column index. Must be in  [0, cols-1].
+     * @param row Row index. Must be in [0, rows - 1].
+     * @return Slope in [0..1].
+     */
     public double getSlope(int col, int row) {
-        final double a, b, c, d, f, g, h, i;
         final int cols = grid[0].length;
         final int rows = grid.length;
 
@@ -327,19 +335,19 @@ public final class Grid {
         final int rowTop = row > 0 ? row - 1 : 0;
         final int rowBottom = row < rows - 1 ? row + 1 : rows - 1;
 
-        a = getValue(colLeft, rowTop);
-        b = getValue(col, rowTop);
-        c = getValue(colRight, rowTop);
-        d = getValue(colLeft, row);
+        final double a = getValue(colLeft, rowTop);
+        final double b = getValue(col, rowTop);
+        final double c = getValue(colRight, rowTop);
+        final double d = getValue(colLeft, row);
 
-        f = getValue(colRight, row);
-        g = getValue(colLeft, rowBottom);
-        h = getValue(col, rowBottom);
-        i = getValue(colRight, rowBottom);
+        final double f = getValue(colRight, row);
+        final double g = getValue(colLeft, rowBottom);
+        final double h = getValue(col, rowBottom);
+        final double i = getValue(colRight, rowBottom);
 
-        //parameters used in the slope calculation
-        double dZdX = ((c + (2 * f) + i) - (a + (2 * d) + g)) / (8 * cellSize);
-        double dZdY = ((g + (2 * h) + i) - (a + (2 * b) + c)) / (8 * cellSize);
+        final double cellSizeTimes8 = 8d * cellSize;
+        final double dZdX = ((c + (2 * f) + i) - (a + (2 * d) + g)) / cellSizeTimes8;
+        final double dZdY = ((g + (2 * h) + i) - (a + (2 * b) + c)) / cellSizeTimes8;
         return Math.sqrt((dZdX * dZdX) + (dZdY * dZdY));
     }
 

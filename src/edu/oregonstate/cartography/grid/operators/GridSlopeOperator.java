@@ -3,7 +3,7 @@ package edu.oregonstate.cartography.grid.operators;
 import edu.oregonstate.cartography.grid.Grid;
 
 /**
- * Compute slope
+ * Compute slope as rise/run in [0..1]
  * @author Bernhard Jenny, Oregon State University
  */
 public class GridSlopeOperator extends ThreadedGridOperator {

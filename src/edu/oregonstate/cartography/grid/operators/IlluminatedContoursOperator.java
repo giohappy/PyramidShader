@@ -246,16 +246,16 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      * Compute the gray value for the illuminated contour line image
      *
      * @param elevation Elevation of the point.
-     * @param aspect Terrain aspect at the point in degrees.
-     * @param slope Terrain slope at the point in radians.
+     * @param aspectDeg Terrain aspect at the point in degrees.
+     * @param slopePerc Terrain slope at the point in rise/run [0..1].
      * @param cellSize Size of a grid cell. Same units as elevation parameter.
      * @return Gray value between 0 and 255.
      */
-    public int computeGray(double elevation, double aspect, double slope, double cellSize) {
+    private int computeGray(double elevation, double aspectDeg, double slopePerc, double cellSize) {
         // convert azimuth angle to geometric angle, from east counterclockwise
         double illumination = 90 - azimuth;
         // calculate minumum angle between illumination angle and aspect
-        double angleDiff = smallestAngleDiff(illumination, aspect);
+        double angleDiff = smallestAngleDiff(illumination, aspectDeg);
         double angleDiffRad = angleDiff / 180. * Math.PI;
         
         // vary the shadowed and illuminated line widths with elevation
@@ -302,7 +302,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
             zDist = interval - zDist;
         }
 
-        if (lineWidth * slope > zDist) {
+        if (lineWidth * slopePerc > zDist) {
             if (!illuminated || angleDiff >= (transitionAngle + gradientAngle)) {
                 // shaded side
                 return 0; // black

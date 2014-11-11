@@ -90,7 +90,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         this.illuminatedWidthHigh = illuminatedWidthHigh;
         this.minWidth = minWidth;
         this.azimuth = azimuth;
-        this.interval = interval;
+        this.interval = Math.abs(interval);
         this.gradientAngle = gradientAngle;
         this.illluminatedGray = illluminatedGray;
         this.aspectGaussBlur = aspectGaussBlur;
@@ -295,14 +295,13 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         // make lines minimum width
         a = Math.max(minWidth * slope * cellSize, a);
 
-        // Code regarding 'a' vs 'diff' ensures that the contour lines
-        // have an equal width throughout the illuminated or shadowed line.
-        double dist = Math.abs(elevation) % interval;
-        if (dist > a) {
-            dist = interval - dist;
+        // compute vertical z distance to closest contour line
+        double zDist = Math.abs(elevation) % interval;
+        if (zDist > interval / 2) {
+            zDist = interval - zDist;
         }
 
-        if (a > dist) {
+        if (a > zDist) {
             if (!illuminated || angleDiff >= (transitionAngle + gradientAngle)) {
                 // shaded side
                 return 0; // black

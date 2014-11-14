@@ -35,37 +35,33 @@ public class PyramidShader {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                try {
-                    // create model object, main window and settings dialog
-                    Model model = new Model();
-                    MainWindow frame = new MainWindow(model);
-                    SettingsDialog dlg = new SettingsDialog(frame, false);
-                    dlg.setModel(model);
-                    frame.setSettingsDialog(dlg);
+                // create model object, main window and settings dialog
+                Model model = new Model();
+                MainWindow frame = new MainWindow(model);
+                SettingsDialog dlg = new SettingsDialog(frame, false);
+                dlg.setModel(model);
+                frame.setSettingsDialog(dlg);
 
-                    // find available screen real estate (without taskbar, etc.)
-                    Rectangle screen = GraphicsEnvironment.
-                            getLocalGraphicsEnvironment().getMaximumWindowBounds();
-                    Dimension dlgDim = dlg.getPreferredSize();
+                // find available screen real estate (without taskbar, etc.)
+                Rectangle screen = GraphicsEnvironment.
+                        getLocalGraphicsEnvironment().getMaximumWindowBounds();
+                Dimension dlgDim = dlg.getPreferredSize();
 
-                    // position settings dialog in top-right corner
-                    dlg.pack();
-                    int x = (int) (screen.getMaxX() - dlgDim.getWidth() - 5);
-                    int y = (int) frame.getLocation().getY();
-                    dlg.setLocation(x, y);
+                // position settings dialog in top-right corner
+                dlg.pack();
+                int x = (int) (screen.getMaxX() - dlgDim.getWidth() - 5);
+                int y = (int) frame.getLocation().getY();
+                dlg.setLocation(x, y);
 
-                    // use rest of screen space for main frame
-                    int frameWidth = (int) (screen.getWidth() - dlgDim.getWidth() - 2 * 5);
-                    frame.setSize(frameWidth, (int) screen.getHeight());
-                    frame.setLocation((int) screen.getMinX(), (int) screen.getMinY());
+                // use rest of screen space for main frame
+                int frameWidth = (int) (screen.getWidth() - dlgDim.getWidth() - 2 * 5);
+                frame.setSize(frameWidth, (int) screen.getHeight());
+                frame.setLocation((int) screen.getMinX(), (int) screen.getMinY());
 
-                    // show windows and open terrain model
-                    frame.setVisible(true);
-                    dlg.setVisible(true);
-                    frame.openGrid();
-                } catch (IOException ex) {
-                    ErrorDialog.showErrorDialog("An error occured.", null, ex, null);
-                }
+                // show windows and open terrain model
+                frame.setVisible(true);
+                dlg.setVisible(true);
+                frame.openGrid();
             }
         });
     }

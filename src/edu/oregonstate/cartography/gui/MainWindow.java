@@ -1,5 +1,6 @@
 package edu.oregonstate.cartography.gui;
 
+import com.fizzysoft.sdu.RecentDocumentsManager;
 import edu.oregonstate.cartography.app.FileUtils;
 import edu.oregonstate.cartography.app.GeometryUtils;
 import edu.oregonstate.cartography.geometryexport.ShapeExporter;
@@ -24,6 +25,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -35,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.imageio.ImageIO;
+import javax.swing.Icon;
 import javax.swing.JOptionPane;
 
 /**
@@ -56,6 +59,8 @@ public class MainWindow extends javax.swing.JFrame {
     private final Model model;
     private SettingsDialog settingsDialog = null;
 
+    private RecentDocumentsManager rdm;
+
     /**
      * Constructor for the JFrame. Initializes components and sets up the
      * default color gradient.
@@ -65,7 +70,8 @@ public class MainWindow extends javax.swing.JFrame {
     public MainWindow(Model model) {
         this.model = model;
 
-        initComponents();  //Sets up the JFrame components with their properties
+        initRecentDocumentsMenu();
+        initComponents();
 
         // get menu keyboard events from owned dialogs
         DialogUtil.setupDialogActions(menuBar);
@@ -96,6 +102,7 @@ public class MainWindow extends javax.swing.JFrame {
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         javax.swing.JMenuItem openMenuItem = new javax.swing.JMenuItem();
+        openRecentMenu = rdm.createOpenRecentMenu();
         javax.swing.JPopupMenu.Separator jSeparator1 = new javax.swing.JPopupMenu.Separator();
         saveTerrainMenuItem = new javax.swing.JMenuItem();
         saveLocalTerrainMenuItem = new javax.swing.JMenuItem();
@@ -106,7 +113,7 @@ public class MainWindow extends javax.swing.JFrame {
         javax.swing.JMenu saveContoursMenu = new javax.swing.JMenu();
         saveTIFFContoursMenuItem = new javax.swing.JMenuItem();
         savePNGContoursMenuItem = new javax.swing.JMenuItem();
-        jSeparator6 = new javax.swing.JPopupMenu.Separator();
+        javax.swing.JPopupMenu.Separator jSeparator6 = new javax.swing.JPopupMenu.Separator();
         planObliqueFeaturesMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
         scaleTerrainModelMenuItem = new javax.swing.JMenuItem();
@@ -199,6 +206,9 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
         fileMenu.add(openMenuItem);
+
+        openRecentMenu.setText("Open Recent");
+        fileMenu.add(openRecentMenu);
         fileMenu.add(jSeparator1);
 
         saveTerrainMenuItem.setText("Save Generalized Terrain Model…");
@@ -259,7 +269,7 @@ public class MainWindow extends javax.swing.JFrame {
         fileMenu.add(saveContoursMenu);
         fileMenu.add(jSeparator6);
 
-        planObliqueFeaturesMenuItem.setText("Plan Oblique for Lines…");
+        planObliqueFeaturesMenuItem.setText("Plan Oblique Lines…");
         planObliqueFeaturesMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 planObliqueFeaturesMenuItemActionPerformed(evt);
@@ -383,6 +393,42 @@ public class MainWindow extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void initRecentDocumentsMenu() {
+        final String APPNAME = "PyramidShader";
+        rdm = new RecentDocumentsManager() {
+
+            private Preferences getPreferences() {
+                return Preferences.userNodeForPackage(MainWindow.class);
+            }
+
+            @Override
+            protected byte[] readRecentDocs() {
+                return getPreferences().getByteArray("RecentDocuments" + APPNAME, null);
+            }
+
+            @Override
+            protected void writeRecentDocs(byte[] data) {
+                getPreferences().putByteArray("RecentDocuments" + APPNAME, data);
+            }
+
+            @Override
+            protected void openFile(File file, ActionEvent event) {
+                if (file != null) {
+                    try {
+                        openGrid(file.getCanonicalPath());
+                    } catch (IOException ex) {
+                        ErrorDialog.showErrorDialog(OPEN_ERROR_MESSAGE, "Error", ex, null);
+                    }
+                }
+            }
+
+            @Override
+            protected Icon getFileIcon(File file) {
+                return null;
+            }
+        };
+    }
+
     private void saveImage(String format, String message) {
         String filePath = askFile(message, false);    //call up a save file dialog
         //Make sure the choice is a valid file
@@ -420,11 +466,7 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_saveTerrainMenuItemActionPerformed
 
     private void openMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMenuItemActionPerformed
-        try {
-            openGrid();
-        } catch (IOException ex) {
-            ErrorDialog.showErrorDialog(OPEN_ERROR_MESSAGE, "Error", ex, this);
-        }
+        openGrid();
     }//GEN-LAST:event_openMenuItemActionPerformed
 
     private void infoMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoMenuItemActionPerformed
@@ -692,7 +734,7 @@ public class MainWindow extends javax.swing.JFrame {
         try {
             // erase previously drawn lines
             navigableImagePanel.repaint();
-            
+
             if (model.planObliqueAngle == 90) {
                 String msg = "Please first adjust the plan oblique relief angle.";
                 String title = "Plan Oblique Lines";
@@ -785,20 +827,12 @@ public class MainWindow extends javax.swing.JFrame {
         return directory + fileName;
     }
 
-    public void openGrid() throws IOException {
-        // ask the user for a file
-        String filePath = askFile("Select an Esri ASCII Grid", true);
-        if (filePath == null) {
-            // user canceled
-            return;
-        }
-
-        setTitle(filePath.substring(filePath.lastIndexOf(File.separator) + 1));
-
-        initPyramidsGridWithProgressDialog(filePath);
-    }
-
-    private void initPyramidsGridWithProgressDialog(final String filePath) {
+    /**
+     * Open a grid file and initialized data model.
+     * @param filePath The file to open
+     * @throws IOException 
+     */
+    private void openGrid(final String filePath) throws IOException {
         SwingWorkerWithProgressIndicator worker;
         String dialogTitle = "Pyramid Shader";
 
@@ -815,7 +849,12 @@ public class MainWindow extends javax.swing.JFrame {
                     // if rendering throws an error, the progress dialog should 
                     // have been closed
                     completeProgress();
-
+                    
+                    // set window title to file name
+                    setTitle(filePath.substring(filePath.lastIndexOf(File.separator) + 1));
+                    
+                    // add document to Open Recent menu
+                    rdm.addDocument(new File(filePath), null);
                 } catch (InterruptedException | CancellationException e) {
                 } catch (Throwable e) {
                     // hide the progress dialog
@@ -885,17 +924,33 @@ public class MainWindow extends javax.swing.JFrame {
         worker.execute();
     }
 
+    /**
+     * Ask user for grid file, open the file, and initialized data model.
+     */
+    public void openGrid() {
+        try {
+            // ask the user for a file
+            String filePath = askFile("Select an Esri ASCII Grid", true);
+            if (filePath != null) {
+                openGrid(filePath);
+            }
+        } catch (IOException ex) {
+            ErrorDialog.showErrorDialog(OPEN_ERROR_MESSAGE, "Error", ex, this);
+        }
+
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu editMenu;
     private javax.swing.JPanel imageResolutionPanel;
     private javax.swing.JSpinner imageResolutionSpinner;
     private javax.swing.JMenuItem infoMenuItem;
-    private javax.swing.JPopupMenu.Separator jSeparator6;
     private javax.swing.JMenuBar menuBar;
     private edu.oregonstate.cartography.gui.NavigableImagePanel navigableImagePanel;
     private javax.swing.JFormattedTextField offsetTerrainFormattedTextField;
     private javax.swing.JMenuItem offsetTerrainModelMenuItem;
     private javax.swing.JPanel offsetTerrainPanel;
+    private javax.swing.JMenu openRecentMenu;
     private javax.swing.JMenuItem planObliqueFeaturesMenuItem;
     private javax.swing.JMenuItem saveLocalTerrainMenuItem;
     private javax.swing.JMenuItem savePNGContoursMenuItem;

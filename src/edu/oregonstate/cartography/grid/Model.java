@@ -142,31 +142,31 @@ public class Model implements Cloneable {
      * line width of illuminated contours (relative to cell size) at lowest
      * elevation
      */
-    public double contoursIlluminatedWidthLow = 0.5;
+    public double contoursIlluminatedWidthLow = 1;
 
     /**
      * line width of illuminated contours (relative to cell size) at highest
      * elevation
      */
-    public double contoursIlluminatedWidthHigh = 0.5;
+    public double contoursIlluminatedWidthHigh = 1;
 
     /**
      * line width of shaded contours (relative to cell size) at lowest elevation
      */
-    public double contoursShadowWidthLow = 0.5;
+    public double contoursShadowWidthLow = 1;
 
     /**
      * line width of shaded contours (relative to cell size) at highest
      * elevation
      */
-    public double contoursShadowWidthHigh = 0.5;
+    public double contoursShadowWidthHigh = 1;
 
     /**
      * contour line widths are never smaller than this value (relative to cell
      * size)
      */
-    public double contoursMinWidth = 0.1;
-    
+    public double contoursMinWidth = 0.2;
+
     /**
      * minimum distance between contour lines (relative to cell size)
      */
@@ -177,11 +177,6 @@ public class Model implements Cloneable {
      * shaded slope. This angle defines the range of interpolation.
      */
     public int contoursGradientAngle = 0;
-
-    /**
-     * the gray value of contour lines in illuminated slopes
-     */
-    public int contoursIllluminatedGray = 255;
 
     /**
      * standard deviation of Gaussian blur filter to despeckle contour lines
@@ -217,7 +212,7 @@ public class Model implements Cloneable {
             Color.GRAY,
             Color.WHITE};
         predefinedColorRamps.add(new ColorRamp("Soft Gray", col, pos));
-        
+
         pos = new float[]{0.5F, 1.0F};
         col = new Color[]{
             Color.BLACK,
@@ -416,7 +411,7 @@ public class Model implements Cloneable {
      * @return
      */
     public BufferedImage renderForegroundImage(BufferedImage destinationImage) {
-        if (foregroundVisualization != ForegroundVisualization.NONE) {
+        if (isRenderingForeground()) {
             boolean illuminated = (foregroundVisualization == ILLUMINATED_CONTOURS);
             IlluminatedContoursOperator op = setupIlluminatedContoursOperator(illuminated);
             op.renderToImage(destinationImage, generalizedGrid,
@@ -505,7 +500,6 @@ public class Model implements Cloneable {
                 azimuth,
                 contoursInterval,
                 contoursGradientAngle,
-                contoursIllluminatedGray,
                 contoursAspectGaussBlur,
                 contoursTransitionAngle,
                 gridMinMax);
@@ -527,6 +521,14 @@ public class Model implements Cloneable {
         return generalizationDetails > -1d;
     }
 
+    /**
+     * Returns true when contour lines need to be rendered in the foreground
+     * @return 
+     */
+    public boolean isRenderingForeground() {
+        return foregroundVisualization != ForegroundVisualization.NONE;
+    }
+    
     /**
      * @param generalizationDetails the generalizationDetails to set
      */

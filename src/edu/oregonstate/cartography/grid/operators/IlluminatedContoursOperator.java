@@ -45,8 +45,6 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
     // a low-pass version of the source grid. Created with standard deviation
     // of aspectGaussBlur
     private Grid smoothGrid;
-    // gray value of illuminated contours
-    private final int illluminatedGray;
     // transition angle between illuminated and shaded contour lines, usually 90 degrees
     private final int transitionAngle;
     // pixel buffer to render to
@@ -83,7 +81,6 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
             double azimuth,
             double interval,
             int gradientAngle,
-            int illluminatedGray,
             double aspectGaussBlur,
             int transitionAngle,
             float[] gridMinMax) {
@@ -97,7 +94,6 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         this.azimuth = azimuth;
         this.interval = Math.abs(interval);
         this.gradientAngle = gradientAngle;
-        this.illluminatedGray = illluminatedGray;
         this.aspectGaussBlur = aspectGaussBlur;
         this.transitionAngle = transitionAngle;
         this.gridMin = gridMinMax[0];
@@ -186,9 +182,9 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         smoothAspect = (smoothAspect + Math.PI) * 180 / Math.PI;
         double slope = src.getSlope(col, row);
         int g = computeGray(elevation, smoothAspect, slope, src.getCellSize());
-        if (g != CONTOURS_TRANSPARENT) {
-            int argb = (int) g | ((int) g << 8) | ((int) g << 16) | 0xFF000000;
-            imageBuffer[row * image.getWidth() + col] = argb;
+        if ((g >> 24) != 0) {
+            //int argb = (int) g | ((int) g << 8) | ((int) g << 16) | 0xFF000000;
+            imageBuffer[row * image.getWidth() + col] = g;
         }
     }
 
@@ -220,11 +216,10 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
                 smoothAspect = (smoothAspect + Math.PI) * 180 / Math.PI;
                 double slopeVal = slopeGrid.getBilinearInterpol(x, y);
                 int g = computeGray(elevation, smoothAspect, slopeVal, cellSize);
-                if (g != CONTOURS_TRANSPARENT) {
-                    int argb = (int) g | ((int) g << 8) | ((int) g << 16) | 0xFF000000;
+                if ((g >> 24) != 0) {
                     int imageCol = col * scale + c;
                     int imageRow = row * scale + r;
-                    imageBuffer[imageRow * image.getWidth() + imageCol] = argb;
+                    imageBuffer[imageRow * image.getWidth() + imageCol] = g;
                 }
             }
         }
@@ -248,6 +243,25 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
     }
 
     /**
+     * S-shaped smooth function using cubic Hermite interpolation
+     * http://en.wikipedia.org/wiki/Smoothstep
+     *
+     * @param edge0 interpolated values for x below edge0 will be 0.
+     * @param edge1 interpolated values for x above edge1 will be 1.
+     * @param x The x value to interpolate a value for.
+     * @return
+     */
+    private static double smoothstep(double edge0, double edge1, double x) {
+        // scale, bias and saturate x to 0..1 range
+        x = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+        // evaluate polynomial
+        return x * x * (3 - 2 * x);
+
+        // alternative smootherstep
+        // return x * x * x * (x * (x * 6 - 15) + 10);
+    }
+
+    /**
      * Compute the gray value for the illuminated contour line image
      *
      * @param elevation Elevation of the point.
@@ -258,75 +272,88 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      */
     private int computeGray(double elevation, double aspectDeg, double slopePerc, double cellSize) {
         // convert azimuth angle to geometric angle, from east counterclockwise
-        double illumination = 90 - azimuth;
+        double illuminationDeg = 90 - azimuth;
         // calculate minumum angle between illumination angle and aspect
-        double angleDiff = smallestAngleDiff(illumination, aspectDeg);
-        double angleDiffRad = angleDiff / 180. * Math.PI;
-        
+        double angleDiffDeg = smallestAngleDiff(illuminationDeg, aspectDeg);
+        double angleDiffRad = angleDiffDeg / 180. * Math.PI;
+
         // vary the shadowed and illuminated line widths with elevation
         double w = (gridMax - elevation) / (gridMax - gridMin);
         //double gamma = 2;
         //w = Math.pow(w, 1d / gamma);
-        double shadowWidth = w * (shadowWidthLow - shadowWidthHigh) + shadowWidthHigh;
+        double shadowWidthPx = w * (shadowWidthLow - shadowWidthHigh) + shadowWidthHigh;
 
-        // compute the line width, which varies with the orientation relative
-        // to the illumination direction
-        double lineWidth;       
+        // compute the line width (in pixels), which varies with the orientation relative
+        // to the illumination direction.
+        double lineWidthPx;
         if (illuminated) {
             //convert to radians
             double transitionAngleRad = transitionAngle / 180. * Math.PI;
-            
-            if (angleDiff > transitionAngle) {
+
+            if (angleDiffDeg > transitionAngle) {
                 //scale angleDiff to range between transitionAngle and 180 degrees
                 double m = (Math.PI / 2) / (Math.PI - transitionAngleRad);
                 double c = (Math.PI / 2) - m * transitionAngleRad;
                 angleDiffRad = angleDiffRad * m + c;
                 //modulate with cosine
-                lineWidth = shadowWidth * Math.abs(Math.cos(angleDiffRad));
+                lineWidthPx = shadowWidthPx * Math.abs(Math.cos(angleDiffRad));
             } else {
                 //scale angleDiff to range between 0 and transitionAngle
                 angleDiffRad = angleDiffRad / transitionAngleRad * (Math.PI / 2);
                 double illuminatedWidth = w * (illuminatedWidthLow - illuminatedWidthHigh) + illuminatedWidthHigh;
                 //modulate with cosine
-                lineWidth = illuminatedWidth * Math.abs(Math.cos(angleDiffRad));
+                lineWidthPx = illuminatedWidth * Math.abs(Math.cos(angleDiffRad));
             }
         } else {
             //for shadowed contours
             //modulate with sine
-            lineWidth = shadowWidth * Math.abs(Math.sin(angleDiffRad / 2));
+            lineWidthPx = shadowWidthPx * Math.abs(Math.sin(angleDiffRad / 2));
         }
 
-        // compute vertical z distance to closest contour line
+        // compute vertical z distance (in meters) to closest contour line
         // the sign of zDist equals the sign of the dividend (the number left of %)
-        double zDist = Math.abs(elevation) % interval;
-        if (zDist > interval / 2) {
-            zDist = interval - zDist;
+        double zDist_m = Math.abs(elevation) % interval;
+        if (zDist_m > interval / 2) {
+            zDist_m = interval - zDist_m;
         }
 
-        // make very thin lines thicker
-        lineWidth = Math.max(minWidth, lineWidth);
+        // maximum possible line width such that contours lines keep a minimum
+        // distance to each other for the given slope
+        // The line is shrunk by half of the minimum line distance if it is too 
+        // close to a neighbor. (The neighbor is shrunkg by the other half.)
+        double maxLineWidth_m = interval / slopePerc - minLineDist * cellSize / 2;
         
-        // convert line width to units of z values (e.g. meters)
-        lineWidth *= cellSize;
+        // make very thick lines thinner to avoid overlapping lines.
+        // convert line width from pixels to units of z values (e.g. meters)
+        double lineWidth_m = Math.min(maxLineWidth_m, lineWidthPx * cellSize);
         
-        // maximum possible line width
-        double maxLineWidth = interval / 2 / slopePerc - minLineDist * cellSize;
-        // make very thick lines thinner
-        lineWidth = Math.min(maxLineWidth, lineWidth);
+        // make very thin lines thicker. The minimum line width parameter can override 
+        // the minimum distance parameter. This is to make sure lines don't get
+        // very thin in steep shadowed slopes.
+        lineWidth_m = Math.max(lineWidth_m, minWidth * cellSize);
+        double halfLineWidth_m = lineWidth_m / 2;
         
-        if (lineWidth * slopePerc > zDist) {
-            if (!illuminated || angleDiff >= (transitionAngle + gradientAngle)) {
-                // shaded side
-                return 0; // black
-            } else if (angleDiff <= (transitionAngle - gradientAngle)) {
-                // illuminated side
-                return illuminated ? illluminatedGray : 0;
-            } else {
-                // gradient between shaded and illuminated side
-                double d = transitionAngle + gradientAngle - angleDiff;
-                return (int) (d / (2. * gradientAngle) * 255.);
-            }
+        // anti-aliasing width is half a cell size
+        double antiAliasingDist_m = 0.5 * cellSize;
+        double t_m = zDist_m / slopePerc;
+
+        // antialiasing increases the width of the line by antiAliasingDist_m
+        if (t_m > halfLineWidth_m + antiAliasingDist_m) {
+            return 0x00FFFFFF; // transparent white
         }
-        return CONTOURS_TRANSPARENT;
+        int alpha = 255 - (int) (255. * smoothstep(halfLineWidth_m, halfLineWidth_m + antiAliasingDist_m, t_m));
+        if (!illuminated || angleDiffDeg >= (transitionAngle + gradientAngle)) {
+            // shaded side: return black with alpha value
+            return alpha << 24; // RGB bytes are 0 for black: 0xXY000000;
+        } else if (angleDiffDeg <= (transitionAngle - gradientAngle)) {
+            // illuminated side: return white with alpha value
+            return illuminated ? 0x00FFFFFF | (alpha << 24) : alpha << 24;
+        } else {
+            // gradient between shaded and illuminated side: blend between
+            // black and white and add alpha value
+            double d = transitionAngle + gradientAngle - angleDiffDeg;
+            int g = (int) (d / (2. * gradientAngle) * 255.);
+            return g | (g << 8) | (g << 16) | (alpha << 24);
+        }
     }
 }

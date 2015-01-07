@@ -271,6 +271,12 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      * @return Gray value between 0 and 255.
      */
     private int computeGray(double elevation, double aspectDeg, double slopePerc, double cellSize) {
+        final int BACKGROUND_COLOR = 0x00FFFFFF; // transparent white
+        
+        if (slopePerc < 10e-11) {
+            return BACKGROUND_COLOR;
+        }
+        
         // convert azimuth angle to geometric angle, from east counterclockwise
         double illuminationDeg = 90 - azimuth;
         // calculate minumum angle between illumination angle and aspect
@@ -339,7 +345,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
 
         // antialiasing increases the width of the line by antiAliasingDist_m
         if (t_m > halfLineWidth_m + antiAliasingDist_m) {
-            return 0x00FFFFFF; // transparent white
+            return BACKGROUND_COLOR;
         }
         int alpha = 255 - (int) (255. * smoothstep(halfLineWidth_m, halfLineWidth_m + antiAliasingDist_m, t_m));
         if (!illuminated || angleDiffDeg >= (transitionAngle + gradientAngle)) {

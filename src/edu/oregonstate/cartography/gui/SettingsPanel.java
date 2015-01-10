@@ -56,12 +56,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         public Void doInBackground() {
             if (model.getGeneralizedGrid() != null) {
                 model.renderBackgroundImage(backgroundImage);
-
-                // directly render to backround image if foreground and background
-                // images are the same size. This avoids a copy operation to
-                // combine the two images.
-                BufferedImage img = backgroundImage != foregroundImage ? foregroundImage : backgroundImage;
-                model.renderForegroundImage(img);
+                model.renderForegroundImage(foregroundImage);
             }
             return null;
         }
@@ -87,7 +82,7 @@ public class SettingsPanel extends javax.swing.JPanel {
                     g.drawImage(backgroundImage, 0, 0, w, h, null);
 
                     // copy foreground image into the display image if required.
-                    if (backgroundImage != foregroundImage) {
+                    if (model.isRenderingForeground()) {
                         BufferedImage img = ImageUtils.getScaledInstance(foregroundImage,
                                 displayImage.getWidth(), displayImage.getHeight(),
                                 RenderingHints.VALUE_INTERPOLATION_BILINEAR, true);

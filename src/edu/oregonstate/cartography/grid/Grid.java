@@ -159,7 +159,7 @@ public final class Grid {
         if (col < 0 || col > cols - 1 || row < 0 || row > rows - 1) {
             return Float.NaN;
         }
-        
+
         // point on right border
         if (col == cols - 1) {
             // point on lower right corner
@@ -168,14 +168,14 @@ public final class Grid {
             }
             return verticalBilinearInterpol(y, row, col);
         }
-        
+
         // point on lower border
         if (row == rows - 1) {
             float leftH = grid[row][col];
             float rightH = grid[row][col + 1];
-            return (float)(dx * (rightH - leftH) + leftH);
+            return (float) (dx * (rightH - leftH) + leftH);
         }
-        
+
         final double relX = dx - col;
         final double relY = (y - south) / cellSize - rows + row + 2;
 
@@ -192,6 +192,97 @@ public final class Grid {
 
         // assume all values are valid
         return (float) (h1 + (h2 - h1) * relX + (h3 - h1) * relY + (h1 - h2 - h3 + h4) * relX * relY);
+    }
+
+    /**
+     * Interpolates a value with bicubic spline.
+     * From Grass: raster/r.resamp.interp and lib/gis/interp.c
+     * @param x Horizontal coordinate.
+     * @param y Vertical coordiante.
+     * @return Interpolated value.
+     */
+    public final double getBicubicInterpol(double x, double y) {
+
+        try {
+            final int rows = grid.length;
+            final int cols = grid[0].length;
+            final double north = south + (rows - 1) * cellSize;
+
+            // column and row of the top left corner
+            int col1 = (int) ((x - west) / cellSize);
+            int col0 = col1 - 1;
+            int col2 = col1 + 1;
+            int col3 = col1 + 2;
+            // mirror values along the edges
+            if (col1 == 0) {
+                col0 = col2;
+            } else if (col1 == cols - 1) {
+                col2 = col0;
+                col3 = col0 - 1;
+            }
+
+            int row1 = (int) ((north - y) / cellSize);
+            int row0 = row1 - 1;
+            int row2 = row1 + 1;
+            int row3 = row1 + 2;
+            // mirror values along the edges
+            if (row1 == 0) {
+                row0 = row2;
+            } else if (row1 == rows - 1) {
+                row2 = row0;
+                row3 = row0 - 1;
+            }
+
+            double u = ((x - west) - col1 * cellSize) / cellSize;
+            double v = ((north - y) - row1 * cellSize) / cellSize;
+
+            double c00 = this.getValue(col0, row0);
+            double c01 = this.getValue(col1, row0);
+            double c02 = this.getValue(col2, row0);
+            double c03 = this.getValue(col3, row0);
+
+            double c10 = this.getValue(col0, row1);
+            double c11 = this.getValue(col1, row1);
+            double c12 = this.getValue(col2, row1);
+            double c13 = this.getValue(col3, row1);
+
+            double c20 = this.getValue(col0, row2);
+            double c21 = this.getValue(col1, row2);
+            double c22 = this.getValue(col2, row2);
+            double c23 = this.getValue(col3, row2);
+
+            double c30 = this.getValue(col0, row3);
+            double c31 = this.getValue(col1, row3);
+            double c32 = this.getValue(col2, row3);
+            double c33 = this.getValue(col3, row3);
+
+            return interp_bicubic(
+                    u, v,
+                    c00, c01, c02, c03,
+                    c10, c11, c12, c13,
+                    c20, c21, c22, c23,
+                    c30, c31, c32, c33);
+        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
+            // FIXME a bug, this should not happen
+            return 0;
+        }
+    }
+
+    private double interp_cubic(double u, double c0, double c1, double c2, double c3) {
+        return (u * (u * (u * (c3 - 3 * c2 + 3 * c1 - c0) + (-c3 + 4 * c2 - 5 * c1 + 2 * c0)) + (c2 - c0)) + 2 * c1) / 2;
+    }
+
+    private double interp_bicubic(double u, double v,
+            double c00, double c01, double c02, double c03,
+            double c10, double c11, double c12, double c13,
+            double c20, double c21, double c22, double c23,
+            double c30, double c31, double c32, double c33) {
+        double c0 = interp_cubic(u, c00, c01, c02, c03);
+        double c1 = interp_cubic(u, c10, c11, c12, c13);
+        double c2 = interp_cubic(u, c20, c21, c22, c23);
+        double c3 = interp_cubic(u, c30, c31, c32, c33);
+
+        return interp_cubic(v, c0, c1, c2, c3);
     }
 
     /**
@@ -284,15 +375,15 @@ public final class Grid {
      * @return Angle in radians in counter-clockwise direction. East is 0.
      */
     public double getAspect(double x, double y, double samplingDist) {
-        final double w = getBilinearInterpol(x - samplingDist, y);
-        final double e = getBilinearInterpol(x + samplingDist, y);
-        final double s = getBilinearInterpol(x, y - samplingDist);
-        final double n = getBilinearInterpol(x, y + samplingDist);
+        final double w = getBicubicInterpol(x - samplingDist, y);
+        final double e = getBicubicInterpol(x + samplingDist, y);
+        final double s = getBicubicInterpol(x, y - samplingDist);
+        final double n = getBicubicInterpol(x, y + samplingDist);
         return Math.atan2(n - s, e - w);
     }
 
     /**
-     * Returns the slope for col/row. Unit is rise/run in [0..1], not an angle. 
+     * Returns the slope for col/row. Unit is rise/run in [0..1], not an angle.
      * To compute an angle use atan(rise/run).
      * http://help.arcgis.com/en/arcgisdesktop/10.0/help../index.html#/How_Slope_works/009z000000vz000000/
      *
@@ -318,11 +409,11 @@ public final class Grid {
     }
 
     /**
-     * Returns the slope for col/row. Unit is rise/run in [0..1], not an angle. 
+     * Returns the slope for col/row. Unit is rise/run in [0..1], not an angle.
      * To compute an angle use atan(rise/run).
      * http://help.arcgis.com/en/arcgisdesktop/10.0/help../index.html#/How_Slope_works/009z000000vz000000/
      *
-     * @param col Column index. Must be in  [0, cols-1].
+     * @param col Column index. Must be in [0, cols-1].
      * @param row Row index. Must be in [0, rows - 1].
      * @return Slope in [0..1].
      */
@@ -462,13 +553,14 @@ public final class Grid {
 
     /**
      * Returns a bounding box for this grid.
+     *
      * @return The bounding box.
      */
     public Rectangle2D getBoundingBox() {
-        return new Rectangle2D.Double(getWest(), getSouth(), 
+        return new Rectangle2D.Double(getWest(), getSouth(),
                 getEast() - getWest(), getNorth() - getSouth());
     }
-    
+
     /**
      * Returns true if the grid has non-zero dimensions and non-NaN position.
      *

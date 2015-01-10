@@ -202,7 +202,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
     private void scaledIlluminatedContours(Grid src, int col, int row,
             Grid slopeGrid, int scale) {
         final double cellSize = src.getCellSize();
-        final double samplingDist = cellSize / scale;
+        final double samplingDist = cellSize / scale / 100;
         final double west = src.getWest();
         final double north = src.getNorth();
 

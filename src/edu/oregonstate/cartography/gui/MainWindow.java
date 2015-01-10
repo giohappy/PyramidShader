@@ -564,10 +564,6 @@ public class MainWindow extends javax.swing.JFrame {
                 int w = model.getGeneralizedGrid().getCols() * scale;
                 int h = model.getGeneralizedGrid().getRows() * scale;
                 BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-                Graphics g = image.getGraphics();
-                g.setColor(model.solidColor);
-                g.fillRect(0, 0, w, h);
-                g.dispose();
                 op.renderToImage(image, model.getGeneralizedGrid(),
                         model.getGeneralizedSlopeGrid(), this);
 

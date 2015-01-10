@@ -13,8 +13,10 @@ import javax.swing.SwingWorker;
  * Group, Oregon State University
  */
 public class IlluminatedContoursOperator extends ThreadedGridOperator {
-
-    public final int CONTOURS_TRANSPARENT = -1;
+    
+    // anti-aliasing width is half a cell size
+    private final double AA_DIST_PX = 0.5;
+        
     // a SwingWorker for communicating progress and for checking cancel events
     private SwingWorker progress;
     // this image will receive the computed contour lines
@@ -66,7 +68,6 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      * @param azimuth
      * @param interval
      * @param gradientAngle
-     * @param illluminatedGray
      * @param aspectGaussBlur
      * @param transitionAngle
      * @param gridMinMax
@@ -337,8 +338,15 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         lineWidth_m = Math.max(lineWidth_m, minWidth * cellSize);
         double halfLineWidth_m = lineWidth_m / 2;
         
-        // anti-aliasing width is half a cell size
-        double antiAliasingDist_m = 0.5 * cellSize;
+        // width of anti-aliased band along the outter border of the line
+        double antiAliasingDist_m = AA_DIST_PX * cellSize;
+        // make sure anti-aliasing distance is not wider than half of the line width
+        // linearly shrink the anti-aliasing band, such that a line width of 0
+        // has a anti-alising band with a width of 0.
+        if (halfLineWidth_m < antiAliasingDist_m) {
+            antiAliasingDist_m = halfLineWidth_m;
+        }
+        
         double t_m = zDist_m / slopePerc;
 
         // antialiasing increases the width of the line by antiAliasingDist_m

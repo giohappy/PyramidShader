@@ -203,7 +203,6 @@ public final class Grid {
      * @return Interpolated value.
      */
     public final double getBicubicInterpol(double x, double y) {
-
         final int rows = grid.length;
         final int cols = grid[0].length;
         final double north = south + (rows - 1) * cellSize;
@@ -234,15 +233,15 @@ public final class Grid {
         final double u = (x - west) / cellSize - col1;
         final double v = (north - y) / cellSize - row1;
 
-        final float[] c0 = grid[col0];
-        final float[] c1 = grid[col1];
-        final float[] c2 = grid[col2];
-        final float[] c3 = grid[col3];
-        
-        final double v0 = interp_cubic(u, c0[row0], c1[row0], c2[row0], c3[row0]);
-        final double v1 = interp_cubic(u, c0[row1], c1[row1], c2[row1], c3[row1]);
-        final double v2 = interp_cubic(u, c0[row2], c1[row2], c2[row2], c3[row2]);
-        final double v3 = interp_cubic(u, c0[row3], c1[row3], c2[row3], c3[row3]);
+        final float[] r0 = grid[row0];
+        final float[] r1 = grid[row1];
+        final float[] r2 = grid[row2];
+        final float[] r3 = grid[row3];
+        final double v0 = interp_cubic(u, r0[col0], r0[col1], r0[col2], r0[col3]);
+        final double v1 = interp_cubic(u, r1[col0], r1[col1], r1[col2], r1[col3]);
+        final double v2 = interp_cubic(u, r2[col0], r2[col1], r2[col2], r2[col3]);
+        final double v3 = interp_cubic(u, r3[col0], r3[col1], r3[col2], r3[col3]);
+
         return interp_cubic(v, v0, v1, v2, v3);
     }
 

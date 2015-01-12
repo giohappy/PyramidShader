@@ -195,94 +195,59 @@ public final class Grid {
     }
 
     /**
-     * Interpolates a value with bicubic spline.
-     * From Grass: raster/r.resamp.interp and lib/gis/interp.c
+     * Interpolates a value with bicubic spline. From Grass:
+     * raster/r.resamp.interp and lib/gis/interp.c
+     *
      * @param x Horizontal coordinate.
      * @param y Vertical coordiante.
      * @return Interpolated value.
      */
     public final double getBicubicInterpol(double x, double y) {
 
-        try {
-            final int rows = grid.length;
-            final int cols = grid[0].length;
-            final double north = south + (rows - 1) * cellSize;
+        final int rows = grid.length;
+        final int cols = grid[0].length;
+        final double north = south + (rows - 1) * cellSize;
 
-            // column and row of the top left corner
-            int col1 = (int) ((x - west) / cellSize);
-            int col0 = col1 - 1;
-            int col2 = col1 + 1;
-            int col3 = col1 + 2;
-            // mirror values along the edges
-            if (col1 == 0) {
-                col0 = col2;
-            } else if (col1 == cols - 1) {
-                col2 = col0;
-                col3 = col0 - 1;
-            }
-
-            int row1 = (int) ((north - y) / cellSize);
-            int row0 = row1 - 1;
-            int row2 = row1 + 1;
-            int row3 = row1 + 2;
-            // mirror values along the edges
-            if (row1 == 0) {
-                row0 = row2;
-            } else if (row1 == rows - 1) {
-                row2 = row0;
-                row3 = row0 - 1;
-            }
-
-            double u = ((x - west) - col1 * cellSize) / cellSize;
-            double v = ((north - y) - row1 * cellSize) / cellSize;
-
-            double c00 = this.getValue(col0, row0);
-            double c01 = this.getValue(col1, row0);
-            double c02 = this.getValue(col2, row0);
-            double c03 = this.getValue(col3, row0);
-
-            double c10 = this.getValue(col0, row1);
-            double c11 = this.getValue(col1, row1);
-            double c12 = this.getValue(col2, row1);
-            double c13 = this.getValue(col3, row1);
-
-            double c20 = this.getValue(col0, row2);
-            double c21 = this.getValue(col1, row2);
-            double c22 = this.getValue(col2, row2);
-            double c23 = this.getValue(col3, row2);
-
-            double c30 = this.getValue(col0, row3);
-            double c31 = this.getValue(col1, row3);
-            double c32 = this.getValue(col2, row3);
-            double c33 = this.getValue(col3, row3);
-
-            return interp_bicubic(
-                    u, v,
-                    c00, c01, c02, c03,
-                    c10, c11, c12, c13,
-                    c20, c21, c22, c23,
-                    c30, c31, c32, c33);
-        } catch (java.lang.ArrayIndexOutOfBoundsException e) {
-            // FIXME a bug, this should not happen
-            return 0;
+        // column and row of the top left corner
+        int col1 = (int) ((x - west) / cellSize);
+        int col0 = col1 - 1;
+        int col2 = col1 + 1;
+        int col3 = col1 + 2;
+        // mirror values along the edges
+        if (col1 == 0) {
+            col0 = col2;
+        } else if (col2 == cols - 1) {
+            col3 = col1;
         }
+
+        int row1 = (int) ((north - y) / cellSize);
+        int row0 = row1 - 1;
+        int row2 = row1 + 1;
+        int row3 = row1 + 2;
+        // mirror values along the edges
+        if (row1 == 0) {
+            row0 = row2;
+        } else if (row2 == rows - 1) {
+            row3 = row1;
+        }
+
+        final double u = (x - west) / cellSize - col1;
+        final double v = (north - y) / cellSize - row1;
+
+        final float[] c0 = grid[col0];
+        final float[] c1 = grid[col1];
+        final float[] c2 = grid[col2];
+        final float[] c3 = grid[col3];
+        
+        final double v0 = interp_cubic(u, c0[row0], c1[row0], c2[row0], c3[row0]);
+        final double v1 = interp_cubic(u, c0[row1], c1[row1], c2[row1], c3[row1]);
+        final double v2 = interp_cubic(u, c0[row2], c1[row2], c2[row2], c3[row2]);
+        final double v3 = interp_cubic(u, c0[row3], c1[row3], c2[row3], c3[row3]);
+        return interp_cubic(v, v0, v1, v2, v3);
     }
 
-    private double interp_cubic(double u, double c0, double c1, double c2, double c3) {
+    private static double interp_cubic(double u, double c0, double c1, double c2, double c3) {
         return (u * (u * (u * (c3 - 3 * c2 + 3 * c1 - c0) + (-c3 + 4 * c2 - 5 * c1 + 2 * c0)) + (c2 - c0)) + 2 * c1) / 2;
-    }
-
-    private double interp_bicubic(double u, double v,
-            double c00, double c01, double c02, double c03,
-            double c10, double c11, double c12, double c13,
-            double c20, double c21, double c22, double c23,
-            double c30, double c31, double c32, double c33) {
-        double c0 = interp_cubic(u, c00, c01, c02, c03);
-        double c1 = interp_cubic(u, c10, c11, c12, c13);
-        double c2 = interp_cubic(u, c20, c21, c22, c23);
-        double c3 = interp_cubic(u, c30, c31, c32, c33);
-
-        return interp_cubic(v, c0, c1, c2, c3);
     }
 
     /**
@@ -445,7 +410,10 @@ public final class Grid {
     @Override
     public String toString() {
         float[] minMax = getMinMax();
-        return "Grid: rows:" + getRows() + " cols:" + getCols() + " range:" + minMax[0] + " to " + minMax[1];
+        return "Grid: rows: " + getRows() + ", cols: " + getCols()
+                + ", west: " + getWest() + ", east: " + getEast()
+                + ", south: " + getSouth() + ", north: " + getNorth()
+                + ", range: " + minMax[0] + " to " + minMax[1];
     }
 
     /**

@@ -51,10 +51,6 @@ public class MainWindow extends javax.swing.JFrame {
     private static final String OPEN_ERROR_MESSAGE = "Could not open the terrain file.";
     private static final String SAVE_IMAGE_ERROR_MESSAGE = "Could not save the image file.";
     private static final String SAVE_TERRAIN_ERROR_MESSAGE = "Could not save the terrain file.";
-    private static final String GEOGRAPHIC_CS_WARNING = "<html>"
-            + "The grid seems to use a geographic coordinate system.<br>"
-            + "Computed shadings and contours will not be correct. <br>"
-            + "Please first project the grid to a Cartesian coordinate system.</html>";
 
     private final Model model;
     private SettingsDialog settingsDialog = null;
@@ -199,7 +195,7 @@ public class MainWindow extends javax.swing.JFrame {
         });
 
         openMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-        openMenuItem.setText("Open Terrain Model…");
+        openMenuItem.setText("Open Grid…");
         openMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 openMenuItemActionPerformed(evt);
@@ -211,7 +207,7 @@ public class MainWindow extends javax.swing.JFrame {
         fileMenu.add(openRecentMenu);
         fileMenu.add(jSeparator1);
 
-        saveTerrainMenuItem.setText("Save Generalized Terrain Model…");
+        saveTerrainMenuItem.setText("Save Generalized Grid…");
         saveTerrainMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveTerrainMenuItemActionPerformed(evt);
@@ -219,7 +215,7 @@ public class MainWindow extends javax.swing.JFrame {
         });
         fileMenu.add(saveTerrainMenuItem);
 
-        saveLocalTerrainMenuItem.setText("Save Locally Filtered Terrain Model…");
+        saveLocalTerrainMenuItem.setText("Save Locally Filtered Grid…");
         saveLocalTerrainMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveLocalTerrainMenuItemActionPerformed(evt);
@@ -290,7 +286,7 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
 
-        scaleTerrainModelMenuItem.setText("Scale Terrain Model");
+        scaleTerrainModelMenuItem.setText("Scale Grid Values");
         scaleTerrainModelMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 scaleTerrainModelMenuItemActionPerformed(evt);
@@ -298,7 +294,7 @@ public class MainWindow extends javax.swing.JFrame {
         });
         editMenu.add(scaleTerrainModelMenuItem);
 
-        offsetTerrainModelMenuItem.setText("Vertically Offset Terrain Model");
+        offsetTerrainModelMenuItem.setText("Offset Grid Values");
         offsetTerrainModelMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 offsetTerrainModelMenuItemActionPerformed(evt);
@@ -369,7 +365,7 @@ public class MainWindow extends javax.swing.JFrame {
         infoMenu.add(settingsMenuItem);
         infoMenu.add(jSeparator3);
 
-        terrainInfoMenuItem.setText("Terrain Model Info");
+        terrainInfoMenuItem.setText("Grid Info");
         terrainInfoMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 terrainInfoMenuItemActionPerformed(evt);
@@ -824,9 +820,10 @@ public class MainWindow extends javax.swing.JFrame {
     }
 
     /**
-     * Open a grid file and initialized data model.
+     * Open a grid file and initialize the data model.
+     *
      * @param filePath The file to open
-     * @throws IOException 
+     * @throws IOException
      */
     private void openGrid(final String filePath) throws IOException {
         SwingWorkerWithProgressIndicator worker;
@@ -845,10 +842,10 @@ public class MainWindow extends javax.swing.JFrame {
                     // if rendering throws an error, the progress dialog should 
                     // have been closed
                     completeProgress();
-                    
+
                     // set window title to file name
                     setTitle(filePath.substring(filePath.lastIndexOf(File.separator) + 1));
-                    
+
                     // add document to Open Recent menu
                     rdm.addDocument(new File(filePath), null);
                 } catch (InterruptedException | CancellationException e) {
@@ -858,8 +855,8 @@ public class MainWindow extends javax.swing.JFrame {
                     // an exception was thrown in doInBackground
                     String msg = "<html>An error occured when importing the terrain model."
                             + "<br>The file must be in Esri ASCII Grid format.</html>";
-                    ErrorDialog.showErrorDialog(msg, "Error", e, getContentPane());
-                    e.printStackTrace();
+                    ErrorDialog.showErrorDialog(msg, "Error", null, getContentPane());
+                    return;
                 } finally {
                     // hide the progress dialog
                     completeProgress();
@@ -887,6 +884,21 @@ public class MainWindow extends javax.swing.JFrame {
 
                     // this will render the image
                     settingsDialog.modelChanged();
+
+                    // display warning when value range in grid is so low that
+                    // shading does not show any variation
+                    float[] minMax = model.getGrid().getMinMax();
+                    float range = minMax[1] - minMax[0];
+                    if (range < model.getGrid().getCellSize() * 2) {
+                        String msg = "<html>"
+                                + "This grid is rather flat and the shading may "
+                                + "not show any variation."
+                                + "<br>Use <i>Edit > " + scaleTerrainModelMenuItem.getText() 
+                                + "</i> to vertically exaggerate the grid."
+                                + "</html>";
+                        JOptionPane.showMessageDialog(getContentPane(), msg,
+                                "Pyramid Shader", JOptionPane.WARNING_MESSAGE);
+                    }
                 } catch (Throwable e) {
                     BufferedImage img = navigableImagePanel.getImage();
                     if (img != null) {

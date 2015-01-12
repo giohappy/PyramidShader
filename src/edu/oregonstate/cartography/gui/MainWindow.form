@@ -167,7 +167,7 @@
                 <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                   <Connection code="javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())" type="code"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Open Terrain Model&#x2026;"/>
+                <Property name="text" type="java.lang.String" value="Open Grid&#x2026;"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openMenuItemActionPerformed"/>
@@ -193,7 +193,7 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="saveTerrainMenuItem">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Save Generalized Terrain Model&#x2026;"/>
+                <Property name="text" type="java.lang.String" value="Save Generalized Grid&#x2026;"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveTerrainMenuItemActionPerformed"/>
@@ -201,7 +201,7 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="saveLocalTerrainMenuItem">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Save Locally Filtered Terrain Model&#x2026;"/>
+                <Property name="text" type="java.lang.String" value="Save Locally Filtered Grid&#x2026;"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveLocalTerrainMenuItemActionPerformed"/>
@@ -293,7 +293,7 @@
           <SubComponents>
             <MenuItem class="javax.swing.JMenuItem" name="scaleTerrainModelMenuItem">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Scale Terrain Model"/>
+                <Property name="text" type="java.lang.String" value="Scale Grid Values"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="scaleTerrainModelMenuItemActionPerformed"/>
@@ -301,7 +301,7 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="offsetTerrainModelMenuItem">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Vertically Offset Terrain Model"/>
+                <Property name="text" type="java.lang.String" value="Offset Grid Values"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="offsetTerrainModelMenuItemActionPerformed"/>
@@ -386,7 +386,7 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="terrainInfoMenuItem">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Terrain Model Info"/>
+                <Property name="text" type="java.lang.String" value="Grid Info"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="terrainInfoMenuItemActionPerformed"/>

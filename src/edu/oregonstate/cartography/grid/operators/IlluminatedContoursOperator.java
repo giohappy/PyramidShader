@@ -13,16 +13,20 @@ import javax.swing.SwingWorker;
  * Group, Oregon State University
  */
 public class IlluminatedContoursOperator extends ThreadedGridOperator {
-    
+
     // anti-aliasing width is half a cell size
     private final double AA_DIST_PX = 0.5;
-        
+
     // a SwingWorker for communicating progress and for checking cancel events
     private SwingWorker progress;
     // this image will receive the computed contour lines
     private BufferedImage image;
     // illuminated and shaded or only shaded contours
     private final boolean illuminated;
+    // color of illuminated contour lines
+    private final int illuminatedColor;
+    // color of shadowed contour lines
+    private final int shadowedColor;
     // width of lowest shaded lines
     private final double shadowWidthLow;
     // width of highestshaded lines
@@ -59,6 +63,8 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
     /**
      *
      * @param illuminated
+     * @param illuminatedColor
+     * @param shadowedColor
      * @param shadowWidthLow
      * @param shadowWidthHigh
      * @param illuminatedWidthLow
@@ -73,6 +79,8 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      * @param gridMinMax
      */
     public IlluminatedContoursOperator(boolean illuminated,
+            int illuminatedColor,
+            int shadowedColor,
             double shadowWidthLow,
             double shadowWidthHigh,
             double illuminatedWidthLow,
@@ -86,6 +94,10 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
             int transitionAngle,
             float[] gridMinMax) {
         this.illuminated = illuminated;
+        // set first byte to 0 for later bitwise or operation with alpha value
+        this.illuminatedColor = (illuminatedColor << 8) >>> 8;
+        // set first byte to 0 for later bitwise or operation with alpha value
+        this.shadowedColor = (shadowedColor << 8) >>> 8;
         this.shadowWidthLow = shadowWidthLow;
         this.shadowWidthHigh = shadowWidthHigh;
         this.illuminatedWidthLow = illuminatedWidthLow;
@@ -183,7 +195,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         smoothAspect = (smoothAspect + Math.PI) * 180 / Math.PI;
         double slope = src.getSlope(col, row);
         int g = computeGray(elevation, smoothAspect, slope, src.getCellSize());
-        if ((g >> 24) != 0) {
+        if ((g >>> 24) != 0) {
             //int argb = (int) g | ((int) g << 8) | ((int) g << 16) | 0xFF000000;
             imageBuffer[row * image.getWidth() + col] = g;
         }
@@ -217,7 +229,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
                 smoothAspect = (smoothAspect + Math.PI) * 180 / Math.PI;
                 double slopeVal = slopeGrid.getBilinearInterpol(x, y);
                 int g = computeGray(elevation, smoothAspect, slopeVal, cellSize);
-                if ((g >> 24) != 0) {
+                if ((g >>> 24) != 0) {
                     int imageCol = col * scale + c;
                     int imageRow = row * scale + r;
                     imageBuffer[imageRow * image.getWidth() + imageCol] = g;
@@ -273,11 +285,11 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      */
     private int computeGray(double elevation, double aspectDeg, double slopePerc, double cellSize) {
         final int BACKGROUND_COLOR = 0x00FFFFFF; // transparent white
-        
+
         if (slopePerc < 10e-11) {
             return BACKGROUND_COLOR;
         }
-        
+
         // convert azimuth angle to geometric angle, from east counterclockwise
         double illuminationDeg = 90 - azimuth;
         // calculate minumum angle between illumination angle and aspect
@@ -299,7 +311,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
 
             if (angleDiffDeg > transitionAngle) {
                 //scale angleDiff to range between transitionAngle and 180 degrees
-                angleDiffRad = (((angleDiffRad-transitionAngleRad)/(Math.PI - transitionAngleRad))*(Math.PI/2))+(Math.PI/2);
+                angleDiffRad = (((angleDiffRad - transitionAngleRad) / (Math.PI - transitionAngleRad)) * (Math.PI / 2)) + (Math.PI / 2);
                 //modulate with cosine
                 lineWidthPx = shadowWidthPx * Math.abs(Math.cos(angleDiffRad));
             } else {
@@ -327,17 +339,17 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         // The line is shrunk by half of the minimum line distance if it is too 
         // close to a neighbor. (The neighbor is shrunkg by the other half.)
         double maxLineWidth_m = interval / slopePerc - minLineDist * cellSize / 2;
-        
+
         // make very thick lines thinner to avoid overlapping lines.
         // convert line width from pixels to units of z values (e.g. meters)
         double lineWidth_m = Math.min(maxLineWidth_m, lineWidthPx * cellSize);
-        
+
         // make very thin lines thicker. The minimum line width parameter can override 
         // the minimum distance parameter. This is to make sure lines don't get
         // very thin in steep shadowed slopes.
         lineWidth_m = Math.max(lineWidth_m, minWidth * cellSize);
         double halfLineWidth_m = lineWidth_m / 2;
-        
+
         // width of anti-aliased band along the outter border of the line
         double antiAliasingDist_m = AA_DIST_PX * cellSize;
         // make sure anti-aliasing distance is not wider than half of the line width
@@ -346,26 +358,53 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         if (halfLineWidth_m < antiAliasingDist_m) {
             antiAliasingDist_m = halfLineWidth_m;
         }
-        
+
         double t_m = zDist_m / slopePerc;
 
         // antialiasing increases the width of the line by antiAliasingDist_m
         if (t_m > halfLineWidth_m + antiAliasingDist_m) {
             return BACKGROUND_COLOR;
         }
-        int alpha = 255 - (int) (255. * smoothstep(halfLineWidth_m, halfLineWidth_m + antiAliasingDist_m, t_m));
+
+        int alpha = 255 - (int) (255. * smoothstep(halfLineWidth_m,
+                halfLineWidth_m + antiAliasingDist_m, t_m));
         if (!illuminated || angleDiffDeg >= (transitionAngle + gradientAngle)) {
-            // shaded side: return black with alpha value
-            return alpha << 24; // RGB bytes are 0 for black: 0xXY000000;
+            // shadowed side: return the color for shaded slopes with alpha value
+            return shadowedColor | (alpha << 24);
         } else if (angleDiffDeg <= (transitionAngle - gradientAngle)) {
-            // illuminated side: return white with alpha value
-            return illuminated ? 0x00FFFFFF | (alpha << 24) : alpha << 24;
+            // illuminated side: return color for illuminated slopes with alpha value
+            return (illuminated ? illuminatedColor : shadowedColor) | (alpha << 24);
         } else {
             // gradient between shaded and illuminated side: blend between
-            // black and white and add alpha value
+            // the color for illuminated slopes and the color for shaded slopes
+            // and add the alpha value
             double d = transitionAngle + gradientAngle - angleDiffDeg;
-            int g = (int) (d / (2. * gradientAngle) * 255.);
-            return g | (g << 8) | (g << 16) | (alpha << 24);
+            double colorW = d / (2. * gradientAngle);
+            return mixColors(shadowedColor, illuminatedColor, alpha, (int) (colorW * 255d));
         }
+    }
+
+    /**
+     * Mix two transparent RGB colors and assign an alpha value.
+     * @param c1 Color 1. Alpha byte must be 0.
+     * @param c2 Color 2. Alpha byte must be 0.
+     * @param a Alpha value in 0..255
+     * @param w Weight of the first color in 0..255
+     * @return ARGB
+     */
+    private static int mixColors(int c1, int c2, int a, int w) {
+        int r1 = (c1 >>> 16) & 0x000000FF;
+        int g1 = (c1 >>> 8) & 0x000000FF;
+        int b1 = c1 & 0x000000FF;
+        
+        int r2 = (c2 >>> 16) & 0x000000FF;
+        int g2 = (c2 >>> 8) & 0x000000FF;
+        int b2 = c2 & 0x000000FF;
+
+        int r = w * (r2 - r1) / 255 + r1;
+        int g = w * (g2 - g1) / 255 + g1;
+        int b = w * (b2 - b1) / 255 + b1;
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 }

@@ -271,6 +271,10 @@ public class SettingsPanel extends javax.swing.JPanel {
         contoursShadowLineWidthLowValueField = new javax.swing.JFormattedTextField();
         contoursIlluminatedLineWidthHighValueField = new javax.swing.JFormattedTextField();
         contoursIlluminatedLineWidthLowValueField = new javax.swing.JFormattedTextField();
+        contoursIlluminatedColorButton = new edu.oregonstate.cartography.gui.ColorButton();
+        contoursShadowedColorButton = new edu.oregonstate.cartography.gui.ColorButton();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
 
         colorPopupMenu.setLightWeightPopupEnabled(false);
 
@@ -1129,9 +1133,8 @@ public class SettingsPanel extends javax.swing.JPanel {
         contoursExportInfoLabel.setText("Use File > Save Contour Image for high resolution contour image.");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 18;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = 21;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
         contoursSettingsPanel.add(contoursExportInfoLabel, gridBagConstraints);
 
@@ -1143,7 +1146,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 17;
+        gridBagConstraints.gridy = 20;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         contoursSettingsPanel.add(contoursBlankBackgroundButton, gridBagConstraints);
@@ -1234,6 +1237,44 @@ public class SettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 3, 0, 0);
         contoursSettingsPanel.add(contoursIlluminatedLineWidthLowValueField, gridBagConstraints);
 
+        contoursIlluminatedColorButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                contoursIlluminatedColorButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 18;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        contoursSettingsPanel.add(contoursIlluminatedColorButton, gridBagConstraints);
+
+        contoursShadowedColorButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                contoursShadowedColorButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 17;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        contoursSettingsPanel.add(contoursShadowedColorButton, gridBagConstraints);
+
+        jLabel5.setText("Illuminated Line Color");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 18;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 7, 0, 0);
+        contoursSettingsPanel.add(jLabel5, gridBagConstraints);
+
+        jLabel6.setText("Shadowed Line Color");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 17;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 7, 0, 0);
+        contoursSettingsPanel.add(jLabel6, gridBagConstraints);
+
         contoursCardPanel.add(contoursSettingsPanel, "contoursSettingsCard");
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1290,6 +1331,9 @@ public class SettingsPanel extends javax.swing.JPanel {
             });
             colorPopupMenu.add(colorMenuItem);
         }
+        
+        contoursIlluminatedColorButton.setColor(new Color(m.contoursIlluminatedColor));
+        contoursShadowedColorButton.setColor(new Color(m.contoursShadowedColor));
 
         updateVisualizationPanelsVisibility();
         updateImage(REGULAR);
@@ -1490,6 +1534,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         contoursIlluminatedLowestLineWidthSlider.setEnabled(illuminated);
         contoursTransitionSlider.setEnabled(illuminated);
         contoursGradientSlider.setEnabled(illuminated);
+        contoursIlluminatedColorButton.setEnabled(illuminated);
     }
 
     private void contoursComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_contoursComboBoxItemStateChanged
@@ -1696,6 +1741,18 @@ public class SettingsPanel extends javax.swing.JPanel {
         updateImage(contoursIlluminatedLowestLineWidthSlider.getValueIsAdjusting() ? FAST : REGULAR);
     }//GEN-LAST:event_contoursIlluminatedLineWidthLowValueFieldPropertyChange
 
+    private void contoursIlluminatedColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_contoursIlluminatedColorButtonActionPerformed
+        Color color = contoursIlluminatedColorButton.getColor();
+        model.contoursIlluminatedColor = color.getRGB();
+        updateImage(REGULAR);
+    }//GEN-LAST:event_contoursIlluminatedColorButtonActionPerformed
+
+    private void contoursShadowedColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_contoursShadowedColorButtonActionPerformed
+        Color color = contoursShadowedColorButton.getColor();
+        model.contoursShadowedColor = color.getRGB();
+        updateImage(REGULAR);
+    }//GEN-LAST:event_contoursShadowedColorButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSlider azimuthSlider;
     private javax.swing.JPanel colorGradientPanel;
@@ -1708,6 +1765,7 @@ public class SettingsPanel extends javax.swing.JPanel {
     private javax.swing.JSlider contoursDespeckleSlider;
     private javax.swing.JPanel contoursEmptyPanel;
     private javax.swing.JSlider contoursGradientSlider;
+    private edu.oregonstate.cartography.gui.ColorButton contoursIlluminatedColorButton;
     private javax.swing.JSlider contoursIlluminatedHighestLineWidthSlider;
     private javax.swing.JFormattedTextField contoursIlluminatedLineWidthHighValueField;
     private javax.swing.JFormattedTextField contoursIlluminatedLineWidthLowValueField;
@@ -1725,6 +1783,7 @@ public class SettingsPanel extends javax.swing.JPanel {
     private javax.swing.JFormattedTextField contoursShadowLineWidthHighValueField;
     private javax.swing.JFormattedTextField contoursShadowLineWidthLowValueField;
     private javax.swing.JSlider contoursShadowLowestLineWidthSlider;
+    private edu.oregonstate.cartography.gui.ColorButton contoursShadowedColorButton;
     private javax.swing.JToggleButton contoursShadowedLockedToggleButton;
     private javax.swing.JSlider contoursTransitionSlider;
     private javax.swing.JLabel generalizationDetaiIsLabel;
@@ -1735,6 +1794,8 @@ public class SettingsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel illuminatedContoursPanel;
     private javax.swing.JPanel illuminationPanel;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JSlider localGridLowPassSlider;
     private javax.swing.JSlider localGridStandardDeviationFilterSizeSlider;
     private javax.swing.JPanel localHypsoPanel;

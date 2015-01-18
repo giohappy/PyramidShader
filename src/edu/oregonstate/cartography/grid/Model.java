@@ -134,6 +134,16 @@ public class Model implements Cloneable {
     public Color solidColor = Color.LIGHT_GRAY;
 
     /**
+     * color for illuminated contour lines. Default is white
+     */
+    public int contoursIlluminatedColor = 0x00FFFFFF;
+    
+    /**
+     * color for shaded contour lines. Default is black.
+     */
+    public int contoursShadowedColor = 0x00000000;
+    
+    /**
      * contour interval
      */
     public double contoursInterval = 200;
@@ -491,6 +501,8 @@ public class Model implements Cloneable {
             boolean illuminated) {
         return new IlluminatedContoursOperator(
                 illuminated,
+                contoursIlluminatedColor,
+                contoursShadowedColor,
                 contoursShadowWidthLow,
                 contoursShadowWidthHigh,
                 contoursIlluminatedWidthLow,

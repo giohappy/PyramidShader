@@ -1436,33 +1436,39 @@ public class SettingsPanel extends javax.swing.JPanel {
     }
 
     private void contoursMinLineWidthSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_contoursMinLineWidthSliderStateChanged
-        model.contoursMinWidth = contoursMinLineWidthSlider.getValue() / 10.;
-
-        // remove event listener to avoid triggering a rendering event
-        int minWidth = contoursMinLineWidthSlider.getValue();
-        int w = Math.max(contoursIlluminatedHighestLineWidthSlider.getValue(), minWidth);
-        setSliderValueWithoutTriggeringEvent(contoursIlluminatedHighestLineWidthSlider, w);
-        w = Math.max(contoursIlluminatedLowestLineWidthSlider.getValue(), minWidth);
-        setSliderValueWithoutTriggeringEvent(contoursIlluminatedLowestLineWidthSlider, w);
-        w = Math.max(contoursShadowHighestLineWidthSlider.getValue(), minWidth);
-        setSliderValueWithoutTriggeringEvent(contoursShadowHighestLineWidthSlider, w);
-        w = Math.max(contoursShadowLowestLineWidthSlider.getValue(), minWidth);
-        setSliderValueWithoutTriggeringEvent(contoursShadowLowestLineWidthSlider, w);
-
-        // update model
-        model.contoursIlluminatedWidthLow = contoursIlluminatedLowestLineWidthSlider.getValue() / 10d;
-        model.contoursIlluminatedWidthHigh = contoursIlluminatedHighestLineWidthSlider.getValue() / 10d;
-        model.contoursShadowWidthLow = contoursShadowLowestLineWidthSlider.getValue() / 10d;
-        model.contoursShadowWidthHigh = contoursShadowHighestLineWidthSlider.getValue() / 10d;
-
-        // update map
-        updateImage(contoursMinLineWidthSlider.getValueIsAdjusting() ? FAST : REGULAR);
+        double v; 
+        int sliderVal;
         
+        model.contoursMinWidth = contoursMinLineWidthSlider.getValue() / 10.;
+        
+        v = ((Number) contoursShadowLineWidthHighValueField.getValue()).doubleValue();
+        model.contoursShadowWidthHigh = Math.max(v, model.contoursMinWidth);
+        sliderVal = (int)Math.round(model.contoursShadowWidthHigh * 10);
+        setSliderValueWithoutTriggeringEvent(contoursShadowHighestLineWidthSlider, sliderVal);
+        
+        v = ((Number) contoursShadowLineWidthLowValueField.getValue()).doubleValue();
+        model.contoursShadowWidthLow = Math.max(v, model.contoursMinWidth);
+        sliderVal = (int)Math.round(model.contoursShadowWidthLow * 10);
+        setSliderValueWithoutTriggeringEvent(contoursShadowLowestLineWidthSlider, sliderVal);
+        
+        v = ((Number) contoursIlluminatedLineWidthHighValueField.getValue()).doubleValue();
+        model.contoursIlluminatedWidthHigh = Math.max(v, model.contoursMinWidth);
+        sliderVal = (int)Math.round(model.contoursIlluminatedWidthHigh * 10);
+        setSliderValueWithoutTriggeringEvent(contoursIlluminatedHighestLineWidthSlider, sliderVal);
+        
+        v = ((Number) contoursIlluminatedLineWidthLowValueField.getValue()).doubleValue();
+        model.contoursIlluminatedWidthLow = Math.max(v, model.contoursMinWidth);
+        sliderVal = (int)Math.round(model.contoursIlluminatedWidthLow * 10);
+        setSliderValueWithoutTriggeringEvent(contoursIlluminatedLowestLineWidthSlider, sliderVal);
+       
         // update text fields
         setFieldValueWithoutTriggeringEvent(contoursShadowLineWidthHighValueField, model.contoursShadowWidthHigh);
         setFieldValueWithoutTriggeringEvent(contoursShadowLineWidthLowValueField, model.contoursShadowWidthLow);
         setFieldValueWithoutTriggeringEvent(contoursIlluminatedLineWidthHighValueField, model.contoursIlluminatedWidthHigh);
         setFieldValueWithoutTriggeringEvent(contoursIlluminatedLineWidthLowValueField, model.contoursIlluminatedWidthLow);
+        
+        // update map
+        updateImage(contoursMinLineWidthSlider.getValueIsAdjusting() ? FAST : REGULAR);
         
         DecimalFormat df = new DecimalFormat("0.0");
         String t = df.format(model.contoursMinWidth);

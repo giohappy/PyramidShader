@@ -286,7 +286,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
     private int computeGray(double elevation, double aspectDeg, double slopePerc, double cellSize) {
         final int BACKGROUND_COLOR = 0x00FFFFFF; // transparent white
 
-        if (slopePerc < 10e-11) {
+        if (Double.isNaN(elevation) || Double.isNaN(aspectDeg) || slopePerc < 10e-11) {
             return BACKGROUND_COLOR;
         }
 
@@ -365,11 +365,11 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         if (t_m > halfLineWidth_m + antiAliasingDist_m) {
             return BACKGROUND_COLOR;
         }
-
         int alpha = 255 - (int) (255. * smoothstep(halfLineWidth_m,
                 halfLineWidth_m + antiAliasingDist_m, t_m));
+        
         if (!illuminated || angleDiffDeg >= (transitionAngle + gradientAngle)) {
-            // shadowed side: return the color for shaded slopes with alpha value
+            // shadowed side: return the color for shadowed slopes with alpha value
             return shadowedColor | (alpha << 24);
         } else if (angleDiffDeg <= (transitionAngle - gradientAngle)) {
             // illuminated side: return color for illuminated slopes with alpha value

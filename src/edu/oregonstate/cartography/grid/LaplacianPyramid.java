@@ -368,7 +368,7 @@ public class LaplacianPyramid {
         if (levelWeights != null && levelWeights.length != levels.length) {
             throw new IllegalArgumentException("incorrect number of pyramid weights");
         }
-
+        
         // copy the smallest grid of the pyramid
         Grid sum = new Grid(levels[levels.length - 1]);
 

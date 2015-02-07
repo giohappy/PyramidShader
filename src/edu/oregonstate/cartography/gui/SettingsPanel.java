@@ -1596,7 +1596,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
     private void contoursBlankBackgroundButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_contoursBlankBackgroundButtonActionPerformed
         model.backgroundVisualization = ColorVisualization.CONTINUOUS;
-        updateVisualizationPanelsVisibility();
+        visualizationComboBox.setSelectedIndex(ColorVisualization.CONTINUOUS.ordinal());
         updateImage(REGULAR);
     }//GEN-LAST:event_contoursBlankBackgroundButtonActionPerformed
 

@@ -5,6 +5,7 @@ import edu.oregonstate.cartography.grid.operators.ColorizerOperator;
 import edu.oregonstate.cartography.grid.operators.ColorizerOperator.ColorVisualization;
 import edu.oregonstate.cartography.grid.operators.GridAddOperator;
 import edu.oregonstate.cartography.grid.operators.GridCopyOperator;
+import edu.oregonstate.cartography.grid.operators.GridMaskOperator;
 import edu.oregonstate.cartography.grid.operators.GridScaleOperator;
 import edu.oregonstate.cartography.grid.operators.GridScaleToRangeOperator;
 import edu.oregonstate.cartography.grid.operators.GridSlopeOperator;
@@ -334,6 +335,9 @@ public class Model implements Cloneable {
             // sum the Laplacian pyramids
             generalizedGrid = laplacianPyramid.sumLevels(w, true);
 
+            // copy NaN values from original grid
+            new GridMaskOperator().operate(grid, generalizedGrid);
+            
             // scale the minimum and maximum values of the output generalized grid to 
             // the same range as the input grid.
             new GridScaleToRangeOperator(gridMinMax).operate(generalizedGrid, generalizedGrid);

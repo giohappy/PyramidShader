@@ -6,42 +6,40 @@ package edu.oregonstate.cartography.grid.operators;
 
 import edu.oregonstate.cartography.grid.Grid;
 
-
-
 /**
- * Gaussian blur or low pass filter.
- * Uses the fact that a 2D Gaussian convolution can be replaced by a horizontal
- * and a vertical 1D convolution. A horizontal 1D convolution is applied, then
- * the grid is transposed, the horizontal 1D convolution applied again, and the
- * grid transposed again. This is much faster than a combination of a horizontal
- * and a vertical convolution, due to the fact that horizontal rows are stored
- * in contiguous locations. The horizontal 1D convolution and the transposition
- * operators are merged into one multi-threaded operator.
- * See http://en.wikipedia.org/wiki/Gaussian_blur
+ * Gaussian blur or low pass filter. Uses the fact that a 2D Gaussian
+ * convolution can be replaced by a horizontal and a vertical 1D convolution. A
+ * horizontal 1D convolution is applied, then the grid is transposed, the
+ * horizontal 1D convolution applied again, and the grid transposed again. This
+ * is much faster than a combination of a horizontal and a vertical convolution,
+ * due to the fact that horizontal rows are stored in contiguous locations. The
+ * horizontal 1D convolution and the transposition operators are merged into one
+ * multi-threaded operator. See http://en.wikipedia.org/wiki/Gaussian_blur
  * August 26, 2010, and April 14, 2011.
  *
  * @author Bernhard Jenny, Institute of Cartography, ETH Zurich.
  */
-public class GridGaussLowPassOperator implements GridOperator{
+public class GridGaussLowPassOperator implements GridOperator {
 
     /**
      * Standard deviation of the Gaussian distribution. Higher values produce
      * stronger smoothing.
      */
     private double std = 0.8;
-    
+
     /**
      * A grid that is used during the filtering process. It is cached between
-     * calls to operate(), as the allocation of this grid is relatively expensive.
+     * calls to operate(), as the allocation of this grid is relatively
+     * expensive.
      */
     private Grid tempTransposedGrid;
-    
+
     /**
-     * The size of the kernel relative to the standard deviation. The kernel's 
-     * dimension in pixels in one direction is: relativeFilterSize * std
-     * A value of 6 is sufficient for most applications. If 
-     * gradients are computed after filtering with a kernel size of 6, however,
-     * artifacts (vertical and horizontal stripes) are likely to become visible.
+     * The size of the kernel relative to the standard deviation. The kernel's
+     * dimension in pixels in one direction is: relativeFilterSize * std A value
+     * of 6 is sufficient for most applications. If gradients are computed after
+     * filtering with a kernel size of 6, however, artifacts (vertical and
+     * horizontal stripes) are likely to become visible.
      */
     private int relativeFilterSize = 8;
 
@@ -53,6 +51,7 @@ public class GridGaussLowPassOperator implements GridOperator{
 
         /**
          * Create a transposed grid
+         *
          * @param srcGrid
          * @return
          */
@@ -83,6 +82,27 @@ public class GridGaussLowPassOperator implements GridOperator{
             return super.operate(src, dst);
         }
 
+        private float convolveWithNaN(float[] srcRow, int col, float[] kernel) {
+            final int nCols = srcRow.length;
+            final int halfFilterSize = kernelSize() / 2;
+            float sum = 0;
+            float coefSum = 0;
+            for (int f = -halfFilterSize; f <= halfFilterSize; f++) {
+                int c = f + col;
+                if (c < 0 || c >= nCols) {
+                    continue;
+                }
+                float v = srcRow[c];
+                if (Float.isNaN(v)) {
+                    continue;
+                }
+                float w = kernel[f + halfFilterSize];
+                sum += v * w;
+                coefSum += w;
+            }
+            return sum / coefSum;
+        }
+
         @Override
         public void operate(Grid src, Grid dst, int startRow, int endRow) {
 
@@ -106,7 +126,11 @@ public class GridGaussLowPassOperator implements GridOperator{
                             coefSum += s;
                         }
                     }
-                    dstGrid[col][row] = sum / coefSum; // transposed destination
+                    float v = sum / coefSum;
+                    if (Float.isNaN(v)) {
+                        v = convolveWithNaN(srcRow, col, kernel);
+                    }
+                    dstGrid[col][row] = v; // transposed destination
                 }
 
                 // convolve center area
@@ -114,6 +138,9 @@ public class GridGaussLowPassOperator implements GridOperator{
                     float sum = 0;
                     for (int c = col - halfFilterSize, f = 0; c <= col + halfFilterSize; c++, f++) {
                         sum += srcRow[c] * kernel[f];
+                    }
+                    if (Float.isNaN(sum)) {
+                        sum = convolveWithNaN(srcRow, col, kernel);
                     }
                     dstGrid[col][row] = sum; // transposed destination
                 }
@@ -130,7 +157,11 @@ public class GridGaussLowPassOperator implements GridOperator{
                             coefSum += s;
                         }
                     }
-                    dstGrid[col][row] = sum / coefSum; // transposed destination
+                    float v = sum / coefSum;
+                    if (Float.isNaN(v)) {
+                        v = convolveWithNaN(srcRow, col, kernel);
+                    }
+                    dstGrid[col][row] = v; // transposed destination
                 }
             }
         }
@@ -140,13 +171,18 @@ public class GridGaussLowPassOperator implements GridOperator{
             return "Horizontal Transposed 1D Convolution";
         }
     }
-    
-    /** Creates a new instance of GridGaussLowPassOperator */
+
+    /**
+     * Creates a new instance of GridGaussLowPassOperator
+     */
     public GridGaussLowPassOperator() {
     }
 
-    /** Creates a new instance of GridGaussLowPassOperator
-     * @param std */
+    /**
+     * Creates a new instance of GridGaussLowPassOperator
+     *
+     * @param std
+     */
     public GridGaussLowPassOperator(double std) {
         setStandardDeviation(std);
     }
@@ -158,6 +194,7 @@ public class GridGaussLowPassOperator implements GridOperator{
 
     /**
      * Evaluates the Gaussian function.
+     *
      * @param x Evaluate at distance x from 0.
      * @return The vertical distance at position x.
      */
@@ -168,6 +205,7 @@ public class GridGaussLowPassOperator implements GridOperator{
 
     /**
      * Returns the size of the kernel.
+     *
      * @return
      */
     private int kernelSize() {
@@ -180,9 +218,10 @@ public class GridGaussLowPassOperator implements GridOperator{
         }
         return filterSize;
     }
-    
+
     /**
      * Computes the coefficients for the Gaussian kernel
+     *
      * @param filterSize
      * @return
      */
@@ -217,7 +256,7 @@ public class GridGaussLowPassOperator implements GridOperator{
         setStandardDeviation(std);
         return operate(src, dst);
     }
-    
+
     public Grid operate(Grid src, Grid dst, double std, int relativeFilterSize) {
         setStandardDeviation(std);
         setRelativeFilterSize(relativeFilterSize);
@@ -232,7 +271,7 @@ public class GridGaussLowPassOperator implements GridOperator{
                 return new GridCopyOperator().operate(src, dst);
             }
         }
-        
+
         HorizontalTransposedConvolution hop = new HorizontalTransposedConvolution();
         Grid transposedGrid = hop.operate(src);
         return hop.operate(transposedGrid, dst);
@@ -240,6 +279,7 @@ public class GridGaussLowPassOperator implements GridOperator{
 
     /**
      * Get the standard deviation of the Gaussian distribution.
+     *
      * @return the standard deviation
      */
     public double getStandardDeviation() {
@@ -249,6 +289,7 @@ public class GridGaussLowPassOperator implements GridOperator{
     /**
      * Set the standard deviation of the Gaussian distribution. If std is 0, no
      * filter is applied.
+     *
      * @param std the standard deviation to set
      */
     public final void setStandardDeviation(double std) {
@@ -257,10 +298,11 @@ public class GridGaussLowPassOperator implements GridOperator{
         }
         this.std = std;
     }
-    
+
     /**
-     * Get the size of the kernel, relative to the standard deviation. The 
+     * Get the size of the kernel, relative to the standard deviation. The
      * kernel size in pixels in one dimension is relativeFilterSize * std
+     *
      * @return the relativeFilterSize
      */
     public int getRelativeFilterSize() {
@@ -268,8 +310,9 @@ public class GridGaussLowPassOperator implements GridOperator{
     }
 
     /**
-     * Set the size of the kernel, relative to the standard deviation. The 
+     * Set the size of the kernel, relative to the standard deviation. The
      * kernel size in pixels in one dimension is relativeFilterSize * std
+     *
      * @param relativeFilterSize the relativeFilterSize to set
      */
     public void setRelativeFilterSize(int relativeFilterSize) {

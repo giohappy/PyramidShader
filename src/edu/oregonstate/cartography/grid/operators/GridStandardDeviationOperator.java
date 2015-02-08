@@ -4,17 +4,20 @@ import edu.oregonstate.cartography.grid.Grid;
 import edu.oregonstate.cartography.grid.LaplacianPyramid;
 
 // FIXME filter is square instead of circular
+// FIXME should use Gaussian bell curve for weighting values?
+// FIXME does not work properly with NaN values
+// FIXME does not work with large filter size and small grid
 
 /**
  *
  * @author Bernhard Jenny, Oregon State University
  */
-public final class GridStandardDeviationOperator implements /*Threaded*/GridOperator {
+public final class GridStandardDeviationOperator extends ThreadedGridOperator {
 
     private static final int FILTER_SIZE_SCALE = 16;
-    
+
     private int levels = 3;
-    
+
     private LaplacianPyramid laplacianPyramid;
 
     private GridStandardDeviationOperator() {
@@ -24,7 +27,7 @@ public final class GridStandardDeviationOperator implements /*Threaded*/GridOper
         this.levels = levels;
         this.laplacianPyramid = laplacianPyramid;
     }
-    
+
     private int filterSize() {
         return levels * FILTER_SIZE_SCALE + 1;
     }
@@ -33,27 +36,22 @@ public final class GridStandardDeviationOperator implements /*Threaded*/GridOper
     public String getName() {
         return "Local Standard Deviation Estimation";
     }
-    
+
     @Override
-    public Grid operate(Grid grid) {
-        if (grid == null) {
+    protected void operate(Grid src, Grid dst, int startRow, int endRow) {
+        if (src == null) {
             throw new IllegalArgumentException();
         }
-        
-        // make sure filterSize is odd number
+
+        // FIXME make sure filterSize is odd number
         final int filterSize = filterSize();
         final int halfFilterSize = filterSize / 2;
 
-        // create the new GeoGrid
-        final int rows = grid.getRows();
-        final int cols = grid.getCols();
-        final double meshSize = grid.getCellSize();
-        Grid newGrid = new Grid(cols, rows, meshSize);
-        newGrid.setWest(grid.getWest());
-        newGrid.setSouth(grid.getSouth());
+        final int cols = src.getCols();
+        final int rows = src.getRows();
 
-        float[][] srcGrid = grid.getGrid();
-        float[][] dstGrid = newGrid.getGrid();
+        float[][] srcGrid = src.getGrid();
+        float[][] dstGrid = dst.getGrid();
 
         // extract high-pass band from Laplacian pyramid
         float[] weights = laplacianPyramid.createConstantWeights(0);
@@ -61,36 +59,44 @@ public final class GridStandardDeviationOperator implements /*Threaded*/GridOper
             weights[i] = 1;
         }
         Grid highPassGrid = laplacianPyramid.sumLevels(weights, true);
+
+        // FIXME the following code does not work if the filter size is larger
+        // than the grid
         
         // top rows
-        for (int row = 0; row < halfFilterSize; row++) {
+        for (int row = startRow; row < halfFilterSize; row++) {
             for (int col = 0; col < cols; col++) {
-                operateBorder(grid, newGrid, col, row, highPassGrid);
+                operateBorder(src, dst, col, row, highPassGrid);
             }
         }
         // bottom rows
-        for (int row = rows - halfFilterSize; row < rows; row++) {
+        for (int row = rows - halfFilterSize; row < endRow; row++) {
             for (int col = 0; col < cols; col++) {
-                operateBorder(grid, newGrid, col, row, highPassGrid);
+                operateBorder(src, dst, col, row, highPassGrid);
             }
         }
+        
+        startRow = Math.max(halfFilterSize, startRow);
+        endRow = Math.min(src.getRows() - halfFilterSize, endRow);
+
         // left columns
         for (int col = 0; col < halfFilterSize; col++) {
-            for (int row = halfFilterSize; row < rows - halfFilterSize; row++) {
-                operateBorder(grid, newGrid, col, row, highPassGrid);
+            for (int row = startRow; row < endRow; row++) {
+                operateBorder(src, dst, col, row, highPassGrid);
             }
         }
         // right columns
         for (int col = cols - halfFilterSize; col < cols; col++) {
-            for (int row = halfFilterSize; row < rows - halfFilterSize; row++) {
-                operateBorder(grid, newGrid, col, row, highPassGrid);
+            for (int row = startRow; row < endRow; row++) {
+                operateBorder(src, dst, col, row, highPassGrid);
             }
         }
 
         // interior of grid
         // FIXME adjust npts to number of NaNs
-        final float npts = filterSize * filterSize;
-        for (int row = halfFilterSize; row < rows - halfFilterSize; row++) {
+        final float npts = filterSize * filterSize;      
+
+        for (int row = startRow; row < endRow; row++) {
             float[] dstRow = dstGrid[row];
             for (int col = halfFilterSize; col < cols - halfFilterSize; col++) {
                 float sqDif = 0;
@@ -108,7 +114,6 @@ public final class GridStandardDeviationOperator implements /*Threaded*/GridOper
                 dstRow[col] = std;
             }
         }
-        return newGrid;
     }
 
     private void operateBorder(Grid src, Grid dst, int col, int row, Grid highPassGrid) {
@@ -143,88 +148,4 @@ public final class GridStandardDeviationOperator implements /*Threaded*/GridOper
         float std = (float) Math.sqrt(sqDif / npts);
         dstGrid[row][col] = std;
     }
-/*
-    //@Override
-    protected void operate(Grid src, Grid dst, int startRow, int endRow) {
-        if (src == null) {
-            throw new IllegalArgumentException();
-        }
-
-        // make sure filterSize is odd number
-        if (filterSize % 2 != 1) {
-            throw new IllegalStateException("filter size must be odd number");
-        }
-        final int halfFilterSize = filterSize / 2;
-
-        float[][] srcGrid = src.getGrid();
-        float[][] dstGrid = dst.getGrid();
-        final int nCols = src.getCols();
-        final int nRows = src.getRows();
-
-        // top rows
-        for (int row = startRow; row < halfFilterSize; row++) {
-            for (int col = 0; col < nCols; col++) {
-                operateBorder(src, dst, col, row);
-            }
-        }
-        // bottom rows
-        for (int row = nRows - halfFilterSize; row < endRow; row++) {
-            for (int col = 0; col < nCols; col++) {
-                operateBorder(src, dst, col, row);
-            }
-        }
-        // left columns
-        for (int col = 0; col < halfFilterSize; col++) {
-            for (int row = startRow; row < endRow; row++) {
-                operateBorder(src, dst, col, row);
-            }
-        }
-        // right columns
-        for (int col = nCols - halfFilterSize; col < nCols; col++) {
-            for (int row = startRow; row < endRow; row++) {
-                operateBorder(src, dst, col, row);
-            }
-        }
-
-        startRow = Math.max(halfFilterSize, startRow);
-        endRow = Math.min(src.getRows() - halfFilterSize, endRow);
-
-        for (int row = startRow; row < endRow; row++) {
-            float[] dstRow = dstGrid[row];
-            for (int col = halfFilterSize; col < nCols - halfFilterSize; col++) {
-                // compute local mean value
-                int npts = 0;
-                double tot = 0;
-                for (int r = row - halfFilterSize; r <= row + halfFilterSize; r++) {
-                    float[] srcRow = srcGrid[r];
-                    for (int c = col - halfFilterSize; c <= col + halfFilterSize; c++) {
-                        final float v = srcRow[c];
-                        if (!Float.isNaN(v)) {
-                            tot += v;
-                            npts++;
-                        }
-                    }
-                }
-                final double mean = tot / npts;
-
-                // compute local differences to the mean value and sum the square 
-                // of the differences
-                double sqDif = 0;
-                for (int r = row - halfFilterSize; r <= row + halfFilterSize; r++) {
-                    float[] srcRow = srcGrid[r];
-                    for (int c = col - halfFilterSize; c <= col + halfFilterSize; c++) {
-                        final float v = srcRow[c];
-                        if (!Float.isNaN(v)) {
-                            final double dif = mean - v;
-                            sqDif += dif * dif;
-                        }
-                    }
-                }
-
-                // compute standard deviation
-                dstRow[col] = (float) Math.sqrt(sqDif / npts);
-            }
-        }
-
-    }*/
 }

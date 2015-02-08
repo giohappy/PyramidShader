@@ -79,7 +79,7 @@ class LocalGridModel {
         }
         //long startTime = System.nanoTime();
         //System.out.println("local grid: start");
-        filteredGrid = new GridDiffDivOperator().operate(originalGrid, lowPassGrid, stdGrid);
+        filteredGrid = new GridDiffDivOperator().operate(originalGrid, lowPassGrid, stdGrid, 1f);
         new GridScaleToRangeOperator(originalGridMinMax).operate(filteredGrid, filteredGrid);
         //System.out.println("local grid: end " + (System.nanoTime() - startTime) / 1000 / 1000 + "ms");
     }

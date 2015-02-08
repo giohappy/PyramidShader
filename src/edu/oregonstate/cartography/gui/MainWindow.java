@@ -902,6 +902,7 @@ public class MainWindow extends javax.swing.JFrame {
                     // add document to Open Recent menu
                     rdm.addDocument(new File(filePath), null);
                 } catch (InterruptedException | CancellationException e) {
+                    return;
                 } catch (Throwable e) {
                     // hide the progress dialog
                     completeProgress();

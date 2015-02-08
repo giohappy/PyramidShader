@@ -19,6 +19,7 @@ import edu.oregonstate.cartography.simplefeatures.PlanObliqueShearing;
 import edu.oregonstate.cartography.simplefeatures.Point;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -26,18 +27,22 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.imageio.ImageIO;
+import javax.swing.Action;
 import javax.swing.Icon;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 /**
@@ -102,6 +107,7 @@ public class MainWindow extends javax.swing.JFrame {
         javax.swing.JPopupMenu.Separator jSeparator1 = new javax.swing.JPopupMenu.Separator();
         saveTerrainMenuItem = new javax.swing.JMenuItem();
         saveLocalTerrainMenuItem = new javax.swing.JMenuItem();
+        saveDownsampledMenu = new javax.swing.JMenu();
         javax.swing.JPopupMenu.Separator jSeparator5 = new javax.swing.JPopupMenu.Separator();
         javax.swing.JMenu saveImageMenu = new javax.swing.JMenu();
         saveTIFFImageMenuItem = new javax.swing.JMenuItem();
@@ -222,6 +228,18 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
         fileMenu.add(saveLocalTerrainMenuItem);
+
+        saveDownsampledMenu.setText("Save Downsampled Grid");
+        saveDownsampledMenu.addMenuListener(new javax.swing.event.MenuListener() {
+            public void menuSelected(javax.swing.event.MenuEvent evt) {
+                saveDownsampledMenuMenuSelected(evt);
+            }
+            public void menuDeselected(javax.swing.event.MenuEvent evt) {
+            }
+            public void menuCanceled(javax.swing.event.MenuEvent evt) {
+            }
+        });
+        fileMenu.add(saveDownsampledMenu);
         fileMenu.add(jSeparator5);
 
         saveImageMenu.setText("Save Image");
@@ -613,6 +631,7 @@ public class MainWindow extends javax.swing.JFrame {
                 = model.foregroundVisualization != Model.ForegroundVisualization.NONE;
         saveTerrainMenuItem.setEnabled(gridLoaded);
         saveLocalTerrainMenuItem.setEnabled(model.backgroundVisualization.isLocal());
+        saveDownsampledMenu.setEnabled(gridLoaded);
         saveTIFFImageMenuItem.setEnabled(gridLoaded);
         savePNGImageMenuItem.setEnabled(gridLoaded);
         saveTIFFContoursMenuItem.setEnabled(contoursVisible);
@@ -794,6 +813,40 @@ public class MainWindow extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_planObliqueFeaturesMenuItemActionPerformed
 
+    private void saveDownsampledMenuMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_saveDownsampledMenuMenuSelected
+        saveDownsampledMenu.removeAll();
+        if (model == null || model.laplacianPyramid == null) {
+            return;
+        }
+        Grid[] levels = model.laplacianPyramid.getLevels();
+        for (int i = 0; i < levels.length; i++) {
+            String str = levels[i].getCols() + "\u00D7" + levels[i].getRows();
+            if (i == 0) {
+                str += " (Full Resolution)";
+            }
+            JMenuItem menuItem = new JMenuItem(str);
+            menuItem.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // weights for Laplacian pyramid levels
+                    float [] w = new float[model.laplacianPyramid.getLevels().length];
+                    Arrays.fill(w, 1f);
+                    for (int j = 0; j < saveDownsampledMenu.getMenuComponentCount(); j++) {
+                        Component comp = saveDownsampledMenu.getMenuComponent(j);
+                        if (comp == e.getSource()) {
+                            Arrays.fill(w, 0, j, 0f);
+                            break;
+                        }
+                    }
+                    
+                    saveTerrain(model.laplacianPyramid.sumLevels(w, false));
+                }
+            });
+            saveDownsampledMenu.add(menuItem);
+        }
+    }//GEN-LAST:event_saveDownsampledMenuMenuSelected
+
     /**
      * Ask the user for a file to read or write.
      *
@@ -893,7 +946,7 @@ public class MainWindow extends javax.swing.JFrame {
                         String msg = "<html>"
                                 + "This grid is rather flat and the shading may "
                                 + "not show any variation."
-                                + "<br>Use <i>Edit > " + scaleTerrainModelMenuItem.getText() 
+                                + "<br>Use <i>Edit > " + scaleTerrainModelMenuItem.getText()
                                 + "</i> to vertically exaggerate the grid."
                                 + "</html>";
                         JOptionPane.showMessageDialog(getContentPane(), msg,
@@ -960,6 +1013,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JPanel offsetTerrainPanel;
     private javax.swing.JMenu openRecentMenu;
     private javax.swing.JMenuItem planObliqueFeaturesMenuItem;
+    private javax.swing.JMenu saveDownsampledMenu;
     private javax.swing.JMenuItem saveLocalTerrainMenuItem;
     private javax.swing.JMenuItem savePNGContoursMenuItem;
     private javax.swing.JMenuItem savePNGImageMenuItem;

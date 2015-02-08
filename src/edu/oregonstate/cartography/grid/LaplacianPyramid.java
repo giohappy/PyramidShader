@@ -362,11 +362,24 @@ public class LaplacianPyramid {
      *
      * @param levelWeights Weights applied when merging pyramid levels. The
      * first value is the weight for the highest frequency band.
+     * @param fullExpand If true, the resulting grid will have the same number
+     * of columns and rows as the most detailed level in this pyramid. If false,
+     * the resulting grid is smaller if the first weights in levelWeights are 0.
      * @return Synthesized grid.
      */
-    public Grid sumLevels(float[] levelWeights) {
+    public Grid sumLevels(float[] levelWeights, boolean fullExpand) {
         if (levelWeights != null && levelWeights.length != levels.length) {
             throw new IllegalArgumentException("incorrect number of pyramid weights");
+        }
+
+        // find the last level to include
+        int mostDetailedLevelID = 0;
+        if (!fullExpand) {
+            for (; mostDetailedLevelID < levels.length; mostDetailedLevelID++) {
+                if (levelWeights[mostDetailedLevelID] != 0f) {
+                    break;
+                }
+            }
         }
         
         // copy the smallest grid of the pyramid
@@ -382,7 +395,7 @@ public class LaplacianPyramid {
         }
 
         // expand the sum and and add the next larger grids
-        for (int i = levels.length - 2; i >= 0; i--) {
+        for (int i = levels.length - 2; i >= mostDetailedLevelID; i--) {
             Grid grid = levels[i];
             sum = LaplacianPyramid.expand(sum, grid.getCols(), grid.getRows());
             float w = (levelWeights == null ? 1 : levelWeights[i]);

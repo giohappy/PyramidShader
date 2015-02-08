@@ -207,6 +207,14 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveLocalTerrainMenuItemActionPerformed"/>
               </Events>
             </MenuItem>
+            <Menu class="javax.swing.JMenu" name="saveDownsampledMenu">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Save Downsampled Grid"/>
+              </Properties>
+              <Events>
+                <EventHandler event="menuSelected" listener="javax.swing.event.MenuListener" parameters="javax.swing.event.MenuEvent" handler="saveDownsampledMenuMenuSelected"/>
+              </Events>
+            </Menu>
             <MenuItem class="javax.swing.JPopupMenu$Separator" name="jSeparator5">
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>

@@ -73,7 +73,7 @@ public class Model implements Cloneable {
     /**
      * Laplacian pyramid of original grid
      */
-    private LaplacianPyramid laplacianPyramid;
+    public LaplacianPyramid laplacianPyramid;
 
     /**
      * modified grid composed of summed pyramids
@@ -332,7 +332,7 @@ public class Model implements Cloneable {
             }
 
             // sum the Laplacian pyramids
-            generalizedGrid = laplacianPyramid.sumLevels(w);
+            generalizedGrid = laplacianPyramid.sumLevels(w, true);
 
             // scale the minimum and maximum values of the output generalized grid to 
             // the same range as the input grid.

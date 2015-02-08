@@ -9,10 +9,15 @@ import edu.oregonstate.cartography.grid.Grid;
  */
 public class PlanObliqueOperator implements GridOperator {
 
-    private final double k;
-    
     /**
-     * the elevation that will not shift, usually the minimum elevation in the grid.
+     * shearing factor: y' = y + k * z where y' is the new position of a point
+     * at y, and z is the elevation at y.
+     */
+    private final double k;
+
+    /**
+     * the elevation that will not shift, usually the minimum elevation in the
+     * grid.
      */
     private final float refElevation;
 
@@ -32,6 +37,12 @@ public class PlanObliqueOperator implements GridOperator {
         // grid cell size
         double cellSize = grid.getCellSize();
 
+        // shearing factor plus conversion factor for cell size in degrees
+        double elevationScale = k;
+        if (cellSize < 0.1) {
+            elevationScale /= Math.PI / 180d * 6371000;
+        }
+
         // init sheared grid
         Grid shearedGrid = new Grid(nCols, nRows, grid.getCellSize());
         shearedGrid.setSouth(grid.getSouth());
@@ -40,19 +51,27 @@ public class PlanObliqueOperator implements GridOperator {
         // fill sheared grid: iteerate over all columns
         for (int col = 0; col < nCols; col++) {
 
-            // store the sheared y coordinate and the elevation of the grid 
-            // vertex below the current vertex
-            double prevShearedY = 0;
-            double prevZ = Double.NaN;
-
             // keep track of the last vertext of the source grid that has been sheared.
             // this accelerates the algorithm, because we don't need to start 
             // each search at the lower grid border, but can instead continue
             // searching at the last found vertex.
-            int prevRow = grid.getRows() - 1;
+            int prevRow = nRows - 1;
+
+            // find the first valid grid value in the current column (from the bottom)
+            // and remember its value
+            double prevZ = Double.NaN;
+            for (; prevRow >= 0; prevRow--) {
+                if (Double.isNaN(grid.getValue(col, prevRow))) {
+                    shearedGrid.setValue(Float.NaN, col, prevRow);
+                } else {
+                    break;
+                }
+            }
+            // store the sheared y coordinate of the grid vertex below the current vertex
+            double prevShearedY = north - prevRow * cellSize;
 
             // iterate over all rows, from bottom to top
-            for (int row = nRows - 1; row >= 0; row--) {
+            for (int row = prevRow; row >= 0; row--) {
 
                 // the vertical y coordinate where an elevation value is needed
                 double targetY = north - row * cellSize;
@@ -60,14 +79,14 @@ public class PlanObliqueOperator implements GridOperator {
                 // initialize z value at targetY
                 double interpolatedZ = Double.NaN;
 
-                // vertically traverse the column towards upper border, starting 
+                // vertically traverse the column towards the upper border, starting 
                 // at the last visited vertex
                 for (int r = prevRow; r >= 0; r--) {
                     // the elevation for the current vertex
-                    float z = grid.getValue(col, r);
-
+                    double z = grid.getValue(col, r);
+                    
                     // shear the y coordinate
-                    double shearedY = north - r * cellSize + (z - refElevation) * k;
+                    double shearedY = north - r * cellSize + (z - refElevation) * elevationScale;
 
                     // if the sheared y coordinate is vertically higher than the 
                     // y coordinate where an elevation value is needed, we have 

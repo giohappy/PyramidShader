@@ -323,11 +323,20 @@ public final class Grid {
     }
 
     public double getAspect(int col, int row) {
-        final double w = getValue(col - 1, row);
-        final double e = getValue(col + 1, row);
-        final double s = getValue(col, row + 1);
-        final double n = getValue(col, row - 1);
-        return Math.atan2(n - s, e - w);
+        final int cols = grid[0].length;
+        final int rows = grid.length;
+        final int colLeft = col > 0 ? col - 1 : 0;
+        final int colRight = col < cols - 1 ? col + 1 : cols - 1;
+        final int rowTop = row > 0 ? row - 1 : 0;
+        final int rowBottom = row < rows - 1 ? row + 1 : rows - 1;
+
+        final double w = getValue(colLeft, row);
+        final double e = getValue(colRight, row);
+        final double s = getValue(col, rowBottom);
+        final double n = getValue(col, rowTop);
+        final double dx = e - w;
+        final double dy = n - s;
+        return (dx == 0d || dy == 0d) ? Double.NaN : Math.atan2(dy, dx);
     }
 
     /**

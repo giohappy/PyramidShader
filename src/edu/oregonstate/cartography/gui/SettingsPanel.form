@@ -59,6 +59,7 @@
               <SubComponents>
                 <Component class="javax.swing.JComboBox" name="visualizationComboBox">
                   <Properties>
+                    <Property name="maximumRowCount" type="int" value="15"/>
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                       <Connection code="new DefaultComboBoxModel(ColorizerOperator.ColorVisualization.values())" type="code"/>
                     </Property>

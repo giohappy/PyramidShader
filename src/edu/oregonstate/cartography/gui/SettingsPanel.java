@@ -282,6 +282,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         visualizationPanel.setLayout(new java.awt.GridBagLayout());
 
+        visualizationComboBox.setMaximumRowCount(15);
         visualizationComboBox.setModel(new DefaultComboBoxModel(ColorizerOperator.ColorVisualization.values()));
         visualizationComboBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -1333,6 +1334,8 @@ public class SettingsPanel extends javax.swing.JPanel {
         }
         localGridHighPassSlider.setValue((int) Math.round(model.getLocalGridHighPassWeight() * 10));
         localGridStandardDeviationFilterSizeSlider.setValue(model.getLocalGridStandardDeviationLevels());
+        
+        colorPopupMenu.removeAll();
         for (ColorRamp cr : model.predefinedColorRamps) {
             JMenuItem colorMenuItem = new JMenuItem(cr.name);
             colorMenuItem.addActionListener(new java.awt.event.ActionListener() {

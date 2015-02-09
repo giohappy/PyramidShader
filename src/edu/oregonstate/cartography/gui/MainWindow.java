@@ -830,8 +830,7 @@ public class MainWindow extends javax.swing.JFrame {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     // weights for Laplacian pyramid levels
-                    float [] w = new float[model.laplacianPyramid.getLevels().length];
-                    Arrays.fill(w, 1f);
+                    float [] w = model.laplacianPyramid.createConstantWeights(1f);
                     for (int j = 0; j < saveDownsampledMenu.getMenuComponentCount(); j++) {
                         Component comp = saveDownsampledMenu.getMenuComponent(j);
                         if (comp == e.getSource()) {

@@ -29,6 +29,8 @@ public class ColorizerOperator extends ThreadedGridOperator {
         HYPSOMETRIC("Hypsometric Color"),
         LOCAL_HYPSOMETRIC_SHADING("Local Hypsometric Color with Shading"),
         LOCAL_HYPSOMETRIC("Local Hypsometric Color"),
+        SLOPE("Slope"),
+        ASPECT("Aspect"),
         CONTINUOUS("Continuous Tone (for Illuminated Contours)");
 
         private final String description;
@@ -38,7 +40,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
         }
 
         public boolean isLocal() {
-            return this == LOCAL_HYPSOMETRIC 
+            return this == LOCAL_HYPSOMETRIC
                     || this == LOCAL_HYPSOMETRIC_SHADING;
         }
 
@@ -48,13 +50,15 @@ public class ColorizerOperator extends ThreadedGridOperator {
                     || this == HYPSOMETRIC_SHADING
                     || this == LOCAL_HYPSOMETRIC_SHADING;
         }
-        
+
         public boolean isColored() {
             return this == EXPOSITION
                     || this == HYPSOMETRIC
                     || this == HYPSOMETRIC_SHADING
                     || this == LOCAL_HYPSOMETRIC
-                    || this == LOCAL_HYPSOMETRIC_SHADING;
+                    || this == LOCAL_HYPSOMETRIC_SHADING
+                    || this == SLOPE
+                    || this == ASPECT;
         }
 
         @Override
@@ -214,8 +218,98 @@ public class ColorizerOperator extends ThreadedGridOperator {
         return dstImage;
     }
 
+    private void grayShading(Grid grayShadingGrid, Grid elevationGrid, int startRow, int endRow) {
+        final int nCols = dstImage.getWidth();
+        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        for (int row = startRow; row < endRow; ++row) {
+            for (int col = 0; col < nCols; ++col) {// convert the shaded gray value to an ARGB pixel value
+                final float gray = grayShadingGrid.getValue(col, row);
+                if (Float.isNaN(gray)) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                } else {
+                    final int g = (int) gray;
+                    final int argb = g | (g << 8) | (g << 16) | 0xFF000000;
+                    imageBuffer[row * nCols + col] = argb;
+                }
+            }
+        }
+    }
+
+    private void hypsometricShading(Grid grayShadingGrid, Grid elevationGrid, int startRow, int endRow) {
+        final int nCols = dstImage.getWidth();
+        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        for (int row = startRow; row < endRow; ++row) {
+            for (int col = 0; col < nCols; ++col) {// convert the shaded gray value to an ARGB pixel value
+                final float gray = grayShadingGrid.getValue(col, row);
+                if (Float.isNaN(gray)) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                } else {
+                    // apply a color ramp to the elevation value
+                    final float v = elevationGrid.getValue(col, row);
+                    // multiply the elevation color with the gray value of the shading
+                    final int argb = getLinearRGB(v, minElev, maxElev, gray / 255f);
+                    imageBuffer[row * nCols + col] = argb;
+                }
+            }
+        }
+    }
+
+    private void expositionShading(Grid grayShadingGrid, Grid elevationGrid, int startRow, int endRow) {
+        final int nCols = dstImage.getWidth();
+        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        for (int row = startRow; row < endRow; ++row) {
+            for (int col = 0; col < nCols; ++col) {// convert the shaded gray value to an ARGB pixel value
+                final float gray = grayShadingGrid.getValue(col, row);
+                if (Float.isNaN(gray)) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                } else {
+                    // apply a color ramp to the shaded gray value 
+                    final int argb = getLinearRGB(gray, 0, 255, 1f);
+                    imageBuffer[row * nCols + col] = argb;
+                }
+            }
+        }
+    }
+
+    private void hypsometric(Grid elevationGrid, int startRow, int endRow) {
+        final int nCols = dstImage.getWidth();
+        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        for (int row = startRow; row < endRow; ++row) {
+            for (int col = 0; col < nCols; ++col) {
+                final float v = elevationGrid.getValue(col, row);
+                final int argb = getLinearRGB(v, minElev, maxElev, 1);
+                imageBuffer[row * nCols + col] = argb;
+            }
+        }
+    }
+
+    private void slope(Grid elevationGrid, int startRow, int endRow) {
+        final int nCols = dstImage.getWidth();
+        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        for (int row = startRow; row < endRow; ++row) {
+            for (int col = 0; col < nCols; ++col) {
+                final float slope = (float) elevationGrid.getSlope(col, row);
+                final int argb = getLinearRGB(slope, 0, 1, 1);
+                imageBuffer[row * nCols + col] = argb;
+            }
+        }
+    }
+
+    private void aspect(Grid elevationGrid, int startRow, int endRow) {
+        final int nCols = dstImage.getWidth();
+        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        for (int row = startRow; row < endRow; ++row) {
+            for (int col = 0; col < nCols; ++col) {
+                float aspect = (float) elevationGrid.getAspect(col, row);
+                final int argb = getLinearRGB(aspect, (float) -Math.PI, (float) Math.PI, 1);
+                imageBuffer[row * nCols + col] = argb;
+            }
+        }
+    }
+
     /**
      * Compute a colored chunk of this image.
+     * FIXME gray shading should be computed here. grayShadingGrid should be removed.
      *
      * @param grayShadingGrid Grid with shaded values between 0 and 255
      * @param elevationGrid Grid with elevation values.
@@ -224,44 +318,27 @@ public class ColorizerOperator extends ThreadedGridOperator {
      */
     @Override
     protected void operate(Grid grayShadingGrid, Grid elevationGrid, int startRow, int endRow) {
-        int argb = 0;
-        float elev;
-        int nCols = dstImage.getWidth();
-        int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
-        for (int row = startRow; row < endRow; ++row) {
-            for (int col = 0; col < nCols; ++col) {
-                //Get the height or gray shading value of the current cell
-                float gray = grayShadingGrid.getValue(col, row);
-                if (Float.isNaN(gray)) {
-                    imageBuffer[row * nCols + col] = VOID_COLOR;
-                    continue;
-                }
-                switch (colorVisualization) {
-                    case GRAY_SHADING:
-                        // convert the shaded gray value to an ARGB pixel value
-                        int g = (int) gray;
-                        argb = g | (g << 8) | (g << 16) | 0xFF000000;
-                        break;
-                    case EXPOSITION:
-                        // apply a color ramp to the shaded gray value 
-                        argb = getLinearRGB(gray, 0, 255, 1f);
-                        break;
-                    case HYPSOMETRIC_SHADING:
-                    case LOCAL_HYPSOMETRIC_SHADING:
-                        // apply a color ramp to the elevation value
-                        elev = elevationGrid.getValue(col, row);
-                        // multiply the elevation color with the gray value of the shading
-                        argb = getLinearRGB(elev, minElev, maxElev, gray / 255f);
-                        break;
-                    case HYPSOMETRIC:
-                    case LOCAL_HYPSOMETRIC:
-                        // apply a color ramp to the elevation value
-                        elev = elevationGrid.getValue(col, row);
-                        argb = getLinearRGB(elev, minElev, maxElev, 1);
-                        break;
-                }
-                imageBuffer[row * nCols + col] = argb;
-            }
+        switch (colorVisualization) {
+            case GRAY_SHADING:
+                grayShading(grayShadingGrid, elevationGrid, startRow, endRow);
+                break;
+            case EXPOSITION:
+                expositionShading(grayShadingGrid, elevationGrid, startRow, endRow);
+                break;
+            case HYPSOMETRIC_SHADING:
+            case LOCAL_HYPSOMETRIC_SHADING:
+                hypsometricShading(grayShadingGrid, elevationGrid, startRow, endRow);
+                break;
+            case HYPSOMETRIC:
+            case LOCAL_HYPSOMETRIC:
+                hypsometric(elevationGrid, startRow, endRow);
+                break;
+            case SLOPE:
+                slope(elevationGrid, startRow, endRow);
+                break;
+            case ASPECT:
+                aspect(elevationGrid, startRow, endRow);
+                break;
         }
     }
 

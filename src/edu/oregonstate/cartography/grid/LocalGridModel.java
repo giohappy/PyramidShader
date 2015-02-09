@@ -105,7 +105,7 @@ class LocalGridModel {
             highPassGrid = new GridDiffOperator().operate(originalGrid, lowPassGrid);
         } else {
             // compute weights for constructing high-pass grid from Laplacian pyramid
-            float[] w = new float[originalGridLaplacianPyramid.getLevels().length];
+            float[] w = originalGridLaplacianPyramid.createConstantWeights(0);
             for (int i = 0; i < w.length; i++) {
                 if (Math.floor(highPassWeight) == i) {
                     w[i] = (float) (highPassWeight - i);

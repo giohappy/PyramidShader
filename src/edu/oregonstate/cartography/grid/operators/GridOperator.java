@@ -23,9 +23,9 @@ public interface GridOperator {
     
     /**
      * Start operating on the passed GeoGrid.
-     * @param grid The Grid to operate on.
-     * @return A new Grid containing the result. The resulting GeoGrid may
-     * be of a different size than the passed GeoGrid.
+     * @param grid The grid to operate on.
+     * @return A new grid containing the result. The resulting grid may
+     * be of a different size than the passed grid.
      */
     public Grid operate (Grid grid);
     

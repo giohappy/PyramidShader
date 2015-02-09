@@ -555,16 +555,16 @@ public class Model implements Cloneable {
         this.generalizationDetails = generalizationDetails;
     }
 
-    public double getLocalGridLowPassStandardDeviation() {
-        return localGridModel.getLocalGridLowPassStd();
+    public double getLocalGridHighPassWeight() {
+        return localGridModel.getHighPassWeight();
     }
 
     public int getLocalGridStandardDeviationLevels() {
         return localGridModel.getLocalGridStandardDeviationLevels();
     }
 
-    public void setLocalGridLowPassStd(double localGridLowPassStd) {
-        localGridModel.setLocalGridLowPassStd(localGridLowPassStd);
+    public void setLocalGridHighPassWeight(double highPassWeight) {
+        localGridModel.setHighPassWeight(highPassWeight);
     }
 
     public void setLocalGridStandardDeviationLevels(int levels) {

@@ -6,6 +6,10 @@ package edu.oregonstate.cartography.grid;
  */
 public class Convolution5x5 {
 
+    /** 
+     * kernel weights. A standard deviation of 1 would result in (9 elements):
+     * 0.0001 0.0044 0.054 0.242 0.3989 0.242 0.054 0.0044 0.0001
+     */
     private final float wa = 0.4f;
     private final float wb = 0.25f;
     private final float wc = 0.05f;

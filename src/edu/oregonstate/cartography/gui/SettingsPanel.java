@@ -211,7 +211,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
         javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
         localGridStandardDeviationFilterSizeSlider = new javax.swing.JSlider();
-        localGridLowPassSlider = new javax.swing.JSlider();
+        localGridHighPassSlider = new javax.swing.JSlider();
         javax.swing.JLabel jLabel3 = new javax.swing.JLabel();
         solidColorPanel = new TransparentMacPanel();
         solidColorButton = new edu.oregonstate.cartography.gui.ColorButton();
@@ -404,6 +404,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         localGridStandardDeviationFilterSizeSlider.setMajorTickSpacing(1);
         localGridStandardDeviationFilterSizeSlider.setMaximum(10);
+        localGridStandardDeviationFilterSizeSlider.setMinimum(1);
         localGridStandardDeviationFilterSizeSlider.setPaintLabels(true);
         localGridStandardDeviationFilterSizeSlider.setPaintTicks(true);
         localGridStandardDeviationFilterSizeSlider.setSnapToTicks(true);
@@ -419,23 +420,22 @@ public class SettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         localHypsoPanel.add(localGridStandardDeviationFilterSizeSlider, gridBagConstraints);
 
-        localGridLowPassSlider.setMaximum(99);
-        localGridLowPassSlider.setMinimum(3);
-        localGridLowPassSlider.setMinorTickSpacing(2);
-        localGridLowPassSlider.setPaintLabels(true);
-        localGridLowPassSlider.setPaintTicks(true);
-        localGridLowPassSlider.setSnapToTicks(true);
-        localGridLowPassSlider.setPreferredSize(new java.awt.Dimension(240, 38));
-        localGridLowPassSlider.addChangeListener(new javax.swing.event.ChangeListener() {
+        localGridHighPassSlider.setMajorTickSpacing(10);
+        localGridHighPassSlider.setMinorTickSpacing(5);
+        localGridHighPassSlider.setPaintLabels(true);
+        localGridHighPassSlider.setPaintTicks(true);
+        localGridHighPassSlider.setValue(10);
+        localGridHighPassSlider.setPreferredSize(new java.awt.Dimension(240, 38));
+        localGridHighPassSlider.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                localGridLowPassSliderStateChanged(evt);
+                localGridHighPassSliderStateChanged(evt);
             }
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        localHypsoPanel.add(localGridLowPassSlider, gridBagConstraints);
+        localHypsoPanel.add(localGridHighPassSlider, gridBagConstraints);
 
         jLabel3.setText("Local Terrain Filtering");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1289,35 +1289,50 @@ public class SettingsPanel extends javax.swing.JPanel {
         add(tabbedPane);
     }// </editor-fold>//GEN-END:initComponents
 
-    public void setModel(Model m) {
-        this.model = m;
+    protected void updateGUI() {
+        generalizationMaxLevelsSpinner.setValue(model.generalizationMaxLevels);
+        generalizationDetailSlider.setValue((int) Math.round(model.getGeneralizationDetails() * 100));
 
-        generalizationMaxLevelsSpinner.setValue(m.generalizationMaxLevels);
-        generalizationDetailSlider.setValue((int) Math.round(m.getGeneralizationDetails() * 100));
+        azimuthSlider.setValue(model.azimuth);
+        zenithSlider.setValue(model.zenith);
 
-        azimuthSlider.setValue(m.azimuth);
-        zenithSlider.setValue(m.zenith);
+        contoursShadowLineWidthHighValueField.setValue(model.contoursShadowWidthHigh);
+        contoursShadowLineWidthLowValueField.setValue(model.contoursShadowWidthLow);
+        contoursIlluminatedLineWidthHighValueField.setValue(model.contoursIlluminatedWidthHigh);
+        contoursIlluminatedLineWidthLowValueField.setValue(model.contoursIlluminatedWidthLow);
 
-        contoursShadowLineWidthHighValueField.setValue(m.contoursShadowWidthHigh);
-        contoursShadowLineWidthLowValueField.setValue(m.contoursShadowWidthLow);
-        contoursIlluminatedLineWidthHighValueField.setValue(m.contoursIlluminatedWidthHigh);
-        contoursIlluminatedLineWidthLowValueField.setValue(m.contoursIlluminatedWidthLow);
-        
-        contoursMinLineWidthSlider.setValue((int) Math.round(m.contoursMinWidth * 10));
-        contoursMinDistanceSlider.setValue((int) Math.round(m.contoursMinDist * 10));
-        contoursGradientSlider.setValue(m.contoursGradientAngle);
-        contoursIntervalTextBox.setValue(m.contoursInterval);
-        contoursDespeckleSlider.setValue((int) Math.round(m.contoursAspectGaussBlur * 20D));
-        contoursTransitionSlider.setValue(m.contoursTransitionAngle);
+        contoursMinLineWidthSlider.setValue((int) Math.round(model.contoursMinWidth * 10));
+        contoursMinDistanceSlider.setValue((int) Math.round(model.contoursMinDist * 10));
+        contoursGradientSlider.setValue(model.contoursGradientAngle);
+        contoursIntervalTextBox.setValue(model.contoursInterval);
+        contoursDespeckleSlider.setValue((int) Math.round(model.contoursAspectGaussBlur * 20D));
+        contoursTransitionSlider.setValue(model.contoursTransitionAngle);
 
-        verticalExaggerationSlider.setValue(Math.round(m.shadingVerticalExaggeration * 10f));
-        colorGradientSlider.setValues(m.colorRamp.colorPositions, m.colorRamp.colors);
-        solidColorButton.setColor(m.solidColor);
-        planObliqueSlider.setValue(m.planObliqueAngle);
+        verticalExaggerationSlider.setValue(Math.round(model.shadingVerticalExaggeration * 10f));
+        colorGradientSlider.setValues(model.colorRamp.colorPositions, model.colorRamp.colors);
+        solidColorButton.setColor(model.solidColor);
+        planObliqueSlider.setValue(model.planObliqueAngle);
         updateGeneralizationInfoLabelVisiblity();
 
-        localGridLowPassSlider.setValue((int) m.getLocalGridLowPassStandardDeviation());
-        localGridStandardDeviationFilterSizeSlider.setValue(m.getLocalGridStandardDeviationLevels());
+        if (model.laplacianPyramid != null && model.laplacianPyramid.getLevels() != null) {
+            localGridHighPassSlider.setMaximum(model.laplacianPyramid.getLevels().length * 10);
+            // adjust slider labels
+            java.util.Hashtable labels = localGridHighPassSlider.createStandardLabels(10);
+            java.util.Enumeration e = labels.elements();
+            while (e.hasMoreElements()) {
+                javax.swing.JComponent comp = (javax.swing.JComponent) e.nextElement();
+                if (comp instanceof javax.swing.JLabel) {
+                    javax.swing.JLabel label = (javax.swing.JLabel) (comp);
+                    String str = Integer.toString(Integer.parseInt(label.getText()) / 10);
+                    label.setText(str);
+                }
+            }
+            localGridHighPassSlider.setLabelTable(labels);
+        } else {
+            localGridHighPassSlider.setMajorTickSpacing(0);
+        }
+        localGridHighPassSlider.setValue((int) Math.round(model.getLocalGridHighPassWeight() * 10));
+        localGridStandardDeviationFilterSizeSlider.setValue(model.getLocalGridStandardDeviationLevels());
         for (ColorRamp cr : model.predefinedColorRamps) {
             JMenuItem colorMenuItem = new JMenuItem(cr.name);
             colorMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -1331,12 +1346,18 @@ public class SettingsPanel extends javax.swing.JPanel {
             });
             colorPopupMenu.add(colorMenuItem);
         }
-        
-        contoursIlluminatedColorButton.setColor(new Color(m.contoursIlluminatedColor));
-        contoursShadowedColorButton.setColor(new Color(m.contoursShadowedColor));
+
+        contoursIlluminatedColorButton.setColor(new Color(model.contoursIlluminatedColor));
+        contoursShadowedColorButton.setColor(new Color(model.contoursShadowedColor));
 
         updateVisualizationPanelsVisibility();
         updateImage(REGULAR);
+
+    }
+
+    public void setModel(Model m) {
+        this.model = m;
+        updateGUI();
     }
 
     private MainWindow getOwnerWindow() {
@@ -1480,40 +1501,40 @@ public class SettingsPanel extends javax.swing.JPanel {
     }
 
     private void contoursMinLineWidthSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_contoursMinLineWidthSliderStateChanged
-        double v; 
+        double v;
         int sliderVal;
-        
+
         model.contoursMinWidth = contoursMinLineWidthSlider.getValue() / 10.;
-        
+
         v = ((Number) contoursShadowLineWidthHighValueField.getValue()).doubleValue();
         model.contoursShadowWidthHigh = Math.max(v, model.contoursMinWidth);
-        sliderVal = (int)Math.round(model.contoursShadowWidthHigh * 10);
+        sliderVal = (int) Math.round(model.contoursShadowWidthHigh * 10);
         setSliderValueWithoutTriggeringEvent(contoursShadowHighestLineWidthSlider, sliderVal);
-        
+
         v = ((Number) contoursShadowLineWidthLowValueField.getValue()).doubleValue();
         model.contoursShadowWidthLow = Math.max(v, model.contoursMinWidth);
-        sliderVal = (int)Math.round(model.contoursShadowWidthLow * 10);
+        sliderVal = (int) Math.round(model.contoursShadowWidthLow * 10);
         setSliderValueWithoutTriggeringEvent(contoursShadowLowestLineWidthSlider, sliderVal);
-        
+
         v = ((Number) contoursIlluminatedLineWidthHighValueField.getValue()).doubleValue();
         model.contoursIlluminatedWidthHigh = Math.max(v, model.contoursMinWidth);
-        sliderVal = (int)Math.round(model.contoursIlluminatedWidthHigh * 10);
+        sliderVal = (int) Math.round(model.contoursIlluminatedWidthHigh * 10);
         setSliderValueWithoutTriggeringEvent(contoursIlluminatedHighestLineWidthSlider, sliderVal);
-        
+
         v = ((Number) contoursIlluminatedLineWidthLowValueField.getValue()).doubleValue();
         model.contoursIlluminatedWidthLow = Math.max(v, model.contoursMinWidth);
-        sliderVal = (int)Math.round(model.contoursIlluminatedWidthLow * 10);
+        sliderVal = (int) Math.round(model.contoursIlluminatedWidthLow * 10);
         setSliderValueWithoutTriggeringEvent(contoursIlluminatedLowestLineWidthSlider, sliderVal);
-       
+
         // update text fields
         setFieldValueWithoutTriggeringEvent(contoursShadowLineWidthHighValueField, model.contoursShadowWidthHigh);
         setFieldValueWithoutTriggeringEvent(contoursShadowLineWidthLowValueField, model.contoursShadowWidthLow);
         setFieldValueWithoutTriggeringEvent(contoursIlluminatedLineWidthHighValueField, model.contoursIlluminatedWidthHigh);
         setFieldValueWithoutTriggeringEvent(contoursIlluminatedLineWidthLowValueField, model.contoursIlluminatedWidthLow);
-        
+
         // update map
         updateImage(contoursMinLineWidthSlider.getValueIsAdjusting() ? FAST : REGULAR);
-        
+
         DecimalFormat df = new DecimalFormat("0.0");
         String t = df.format(model.contoursMinWidth);
         contoursMinLineWidthValueLabel.setText(t);
@@ -1576,13 +1597,13 @@ public class SettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_localGridStandardDeviationFilterSizeSliderStateChanged
 
-    private void localGridLowPassSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_localGridLowPassSliderStateChanged
-        if (localGridLowPassSlider.getValueIsAdjusting() == false) {
-            int filterSize = localGridLowPassSlider.getValue();
-            model.setLocalGridLowPassStd(filterSize);
+    private void localGridHighPassSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_localGridHighPassSliderStateChanged
+        if (localGridHighPassSlider.getValueIsAdjusting() == false) {
+            int filterSize = localGridHighPassSlider.getValue();
+            model.setLocalGridHighPassWeight(filterSize / 10d);
             updateImage(REGULAR);
         }
-    }//GEN-LAST:event_localGridLowPassSliderStateChanged
+    }//GEN-LAST:event_localGridHighPassSliderStateChanged
 
     private void contoursDespeckleSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_contoursDespeckleSliderStateChanged
         model.contoursAspectGaussBlur = contoursDespeckleSlider.getValue() / 20D;
@@ -1667,12 +1688,12 @@ public class SettingsPanel extends javax.swing.JPanel {
 
     private void adjustMinWidth(double val) {
         model.contoursMinWidth = Math.min(val, model.contoursMinWidth);
-        int sliderVal = (int)Math.round(model.contoursMinWidth * 10f);
+        int sliderVal = (int) Math.round(model.contoursMinWidth * 10f);
         setSliderValueWithoutTriggeringEvent(contoursMinLineWidthSlider, sliderVal);
         String t = new DecimalFormat("0.0").format(model.contoursMinWidth);
         contoursMinLineWidthValueLabel.setText(t);
     }
-    
+
     private void contoursShadowLineWidthHighValueFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_contoursShadowLineWidthHighValueFieldPropertyChange
         if ("value".equals(evt.getPropertyName()) == false) {
             return;
@@ -1689,7 +1710,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         adjustMinWidth(model.contoursShadowWidthHigh);
         updateImage(contoursShadowHighestLineWidthSlider.getValueIsAdjusting() ? FAST : REGULAR);
     }//GEN-LAST:event_contoursShadowLineWidthHighValueFieldPropertyChange
-    
+
     private void contoursShadowLineWidthLowValueFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_contoursShadowLineWidthLowValueFieldPropertyChange
         if ("value".equals(evt.getPropertyName()) == false) {
             return;
@@ -1796,7 +1817,7 @@ public class SettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
-    private javax.swing.JSlider localGridLowPassSlider;
+    private javax.swing.JSlider localGridHighPassSlider;
     private javax.swing.JSlider localGridStandardDeviationFilterSizeSlider;
     private javax.swing.JPanel localHypsoPanel;
     private javax.swing.JPanel planObliquePanel;

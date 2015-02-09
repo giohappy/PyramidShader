@@ -4,9 +4,10 @@ import edu.oregonstate.cartography.grid.Grid;
 import edu.oregonstate.cartography.grid.LaplacianPyramid;
 
 // FIXME filter is square instead of circular
-// FIXME should use Gaussian bell curve for weighting values?
+// FIXME should use Gaussian bell curve for weighting values
 // FIXME does not work properly with NaN values
 // FIXME does not work with large filter size and small grid
+// FIXME document code
 
 /**
  *

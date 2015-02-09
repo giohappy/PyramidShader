@@ -53,5 +53,6 @@ public class SettingsDialog extends javax.swing.JDialog {
     
     public void modelChanged() {
         settingsPanel.updateImage(SettingsPanel.RenderSpeed.REGULAR);
+        settingsPanel.updateGUI();
     }
 }

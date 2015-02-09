@@ -5,6 +5,7 @@
 package edu.oregonstate.cartography.grid.operators;
 
 import edu.oregonstate.cartography.grid.Grid;
+import java.text.DecimalFormat;
 
 /**
  * Gaussian blur or low pass filter. Uses the fact that a 2D Gaussian
@@ -26,13 +27,6 @@ public class GridGaussLowPassOperator implements GridOperator {
      * stronger smoothing.
      */
     private double std = 0.8;
-
-    /**
-     * A grid that is used during the filtering process. It is cached between
-     * calls to operate(), as the allocation of this grid is relatively
-     * expensive.
-     */
-    private Grid tempTransposedGrid;
 
     /**
      * The size of the kernel relative to the standard deviation. The kernel's
@@ -57,21 +51,12 @@ public class GridGaussLowPassOperator implements GridOperator {
          */
         @Override
         protected Grid initDestinationGrid(Grid srcGrid) {
-
-            if (!isTemporaryTransposedGridValid(srcGrid)) {
-                final int nrows = srcGrid.getRows();
-                final int ncols = srcGrid.getCols();
-                tempTransposedGrid = new Grid(nrows, ncols, srcGrid.getCellSize());
-                tempTransposedGrid.setWest(srcGrid.getWest());
-                tempTransposedGrid.setSouth(srcGrid.getSouth());
-            }
+            final int nrows = srcGrid.getRows();
+            final int ncols = srcGrid.getCols();
+            Grid tempTransposedGrid = new Grid(nrows, ncols, srcGrid.getCellSize());
+            tempTransposedGrid.setWest(srcGrid.getWest());
+            tempTransposedGrid.setSouth(srcGrid.getSouth());
             return tempTransposedGrid;
-        }
-
-        private boolean isTemporaryTransposedGridValid(Grid srcGrid) {
-            return tempTransposedGrid != null
-                    && srcGrid.getCols() == tempTransposedGrid.getRows()
-                    && srcGrid.getRows() == tempTransposedGrid.getCols();
         }
 
         @Override
@@ -190,6 +175,21 @@ public class GridGaussLowPassOperator implements GridOperator {
     @Override
     public String getName() {
         return "Gauss Low Pass";
+    }
+
+    public String kernelToString() {
+        float[] kernel = kernel();
+        StringBuilder sb = new StringBuilder();
+        DecimalFormat df = new DecimalFormat("0.####");
+        sb.append("Kernel ");
+        sb.append(kernel.length);
+        sb.append("x");
+        sb.append(kernel.length);
+        sb.append(System.getProperty("line.separator"));
+        for (int i = 0; i < kernel.length; i++) {
+            sb.append(df.format(kernel[i])).append(" ");
+        }
+        return sb.toString();
     }
 
     /**

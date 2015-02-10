@@ -1,5 +1,6 @@
 package edu.oregonstate.cartography.grid.operators;
 
+import edu.oregonstate.cartography.app.Vector3D;
 import edu.oregonstate.cartography.grid.Grid;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -83,6 +84,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
     private int[] reds;
     private int[] greens;
     private int[] blues;
+
+    // utility variables for accelerating gray shading computation
+    private double lx, ly, lz, nz, nz_sq;
 
     // colored image output
     private BufferedImage dstImage;
@@ -201,143 +205,276 @@ public class ColorizerOperator extends ThreadedGridOperator {
     /**
      * Compute the color image.
      *
-     * @param grayShadingGrid Grid with shading values between 0 and 255
-     * @param elevationGrid Grid with elevation values.
+     * @param grid Grid with (elevation) values.
      * @param image Image to write pixels to. Can be null.
      * @param minElev Lowest elevation in elevationGrid
      * @param maxElev Highest elevation in elevationGrid
+     * @param azimuth
+     * @param zenith
+     * @param vertExaggeration
      * @return An image with new pixels. This can be identical to the passed
      * image.
      */
-    public BufferedImage operate(Grid grayShadingGrid, Grid elevationGrid,
-            BufferedImage image, float minElev, float maxElev) {
+    public BufferedImage operate(Grid grid,
+            BufferedImage image, float minElev, float maxElev, double azimuth,
+            double zenith, float vertExaggeration) {
+
         dstImage = image;
         this.minElev = minElev;
         this.maxElev = maxElev;
-        super.operate(grayShadingGrid, elevationGrid);
+
+        // create a light vector
+        Vector3D light = new Vector3D(azimuth, zenith);
+        lx = light.x;
+        ly = light.y;
+        lz = light.z;
+
+        // the cell size to calculate the horizontal components of vectors
+        double cellSize = grid.getCellSize();
+        // convert degrees to meters on a sphere
+        if (cellSize < 0.1) {
+            cellSize = cellSize / 180 * Math.PI * 6371000;
+        }
+
+        // z coordinate of normal vector
+        nz = 2 * cellSize / vertExaggeration;
+        nz_sq = nz * nz;
+
+        super.operate(grid, grid);
         return dstImage;
     }
 
-    private void grayShading(Grid grayShadingGrid, Grid elevationGrid, int startRow, int endRow) {
+    private int[] imageBuffer(BufferedImage img) {
+        return ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
+    }
+
+    /**
+     * Computes a shading value in 0..255 for a normal vector.
+     *
+     * @param nx X component of normal vector.
+     * @param ny Y component of normal vector.
+     * @return Gray value between 0 and 255.
+     */
+    private double shadeNormal(double nx, double ny) {
+        // compute the dot product of the normal and the light vector. This
+        // gives a value between -1 (surface faces directly away from
+        // light) and 1 (surface faces directly toward light)
+        final double nL = Math.sqrt(nx * nx + ny * ny + nz_sq);
+        final double dotProduct = (nx * lx + ny * ly + nz * lz) / nL;
+
+        // scale dot product from [-1, +1] to a gray value in [0, 255]
+        return (dotProduct + 1d) * 127.5;
+    }
+
+    private double shade(float[][] grid, int col, int row, int nCols, int nRows) {
+        if (row == 0) {
+            // top-left corner
+            if (col == 0) {
+                final double s = grid[1][0];
+                final double e = grid[0][1];
+                final double c = grid[0][0];
+                return shadeNormal(2 * (e - c), 2 * (s - c));
+            }
+
+            // top-right corner
+            if (col == nCols - 1) {
+                final double s = grid[1][nCols - 1];
+                final double w = grid[0][nCols - 2];
+                final double c = grid[0][nCols - 1];
+                return shadeNormal(2 * (w - c), 2 * (s - c));
+            }
+
+            // somewhere in top row
+            final double s = grid[1][col];
+            final double e = grid[0][col + 1];
+            final double c = grid[0][col];
+            final double w = grid[0][col - 1];
+            return shadeNormal(w - e, 2 * (s - c));
+        }
+
+        if (row == nRows - 1) {
+            // bottom-left corner
+            if (col == 0) {
+                final double n = grid[nRows - 2][0];
+                final double e = grid[nRows - 1][1];
+                final double c = grid[nRows - 1][0];
+                return shadeNormal(2 * (c - e), 2 * (c - n));
+            }
+
+            // bottom-right corner
+            if (col == nCols - 1) {
+                final double n = grid[nRows - 2][nCols - 1];
+                final double w = grid[nRows - 1][nCols - 2];
+                final double c = grid[nRows - 1][nCols - 1];
+                return shadeNormal(2 * (w - c), 2 * (c - n));
+            }
+
+            // center of bottom row
+            final double n = grid[nRows - 2][col];
+            final double e = grid[nRows - 1][col + 1];
+            final double c = grid[nRows - 1][col];
+            final double w = grid[nRows - 1][col - 1];
+            return shadeNormal(w - e, 2 * (c - n));
+        }
+
+        if (col == 0) {
+            final float[] topR = grid[row - 1];
+            final float[] ctrR = grid[row];
+            final float[] btmR = grid[row + 1];
+            return shadeNormal(2 * (ctrR[0] - ctrR[1]), btmR[0] - topR[0]);
+        }
+
+        if (col == nCols - 1) {
+            final float[] topR = grid[row - 1];
+            final float[] ctrR = grid[row];
+            final float[] btmR = grid[row + 1];
+            return shadeNormal(2 * (ctrR[nCols - 2] - ctrR[nCols - 1]),
+                    btmR[nCols - 1] - topR[nCols - 1]);
+        }
+
+        // normal vector on vertex
+        final float[] centerRow = grid[row];
+        final double nx = centerRow[col - 1] - centerRow[col + 1];
+        final double ny = grid[row + 1][col] - grid[row - 1][col];
+        return shadeNormal(nx, ny);
+    }
+
+    private void grayShading(float[][] grid, int startRow, int endRow) {
         final int nCols = dstImage.getWidth();
-        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        final int nRows = dstImage.getHeight();
+        final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
-            for (int col = 0; col < nCols; ++col) {// convert the shaded gray value to an ARGB pixel value
-                final float gray = grayShadingGrid.getValue(col, row);
-                if (Float.isNaN(gray)) {
+            for (int col = 0; col < nCols; ++col) {
+                final double gray = shade(grid, col, row, nCols, nRows);
+                if (Double.isNaN(gray)) {
                     imageBuffer[row * nCols + col] = VOID_COLOR;
                 } else {
                     final int g = (int) gray;
-                    final int argb = g | (g << 8) | (g << 16) | 0xFF000000;
-                    imageBuffer[row * nCols + col] = argb;
+                    imageBuffer[row * nCols + col] = g | (g << 8) | (g << 16) | 0xFF000000;
                 }
             }
         }
     }
 
-    private void hypsometricShading(Grid grayShadingGrid, Grid elevationGrid, int startRow, int endRow) {
-        final int nCols = dstImage.getWidth();
-        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+    private void hypsometricShading(Grid grid, int startRow, int endRow) {
+        final int nCols = grid.getCols();
+        final int nRows = grid.getRows();
+        final float[][] gr = grid.getGrid();
+        final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
-            for (int col = 0; col < nCols; ++col) {// convert the shaded gray value to an ARGB pixel value
-                final float gray = grayShadingGrid.getValue(col, row);
-                if (Float.isNaN(gray)) {
+            for (int col = 0; col < nCols; ++col) {
+                final double gray = shade(gr, col, row, nCols, nRows);
+                if (Double.isNaN(gray)) {
                     imageBuffer[row * nCols + col] = VOID_COLOR;
                 } else {
-                    // apply a color ramp to the elevation value
-                    final float v = elevationGrid.getValue(col, row);
-                    // multiply the elevation color with the gray value of the shading
-                    final int argb = getLinearRGB(v, minElev, maxElev, gray / 255f);
+                    // apply a color ramp to the grid value
+                    final float v = gr[row][col];
+                    // multiply the color with the gray value of the shading
+                    final int argb = getLinearRGB(v, minElev, maxElev, (float) (gray / 255d));
                     imageBuffer[row * nCols + col] = argb;
                 }
             }
         }
     }
 
-    private void expositionShading(Grid grayShadingGrid, Grid elevationGrid, int startRow, int endRow) {
+    private void expositionShading(float[][] grid, int startRow, int endRow) {
         final int nCols = dstImage.getWidth();
-        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        final int nRows = dstImage.getHeight();
+        final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
-            for (int col = 0; col < nCols; ++col) {// convert the shaded gray value to an ARGB pixel value
-                final float gray = grayShadingGrid.getValue(col, row);
-                if (Float.isNaN(gray)) {
+            for (int col = 0; col < nCols; ++col) {
+                final double gray = shade(grid, col, row, nCols, nRows);
+                if (Double.isNaN(gray)) {
                     imageBuffer[row * nCols + col] = VOID_COLOR;
                 } else {
                     // apply a color ramp to the shaded gray value 
-                    final int argb = getLinearRGB(gray, 0, 255, 1f);
+                    final int argb = getLinearRGB((float) gray, 0, 255, 1f);
                     imageBuffer[row * nCols + col] = argb;
                 }
             }
         }
     }
 
-    private void hypsometric(Grid elevationGrid, int startRow, int endRow) {
+    private void hypsometric(Grid grid, int startRow, int endRow) {
         final int nCols = dstImage.getWidth();
-        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
+            float[] gridRow = grid.getGrid()[row];
             for (int col = 0; col < nCols; ++col) {
-                final float v = elevationGrid.getValue(col, row);
-                final int argb = getLinearRGB(v, minElev, maxElev, 1);
-                imageBuffer[row * nCols + col] = argb;
+                final float v = gridRow[col];
+                if (Float.isNaN(v)) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                } else {
+                    final int argb = getLinearRGB(v, minElev, maxElev, 1);
+                    imageBuffer[row * nCols + col] = argb;
+                }
             }
         }
     }
 
-    private void slope(Grid elevationGrid, int startRow, int endRow) {
+    private void slope(Grid grid, int startRow, int endRow) {
         final int nCols = dstImage.getWidth();
-        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
             for (int col = 0; col < nCols; ++col) {
-                final float slope = (float) elevationGrid.getSlope(col, row);
-                final int argb = getLinearRGB(slope, 0, 1, 1);
-                imageBuffer[row * nCols + col] = argb;
+                final float slope = (float) grid.getSlope(col, row);
+                if (Float.isNaN(slope)) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                } else {
+                    final int argb = getLinearRGB(slope, 0, 1, 1);
+                    imageBuffer[row * nCols + col] = argb;
+                }
             }
         }
     }
 
-    private void aspect(Grid elevationGrid, int startRow, int endRow) {
+    private void aspect(Grid grid, int startRow, int endRow) {
         final int nCols = dstImage.getWidth();
-        final int[] imageBuffer = ((DataBufferInt) (dstImage.getRaster().getDataBuffer())).getData();
+        final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
             for (int col = 0; col < nCols; ++col) {
-                float aspect = (float) elevationGrid.getAspect(col, row);
-                final int argb = getLinearRGB(aspect, (float) -Math.PI, (float) Math.PI, 1);
-                imageBuffer[row * nCols + col] = argb;
+                final float aspect = (float) grid.getAspect(col, row);
+                if (Float.isNaN(aspect)) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                } else {
+                    final int argb = getLinearRGB(aspect, (float) -Math.PI, (float) Math.PI, 1);
+                    imageBuffer[row * nCols + col] = argb;
+                }
             }
         }
     }
 
     /**
-     * Compute a colored chunk of this image.
-     * FIXME gray shading should be computed here. grayShadingGrid should be removed.
+     * Compute a colored chunk of this image. FIXME gray shading should be
+     * computed here. grayShadingGrid should be removed.
      *
-     * @param grayShadingGrid Grid with shaded values between 0 and 255
-     * @param elevationGrid Grid with elevation values.
+     * @param grid Grid with elevation values.
+     * @param ignore
      * @param startRow First row to compute.
      * @param endRow First row of next chunk.
      */
     @Override
-    protected void operate(Grid grayShadingGrid, Grid elevationGrid, int startRow, int endRow) {
+    protected void operate(Grid grid, Grid ignore, int startRow, int endRow) {
         switch (colorVisualization) {
             case GRAY_SHADING:
-                grayShading(grayShadingGrid, elevationGrid, startRow, endRow);
+                grayShading(grid.getGrid(), startRow, endRow);
                 break;
             case EXPOSITION:
-                expositionShading(grayShadingGrid, elevationGrid, startRow, endRow);
+                expositionShading(grid.getGrid(), startRow, endRow);
                 break;
             case HYPSOMETRIC_SHADING:
             case LOCAL_HYPSOMETRIC_SHADING:
-                hypsometricShading(grayShadingGrid, elevationGrid, startRow, endRow);
+                hypsometricShading(grid, startRow, endRow);
                 break;
             case HYPSOMETRIC:
             case LOCAL_HYPSOMETRIC:
-                hypsometric(elevationGrid, startRow, endRow);
+                hypsometric(grid, startRow, endRow);
                 break;
             case SLOPE:
-                slope(elevationGrid, startRow, endRow);
+                slope(grid, startRow, endRow);
                 break;
             case ASPECT:
-                aspect(elevationGrid, startRow, endRow);
+                aspect(grid, startRow, endRow);
                 break;
         }
     }

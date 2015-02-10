@@ -394,25 +394,18 @@ public class Model implements Cloneable {
                 planObliqueGeneralizedGrid = planObliqueOp.operate(generalizedGrid);
             }
 
-            // shading
-            ShaderOperator shader = new ShaderOperator();
-            shader.setIlluminationAzimuth(azimuth);
-            shader.setIlluminationZenith(zenith);
-            shader.setVerticalExaggeration(shadingVerticalExaggeration);
-            Grid reliefComposite = shader.operate(planObliqueGeneralizedGrid);
-
-            // coloring
+            // coloring and shading
             ColorizerOperator colorizer = new ColorizerOperator(backgroundVisualization);
             colorizer.setColors(colorRamp.colors, colorRamp.colorPositions);
 
-            Grid terrainGrid;
+            Grid grid;
             if (backgroundVisualization.isLocal()) {
-                terrainGrid = localGridModel.getFilteredGrid();
+                grid = localGridModel.getFilteredGrid();
             } else {
-                terrainGrid = planObliqueGeneralizedGrid;
+                grid = planObliqueGeneralizedGrid;
             }
-            colorizer.operate(reliefComposite, terrainGrid, destinationImage,
-                    gridMinMax[0], gridMinMax[1]);
+            colorizer.operate(grid, destinationImage,
+                    gridMinMax[0], gridMinMax[1], azimuth, zenith, shadingVerticalExaggeration);
         }
         return destinationImage;
     }

@@ -13,6 +13,7 @@ import edu.oregonstate.cartography.grid.Model;
 import static edu.oregonstate.cartography.grid.Model.ForegroundVisualization.ILLUMINATED_CONTOURS;
 import edu.oregonstate.cartography.grid.WorldFileExporter;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
+import edu.oregonstate.cartography.grid.operators.NormalMapOperator;
 import edu.oregonstate.cartography.simplefeatures.GeometryCollection;
 import edu.oregonstate.cartography.simplefeatures.LineString;
 import edu.oregonstate.cartography.simplefeatures.PlanObliqueShearing;
@@ -115,6 +116,7 @@ public class MainWindow extends javax.swing.JFrame {
         javax.swing.JMenu saveContoursMenu = new javax.swing.JMenu();
         saveTIFFContoursMenuItem = new javax.swing.JMenuItem();
         savePNGContoursMenuItem = new javax.swing.JMenuItem();
+        saveNormalMapMenuItem = new javax.swing.JMenuItem();
         javax.swing.JPopupMenu.Separator jSeparator6 = new javax.swing.JPopupMenu.Separator();
         planObliqueFeaturesMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
@@ -281,6 +283,14 @@ public class MainWindow extends javax.swing.JFrame {
         saveContoursMenu.add(savePNGContoursMenuItem);
 
         fileMenu.add(saveContoursMenu);
+
+        saveNormalMapMenuItem.setText("Save Normal Map…");
+        saveNormalMapMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveNormalMapMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(saveNormalMapMenuItem);
         fileMenu.add(jSeparator6);
 
         planObliqueFeaturesMenuItem.setText("Plan Oblique Lines…");
@@ -846,6 +856,34 @@ public class MainWindow extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_saveDownsampledMenuMenuSelected
 
+    private void saveNormalMapMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveNormalMapMenuItemActionPerformed
+        String filePath = askFile("Normal Map", false);
+        String format = "tif";
+        //Make sure the choice is a valid file
+        if (filePath != null) {
+            filePath = FileUtils.forceFileNameExtension(filePath, format);
+            try {
+                BufferedImage img = model.createDestinationImage(1);
+                NormalMapOperator op = new NormalMapOperator();
+                op.operate(model.getGeneralizedGrid(), img, model.shadingVerticalExaggeration);
+                ImageIO.write(img, format, new File(filePath));
+
+                // create world file for image file
+                String worldFilePath = WorldFileExporter.constructPath(filePath);
+                Grid dem = model.getGeneralizedGrid();
+                double cellSize = dem.getCellSize();
+                // for each grid value, one image cell is contructed. The extent
+                // of the image is therefore one pixel larger horizontally and
+                // vertically.
+                double west = dem.getWest() - cellSize / 2;
+                double north = dem.getNorth() + cellSize / 2;
+                WorldFileExporter.writeWorldFile(worldFilePath, cellSize, west, north);
+            } catch (IOException ex) {
+                ErrorDialog.showErrorDialog(SAVE_IMAGE_ERROR_MESSAGE, "Error", ex, this);
+            }
+        }
+    }//GEN-LAST:event_saveNormalMapMenuItemActionPerformed
+
     /**
      * Ask the user for a file to read or write.
      *
@@ -1015,6 +1053,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenuItem planObliqueFeaturesMenuItem;
     private javax.swing.JMenu saveDownsampledMenu;
     private javax.swing.JMenuItem saveLocalTerrainMenuItem;
+    private javax.swing.JMenuItem saveNormalMapMenuItem;
     private javax.swing.JMenuItem savePNGContoursMenuItem;
     private javax.swing.JMenuItem savePNGImageMenuItem;
     private javax.swing.JMenuItem saveTIFFContoursMenuItem;

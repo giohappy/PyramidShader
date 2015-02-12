@@ -212,8 +212,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
      * @param azimuth
      * @param zenith
      * @param vertExaggeration
-     * @return An image with new pixels. This can be identical to the passed
-     * image.
+     * @return An image with new pixels.
      */
     public BufferedImage operate(Grid grid,
             BufferedImage image, float minElev, float maxElev, double azimuth,
@@ -445,8 +444,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
     }
 
     /**
-     * Compute a colored chunk of this image. FIXME gray shading should be
-     * computed here. grayShadingGrid should be removed.
+     * Compute a chunk of the image.
      *
      * @param grid Grid with elevation values.
      * @param ignore

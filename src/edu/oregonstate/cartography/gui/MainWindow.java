@@ -14,6 +14,7 @@ import static edu.oregonstate.cartography.grid.Model.ForegroundVisualization.ILL
 import edu.oregonstate.cartography.grid.WorldFileExporter;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
 import edu.oregonstate.cartography.grid.operators.NormalMapOperator;
+import edu.oregonstate.cartography.grid.operators.NormalMapOperator.Channel;
 import edu.oregonstate.cartography.simplefeatures.GeometryCollection;
 import edu.oregonstate.cartography.simplefeatures.LineString;
 import edu.oregonstate.cartography.simplefeatures.PlanObliqueShearing;
@@ -660,6 +661,8 @@ public class MainWindow extends javax.swing.JFrame {
         savePNGImageMenuItem.setEnabled(gridLoaded);
         saveTIFFContoursMenuItem.setEnabled(contoursVisible);
         savePNGContoursMenuItem.setEnabled(contoursVisible);
+        saveTIFFNormalMapMenuItem.setEnabled(gridLoaded);
+        savePNGNormalMapMenuItem.setEnabled(gridLoaded);
     }//GEN-LAST:event_fileMenuMenuSelected
 
     private void viewMenuMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_viewMenuMenuSelected
@@ -876,7 +879,8 @@ public class MainWindow extends javax.swing.JFrame {
             filePath = FileUtils.forceFileNameExtension(filePath, format);
             try {
                 BufferedImage img = model.createDestinationImage(1);
-                NormalMapOperator op = new NormalMapOperator();
+                NormalMapOperator op = new NormalMapOperator(Channel.R, Channel.G, Channel.B, 
+                        false, false, false);
                 op.operate(model.getGeneralizedGrid(), img, model.shadingVerticalExaggeration);
                 ImageIO.write(img, format, new File(filePath));
 

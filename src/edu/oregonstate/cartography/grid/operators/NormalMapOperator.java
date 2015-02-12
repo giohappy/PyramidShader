@@ -11,17 +11,50 @@ import java.awt.image.DataBufferInt;
  */
 public class NormalMapOperator extends ThreadedGridOperator {
 
+    public enum Channel {
+
+        R, G, B
+    };
+
+    private Channel xChannel = Channel.R;
+    private Channel yChannel = Channel.G;
+    private Channel zChannel = Channel.B;
+
+    private boolean invertX = false;
+    private boolean invertY = false;
+    private boolean invertZ = false;
+
     // utility variables for accelerating computations
-    private double nz, nz_sq;
+    private double normalZ, nz_sq;
 
     // colored image output
     private BufferedImage dstImage;
 
     /**
-     * Creates a new instance
-     *
+     * Creates a new instance with x normal components on red channel, y on
+     * green channel, and z on blue channel.
      */
     public NormalMapOperator() {
+    }
+
+    /**
+     * Creates a new instance with configurable channel assignments.
+     *
+     * @param xChannel The channel for storing the x component of normals.
+     * @param yChannel The channel for storing the y component of normals.
+     * @param zChannel The channel for storing the z component of normals.
+     * @param invertX True if the x component of the normal is to be inverted.
+     * @param invertY True if the y component of the normal is to be inverted.
+     * @param invertZ True if the z component of the normal is to be inverted.
+     */
+    public NormalMapOperator(Channel xChannel, Channel yChannel, Channel zChannel,
+            boolean invertX, boolean invertY, boolean invertZ) {
+        this.xChannel = xChannel;
+        this.yChannel = yChannel;
+        this.zChannel = zChannel;
+        this.invertX = invertX;
+        this.invertY = invertY;
+        this.invertZ = invertZ;
     }
 
     /**
@@ -42,8 +75,7 @@ public class NormalMapOperator extends ThreadedGridOperator {
      * @param grid Grid with (elevation) values.
      * @param image Image to write pixels to. Can be null.
      * @param vertExaggeration
-     * @return An image with new pixels.
-     * image.
+     * @return An image with new pixels. image.
      */
     public BufferedImage operate(Grid grid, BufferedImage image, float vertExaggeration) {
 
@@ -57,8 +89,8 @@ public class NormalMapOperator extends ThreadedGridOperator {
         }
 
         // z coordinate of normal vector
-        nz = 2 * cellSize / vertExaggeration;
-        nz_sq = nz * nz;
+        normalZ = 2 * cellSize / vertExaggeration;
+        nz_sq = normalZ * normalZ;
 
         super.operate(grid, grid);
         return dstImage;
@@ -66,6 +98,16 @@ public class NormalMapOperator extends ThreadedGridOperator {
 
     private int[] imageBuffer(BufferedImage img) {
         return ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
+    }
+
+    private int shift(Channel ch, int color) {
+        if (ch == Channel.R) {
+            return color << 16;
+        }
+        if (ch == Channel.G) {
+            return color << 8;
+        }
+        return color;
     }
 
     /**
@@ -80,10 +122,19 @@ public class NormalMapOperator extends ThreadedGridOperator {
         if (Double.isNaN(nL)) {
             return 0xFF0000FF; // should this be a vector with 0 length?
         }
-        final int r = (int) (Math.round((nx / nL + 1d) / 2d * 255d));
-        final int g = (int) (Math.round((ny / nL + 1d) / 2d * 255d));
-        final int b = (int) (Math.round((nz / nL + 1d) / 2d * 255d));
-        return 0xFF000000 | r << 16 | g << 8 | b;
+
+        if (invertX) {
+            nx *= -1;
+        }
+        if (invertY) {
+            ny *= -1;
+        }
+        final double nz = invertZ ? normalZ * -1 : normalZ;
+
+        final int x = (int) (Math.round((nx / nL + 1d) / 2d * 255d));
+        final int y = (int) (Math.round((ny / nL + 1d) / 2d * 255d));
+        final int z = (int) (Math.round((nz / nL + 1d) / 2d * 255d));
+        return 0xFF000000 | shift(xChannel, x) | shift(yChannel, y) | shift(zChannel, z);
     }
 
     private int normalARGB(float[][] grid, int col, int row, int nCols, int nRows) {

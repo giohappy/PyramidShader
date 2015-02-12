@@ -116,7 +116,9 @@ public class MainWindow extends javax.swing.JFrame {
         javax.swing.JMenu saveContoursMenu = new javax.swing.JMenu();
         saveTIFFContoursMenuItem = new javax.swing.JMenuItem();
         savePNGContoursMenuItem = new javax.swing.JMenuItem();
-        saveNormalMapMenuItem = new javax.swing.JMenuItem();
+        javax.swing.JMenu saveContoursMenu1 = new javax.swing.JMenu();
+        saveTIFFNormalMapMenuItem = new javax.swing.JMenuItem();
+        savePNGNormalMapMenuItem = new javax.swing.JMenuItem();
         javax.swing.JPopupMenu.Separator jSeparator6 = new javax.swing.JPopupMenu.Separator();
         planObliqueFeaturesMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
@@ -284,13 +286,25 @@ public class MainWindow extends javax.swing.JFrame {
 
         fileMenu.add(saveContoursMenu);
 
-        saveNormalMapMenuItem.setText("Save Normal Map…");
-        saveNormalMapMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        saveContoursMenu1.setText("Save Normal Map");
+
+        saveTIFFNormalMapMenuItem.setText("TIFF");
+        saveTIFFNormalMapMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveNormalMapMenuItemActionPerformed(evt);
+                saveTIFFNormalMapMenuItemActionPerformed(evt);
             }
         });
-        fileMenu.add(saveNormalMapMenuItem);
+        saveContoursMenu1.add(saveTIFFNormalMapMenuItem);
+
+        savePNGNormalMapMenuItem.setText("PNG");
+        savePNGNormalMapMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                savePNGNormalMapMenuItemActionPerformed(evt);
+            }
+        });
+        saveContoursMenu1.add(savePNGNormalMapMenuItem);
+
+        fileMenu.add(saveContoursMenu1);
         fileMenu.add(jSeparator6);
 
         planObliqueFeaturesMenuItem.setText("Plan Oblique Lines…");
@@ -856,10 +870,8 @@ public class MainWindow extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_saveDownsampledMenuMenuSelected
 
-    private void saveNormalMapMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveNormalMapMenuItemActionPerformed
+    private void saveNormalMap(String format) {
         String filePath = askFile("Normal Map", false);
-        String format = "tif";
-        //Make sure the choice is a valid file
         if (filePath != null) {
             filePath = FileUtils.forceFileNameExtension(filePath, format);
             try {
@@ -882,7 +894,14 @@ public class MainWindow extends javax.swing.JFrame {
                 ErrorDialog.showErrorDialog(SAVE_IMAGE_ERROR_MESSAGE, "Error", ex, this);
             }
         }
-    }//GEN-LAST:event_saveNormalMapMenuItemActionPerformed
+    }
+    private void saveTIFFNormalMapMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveTIFFNormalMapMenuItemActionPerformed
+        saveNormalMap("tif");
+    }//GEN-LAST:event_saveTIFFNormalMapMenuItemActionPerformed
+
+    private void savePNGNormalMapMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savePNGNormalMapMenuItemActionPerformed
+        saveNormalMap("png");
+    }//GEN-LAST:event_savePNGNormalMapMenuItemActionPerformed
 
     /**
      * Ask the user for a file to read or write.
@@ -1053,11 +1072,12 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenuItem planObliqueFeaturesMenuItem;
     private javax.swing.JMenu saveDownsampledMenu;
     private javax.swing.JMenuItem saveLocalTerrainMenuItem;
-    private javax.swing.JMenuItem saveNormalMapMenuItem;
     private javax.swing.JMenuItem savePNGContoursMenuItem;
     private javax.swing.JMenuItem savePNGImageMenuItem;
+    private javax.swing.JMenuItem savePNGNormalMapMenuItem;
     private javax.swing.JMenuItem saveTIFFContoursMenuItem;
     private javax.swing.JMenuItem saveTIFFImageMenuItem;
+    private javax.swing.JMenuItem saveTIFFNormalMapMenuItem;
     private javax.swing.JMenuItem saveTerrainMenuItem;
     private javax.swing.JFormattedTextField scaleTerrainFormattedTextField;
     private javax.swing.JMenuItem scaleTerrainModelMenuItem;

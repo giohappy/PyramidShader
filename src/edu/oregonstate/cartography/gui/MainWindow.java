@@ -42,7 +42,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.imageio.ImageIO;
-import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -880,7 +879,7 @@ public class MainWindow extends javax.swing.JFrame {
             try {
                 BufferedImage img = model.createDestinationImage(1);
                 NormalMapOperator op = new NormalMapOperator(Channel.R, Channel.G, Channel.B, 
-                        false, false, false);
+                        false, false, false, 1f);
                 op.operate(model.getGeneralizedGrid(), img, model.shadingVerticalExaggeration);
                 ImageIO.write(img, format, new File(filePath));
 

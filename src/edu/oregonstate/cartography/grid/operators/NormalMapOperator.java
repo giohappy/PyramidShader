@@ -11,7 +11,7 @@ import java.awt.image.DataBufferInt;
  */
 public class NormalMapOperator extends ThreadedGridOperator {
 
-    // utility variables for accelerating gray shading computation
+    // utility variables for accelerating computations
     private double nz, nz_sq;
 
     // colored image output
@@ -75,22 +75,25 @@ public class NormalMapOperator extends ThreadedGridOperator {
      * @param ny Y component of normal vector.
      * @return Gray value between 0 and 255.
      */
-    private int shadeNormal(double nx, double ny) {
+    private int normalARGB(double nx, double ny) {
         final double nL = Math.sqrt(nx * nx + ny * ny + nz_sq);
+        if (Double.isNaN(nL)) {
+            return 0xFF0000FF; // should this be a vector with 0 length?
+        }
         final int r = (int) (Math.round((nx / nL + 1d) / 2d * 255d));
         final int g = (int) (Math.round((ny / nL + 1d) / 2d * 255d));
         final int b = (int) (Math.round((nz / nL + 1d) / 2d * 255d));
         return 0xFF000000 | r << 16 | g << 8 | b;
     }
 
-    private int shade(float[][] grid, int col, int row, int nCols, int nRows) {
+    private int normalARGB(float[][] grid, int col, int row, int nCols, int nRows) {
         if (row == 0) {
             // top-left corner
             if (col == 0) {
                 final double s = grid[1][0];
                 final double e = grid[0][1];
                 final double c = grid[0][0];
-                return shadeNormal(2 * (e - c), 2 * (s - c));
+                return normalARGB(2 * (e - c), 2 * (s - c));
             }
 
             // top-right corner
@@ -98,7 +101,7 @@ public class NormalMapOperator extends ThreadedGridOperator {
                 final double s = grid[1][nCols - 1];
                 final double w = grid[0][nCols - 2];
                 final double c = grid[0][nCols - 1];
-                return shadeNormal(2 * (w - c), 2 * (s - c));
+                return normalARGB(2 * (w - c), 2 * (s - c));
             }
 
             // somewhere in top row
@@ -106,7 +109,7 @@ public class NormalMapOperator extends ThreadedGridOperator {
             final double e = grid[0][col + 1];
             final double c = grid[0][col];
             final double w = grid[0][col - 1];
-            return shadeNormal(w - e, 2 * (s - c));
+            return normalARGB(w - e, 2 * (s - c));
         }
 
         if (row == nRows - 1) {
@@ -115,7 +118,7 @@ public class NormalMapOperator extends ThreadedGridOperator {
                 final double n = grid[nRows - 2][0];
                 final double e = grid[nRows - 1][1];
                 final double c = grid[nRows - 1][0];
-                return shadeNormal(2 * (c - e), 2 * (c - n));
+                return normalARGB(2 * (c - e), 2 * (c - n));
             }
 
             // bottom-right corner
@@ -123,7 +126,7 @@ public class NormalMapOperator extends ThreadedGridOperator {
                 final double n = grid[nRows - 2][nCols - 1];
                 final double w = grid[nRows - 1][nCols - 2];
                 final double c = grid[nRows - 1][nCols - 1];
-                return shadeNormal(2 * (w - c), 2 * (c - n));
+                return normalARGB(2 * (w - c), 2 * (c - n));
             }
 
             // center of bottom row
@@ -131,21 +134,21 @@ public class NormalMapOperator extends ThreadedGridOperator {
             final double e = grid[nRows - 1][col + 1];
             final double c = grid[nRows - 1][col];
             final double w = grid[nRows - 1][col - 1];
-            return shadeNormal(w - e, 2 * (c - n));
+            return normalARGB(w - e, 2 * (c - n));
         }
 
         if (col == 0) {
             final float[] topR = grid[row - 1];
             final float[] ctrR = grid[row];
             final float[] btmR = grid[row + 1];
-            return shadeNormal(2 * (ctrR[0] - ctrR[1]), btmR[0] - topR[0]);
+            return normalARGB(2 * (ctrR[0] - ctrR[1]), btmR[0] - topR[0]);
         }
 
         if (col == nCols - 1) {
             final float[] topR = grid[row - 1];
             final float[] ctrR = grid[row];
             final float[] btmR = grid[row + 1];
-            return shadeNormal(2 * (ctrR[nCols - 2] - ctrR[nCols - 1]),
+            return normalARGB(2 * (ctrR[nCols - 2] - ctrR[nCols - 1]),
                     btmR[nCols - 1] - topR[nCols - 1]);
         }
 
@@ -153,7 +156,7 @@ public class NormalMapOperator extends ThreadedGridOperator {
         final float[] centerRow = grid[row];
         final double nx = centerRow[col - 1] - centerRow[col + 1];
         final double ny = grid[row + 1][col] - grid[row - 1][col];
-        return shadeNormal(nx, ny);
+        return normalARGB(nx, ny);
     }
 
     /**
@@ -172,7 +175,7 @@ public class NormalMapOperator extends ThreadedGridOperator {
         final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
             for (int col = 0; col < nCols; ++col) {
-                imageBuffer[row * nCols + col] = shade(g, col, row, nCols, nRows);
+                imageBuffer[row * nCols + col] = normalARGB(g, col, row, nCols, nRows);
             }
         }
     }

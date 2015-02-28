@@ -7,6 +7,7 @@ package edu.oregonstate.cartography.gui;
 
 import java.awt.event.ActionListener;
 import javax.swing.Action;
+import javax.swing.JLabel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
@@ -86,11 +87,34 @@ public class ProgressPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Removes the message field. The message field cannot be shown again.
+     * Removes the message field.
      */
     public void removeMessageField() {
         assert (SwingUtilities.isEventDispatchThread());
         remove(messageLabel);
+    }
+    
+    /**
+     * Removes the cancel button field.
+     */
+    public void removeCancelButton() {
+        assert (SwingUtilities.isEventDispatchThread());
+        remove(cancelButton);
+    }
+    
+    public void horizontalDesign() {
+        assert (SwingUtilities.isEventDispatchThread());
+        removeMessageField();
+        messageLabel = new JLabel();
+        java.awt.GridBagConstraints gridBagConstraints;
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 12, 0, 0);
+        add(messageLabel, gridBagConstraints);
+        revalidate(); //force panel to lay out components again
+        repaint();
     }
 
     /**
@@ -132,6 +156,8 @@ public class ProgressPanel extends javax.swing.JPanel {
     public void setMessage(final String msg) {
         assert (SwingUtilities.isEventDispatchThread());
         messageLabel.setText(msg);
+        messageLabel.revalidate();
+        messageLabel.paintImmediately(messageLabel.getVisibleRect());
     }
 
     /**
@@ -141,8 +167,8 @@ public class ProgressPanel extends javax.swing.JPanel {
     public void setIndeterminate(boolean indeterminate) {
         assert (SwingUtilities.isEventDispatchThread());
         progressBar.setIndeterminate(indeterminate);
-
     }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel messageLabel;

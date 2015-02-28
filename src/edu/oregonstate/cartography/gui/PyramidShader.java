@@ -37,33 +37,35 @@ public class PyramidShader {
             public void run() {
                 // create model object, main window and settings dialog
                 Model model = new Model();
-                MainWindow frame = new MainWindow(model);
-                SettingsDialog dlg = new SettingsDialog(frame, false);
-                dlg.setModel(model);
-                frame.setSettingsDialog(dlg);
-                dlg.setProgressPanel(frame.getProgressPanel());
-
-
+                MainWindow mainWindow = new MainWindow(model);
+                SettingsDialog settingsDialog = new SettingsDialog(mainWindow, false);
+                settingsDialog.setModel(model);
+                mainWindow.getProgressPanel().removeCancelButton();
+                mainWindow.getProgressPanel().removeMessageField();
+                mainWindow.getProgressPanel().horizontalDesign();
+                mainWindow.setSettingsDialog(settingsDialog);
+                settingsDialog.setProgressPanel(mainWindow.getProgressPanel());
+                
                 // find available screen real estate (without taskbar, etc.)
                 Rectangle screen = GraphicsEnvironment.
                         getLocalGraphicsEnvironment().getMaximumWindowBounds();
-                Dimension dlgDim = dlg.getPreferredSize();
+                Dimension dlgDim = settingsDialog.getPreferredSize();
 
                 // position settings dialog in top-right corner
-                dlg.pack();
+                settingsDialog.pack();
                 int x = (int) (screen.getMaxX() - dlgDim.getWidth() - 5);
-                int y = (int) frame.getLocation().getY();
-                dlg.setLocation(x, y);
+                int y = (int) mainWindow.getLocation().getY();
+                settingsDialog.setLocation(x, y);
 
                 // use rest of screen space for main frame
                 int frameWidth = (int) (screen.getWidth() - dlgDim.getWidth() - 2 * 5);
-                frame.setSize(frameWidth, (int) screen.getHeight());
-                frame.setLocation((int) screen.getMinX(), (int) screen.getMinY());
+                mainWindow.setSize(frameWidth, (int) screen.getHeight());
+                mainWindow.setLocation((int) screen.getMinX(), (int) screen.getMinY());
 
                 // show windows and open terrain model
-                frame.setVisible(true);
-                dlg.setVisible(true);
-                frame.openGrid();
+                mainWindow.setVisible(true);
+                settingsDialog.setVisible(true);
+                mainWindow.openGrid();
             }
         });
     }

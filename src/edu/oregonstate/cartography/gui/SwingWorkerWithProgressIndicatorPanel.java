@@ -120,7 +120,6 @@ public abstract class SwingWorkerWithProgressIndicatorPanel<T> extends SwingWork
     @Override
     public void setMessage(final String msg) {
         SwingUtilities.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 progressPanel.setMessage(msg);

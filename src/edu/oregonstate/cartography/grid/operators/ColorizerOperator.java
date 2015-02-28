@@ -239,6 +239,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
             BufferedImage image, float minElev, float maxElev, double azimuth,
             double zenith, float vertExaggeration) {
 
+        // FIXME does not work
+        progressIndicator.setMessage("Rendering " + colorVisualization.toString());
+
         dstImage = image;
         this.minElev = minElev;
         this.maxElev = maxElev;
@@ -261,6 +264,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
         nz_sq = nz * nz;
 
         super.operate(grid, grid);
+        
+        // FIXME does not work
+        progressIndicator.setMessage("Finished Rendering " + colorVisualization.toString());
         return dstImage;
     }
 

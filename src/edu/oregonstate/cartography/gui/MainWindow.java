@@ -76,9 +76,7 @@ public class MainWindow extends javax.swing.JFrame {
         initComponents();
 
         // get menu keyboard events from owned dialogs
-        DialogUtil.setupDialogActions(menuBar);
-        
-        progressPanel.removeMessageField();
+        DialogUtil.setupDialogActions(menuBar);       
     }
 
     /**
@@ -197,7 +195,7 @@ public class MainWindow extends javax.swing.JFrame {
         navigableImagePanel.setNavigationImageEnabled(false);
         getContentPane().add(navigableImagePanel, java.awt.BorderLayout.CENTER);
 
-        bottomPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 1));
+        bottomPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 1));
         bottomPanel.add(progressPanel);
 
         getContentPane().add(bottomPanel, java.awt.BorderLayout.SOUTH);

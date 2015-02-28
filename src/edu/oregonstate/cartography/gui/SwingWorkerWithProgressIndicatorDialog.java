@@ -17,7 +17,7 @@ import javax.swing.border.EmptyBorder;
  * @author Bernhard Jenny, Institute of Cartography, ETH Zurich.
  * @param <T>
  */
-public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T, Integer>
+public abstract class SwingWorkerWithProgressIndicatorDialog<T> extends SwingWorker<T, Integer>
         implements ProgressIndicator {
 
     /**
@@ -33,10 +33,6 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
      * The owner frame of the dialog
      */
     protected Frame owner;
-    /**
-     * flag to remember whether the duration of the task is indeterminate.
-     */
-    private boolean indeterminate;
     /**
      * The number of tasks to execute. The default is 1.
      */
@@ -63,7 +59,7 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
      * @param message
      * @param blockOwner
      */
-    public SwingWorkerWithProgressIndicator(Frame owner,
+    public SwingWorkerWithProgressIndicatorDialog(Frame owner,
             String dialogTitle,
             String message,
             boolean blockOwner) {
@@ -151,7 +147,7 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
             public void run() {
                 dialog.setVisible(false);
                 dialog.dispose();
-                progressPanel.dispose();
+                progressPanel.removeActionListeners();
             }
         });
     }
@@ -354,18 +350,8 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
         }
     }
 
-    public boolean isIndeterminate() {
-        synchronized (this) {
-            return this.indeterminate;
-        }
-    }
-
-    public void setIndeterminate(boolean indet) {
-        synchronized (this) {
-            this.indeterminate = indet;
-        }
+    public void setIndeterminate(final boolean indeterminate) {
         SwingUtilities.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 progressPanel.setIndeterminate(indeterminate);

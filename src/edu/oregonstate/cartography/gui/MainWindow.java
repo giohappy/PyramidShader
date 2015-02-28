@@ -568,8 +568,8 @@ public class MainWindow extends javax.swing.JFrame {
      */
     private void exportContours(final String filePath, final String imageFormat, final int scale) {
         String dialogTitle = "Contours Export";
-        SwingWorkerWithProgressIndicator worker;
-        worker = new SwingWorkerWithProgressIndicator<Void>(this, dialogTitle, "", true) {
+        SwingWorkerWithProgressIndicatorDialog worker;
+        worker = new SwingWorkerWithProgressIndicatorDialog<Void>(this, dialogTitle, "", true) {
             @Override
             public void done() {
                 try {
@@ -947,10 +947,10 @@ public class MainWindow extends javax.swing.JFrame {
      * @throws IOException
      */
     private void openGrid(final String filePath) throws IOException {
-        SwingWorkerWithProgressIndicator worker;
+        SwingWorkerWithProgressIndicatorDialog worker;
         String dialogTitle = "Pyramid Shader";
 
-        worker = new SwingWorkerWithProgressIndicator<Void>(this, dialogTitle, "", true) {
+        worker = new SwingWorkerWithProgressIndicatorDialog<Void>(this, dialogTitle, "", true) {
 
             @Override
             public void done() {
@@ -1140,5 +1140,9 @@ public class MainWindow extends javax.swing.JFrame {
                 ErrorDialog.showErrorDialog(SAVE_TERRAIN_ERROR_MESSAGE, "Error", ex, this);
             }
         }
+    }
+
+    ProgressPanel getProgressPanel() {
+        return progressPanel;
     }
 }

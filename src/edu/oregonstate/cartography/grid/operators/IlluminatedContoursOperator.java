@@ -2,7 +2,6 @@ package edu.oregonstate.cartography.grid.operators;
 
 import edu.oregonstate.cartography.grid.Grid;
 import edu.oregonstate.cartography.gui.ProgressIndicator;
-import edu.oregonstate.cartography.gui.SwingWorkerWithProgressIndicator;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 

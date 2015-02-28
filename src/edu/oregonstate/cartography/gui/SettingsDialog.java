@@ -55,4 +55,8 @@ public class SettingsDialog extends javax.swing.JDialog {
         settingsPanel.updateImage(SettingsPanel.RenderSpeed.REGULAR);
         settingsPanel.updateGUI();
     }
+
+    void setProgressPanel(ProgressPanel progressPanel) {
+        settingsPanel.setProgressPanel(progressPanel);
+    }
 }

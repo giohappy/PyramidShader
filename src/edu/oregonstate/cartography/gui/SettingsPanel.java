@@ -42,17 +42,16 @@ public class SettingsPanel extends javax.swing.JPanel {
     }
 
     // A SwingWorker for rendering the image.
-    class Renderer extends SwingWorkerWithProgressIndicator<Void> {
+    class Renderer extends SwingWorkerWithProgressIndicatorPanel<Void> {
 
         private final BufferedImage backgroundImage;
         private final BufferedImage foregroundImage;
 
         protected Renderer(BufferedImage backgroundImage,
-                BufferedImage foregroundImage) {
-            super(getOwnerWindow(), "Rendering High-Resolution Contour Lines", "", true);
+                BufferedImage foregroundImage, ProgressPanel progressPanel) {
+            super(progressPanel);
             this.backgroundImage = backgroundImage;
             this.foregroundImage = foregroundImage;
-            this.setMaxTimeWithoutDialogMilliseconds(500);
             this.setIndeterminate(false);
             this.setCancellable(false);
             this.removeMessageField();
@@ -111,11 +110,16 @@ public class SettingsPanel extends javax.swing.JPanel {
     }
     private Model model;
     private Renderer renderer;
+    private ProgressPanel progressPanel;
 
     public SettingsPanel() {
         initComponents();
     }
 
+    public void setProgressPanel(ProgressPanel progressPanel) {
+        this.progressPanel = progressPanel;
+    }
+    
     /**
      * Adjusts the visibility of the GUI components for configuring the
      * different visualization types.
@@ -183,12 +187,13 @@ public class SettingsPanel extends javax.swing.JPanel {
             BufferedImage foregroundImage = model.createDestinationImage(foregroundScale);
 
             // create a new renderer and run it
-            renderer = new Renderer(backgroundImage, foregroundImage);
+            renderer = new Renderer(backgroundImage, foregroundImage, progressPanel);
             renderer.execute();
         } catch (Throwable e) {
             String msg = "<html>An error occured when rendering the terrain.</html>";
             String title = "Error";
             ErrorDialog.showErrorDialog(msg, title, e, null);
+            e.printStackTrace();
         }
     }
 

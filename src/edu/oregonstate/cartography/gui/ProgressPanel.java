@@ -28,13 +28,13 @@ public class ProgressPanel extends javax.swing.JPanel {
     }
 
     /**
-     * dispose() must be called when the panel is no longer needed and the
+     * removeActionListeners() must be called when the panel is no longer needed and the
      * parent dialog is disposed. This is to avoid a memory leak that may fill
      * up heap space when listeners are not removed (which make garbage
      * collecting a Frame impossible). Must be called from the Swing Event
      * Dispatch Thread.
      */
-    public void dispose() {
+    public void removeActionListeners() {
         assert (SwingUtilities.isEventDispatchThread());
         ActionListener[] als = cancelButton.getActionListeners();
         for (ActionListener al : als) {
@@ -106,7 +106,7 @@ public class ProgressPanel extends javax.swing.JPanel {
 
     /**
      * @param cancelAction A callback handler that is called when the
-     * user presses the cancel button.
+     * user presses the cancel button or the escape key.
      */
     public void setCancelAction(Action cancelAction) {
         assert (SwingUtilities.isEventDispatchThread());

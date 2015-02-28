@@ -41,6 +41,8 @@ public class PyramidShader {
                 SettingsDialog dlg = new SettingsDialog(frame, false);
                 dlg.setModel(model);
                 frame.setSettingsDialog(dlg);
+                dlg.setProgressPanel(frame.getProgressPanel());
+
 
                 // find available screen real estate (without taskbar, etc.)
                 Rectangle screen = GraphicsEnvironment.

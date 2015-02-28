@@ -62,7 +62,7 @@ public class SettingsPanel extends javax.swing.JPanel {
             if (model.getGeneralizedGrid() != null) {
                 // initialize the progress dialog
                 start();
-                model.renderBackgroundImage(backgroundImage);
+                model.renderBackgroundImage(backgroundImage, this);
                 model.renderForegroundImage(foregroundImage, this);
             }
             return null;

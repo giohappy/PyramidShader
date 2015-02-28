@@ -486,7 +486,7 @@ public class MainWindow extends javax.swing.JFrame {
                 // instead of using navigableImagePanel.getImage(), which migh
                 // have a different size
                 BufferedImage img = model.createDestinationImage(1);
-                model.renderBackgroundImage(img);
+                model.renderBackgroundImage(img, null);
                 ImageIO.write(img, format, new File(filePath));
 
                 // create world file for image file

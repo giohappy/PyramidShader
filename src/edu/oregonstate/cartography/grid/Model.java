@@ -375,7 +375,8 @@ public class Model implements Cloneable {
      * image.
      * @return
      */
-    public BufferedImage renderBackgroundImage(BufferedImage destinationImage) {
+    public BufferedImage renderBackgroundImage(BufferedImage destinationImage,
+            ProgressIndicator progressIndicator) {
         if (generalizedGrid == null || destinationImage == null) {
             return null;
         }
@@ -395,7 +396,7 @@ public class Model implements Cloneable {
             }
 
             // coloring and shading
-            ColorizerOperator colorizer = new ColorizerOperator(backgroundVisualization);
+            ColorizerOperator colorizer = new ColorizerOperator(backgroundVisualization, progressIndicator);
             colorizer.setColors(colorRamp.colors, colorRamp.colorPositions);
 
             Grid grid;

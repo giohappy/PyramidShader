@@ -2,6 +2,7 @@ package edu.oregonstate.cartography.grid.operators;
 
 import edu.oregonstate.cartography.app.Vector3D;
 import edu.oregonstate.cartography.grid.Grid;
+import edu.oregonstate.cartography.gui.ProgressIndicator;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -94,14 +95,18 @@ public class ColorizerOperator extends ThreadedGridOperator {
     // the type of visualization created
     private ColorVisualization colorVisualization = ColorVisualization.GRAY_SHADING;
 
+    private final ProgressIndicator progressIndicator;
+
     /**
      * Creates a new instance
      *
      * @param colorVisualization the type of color that is created by this
      * operator
      */
-    public ColorizerOperator(ColorVisualization colorVisualization) {
+    public ColorizerOperator(ColorVisualization colorVisualization,
+            ProgressIndicator progressIndicator) {
         this.colorVisualization = colorVisualization;
+        this.progressIndicator = progressIndicator;
     }
 
     /**
@@ -188,6 +193,22 @@ public class ColorizerOperator extends ThreadedGridOperator {
                 | ((int) (mult * greens[0]) << 8)
                 | ((int) (mult * reds[0]) << 16)
                 | 0xFF000000;
+    }
+    
+    private boolean reportProgress(int startRow, int endRow, int row) {
+        if (progressIndicator == null) {
+            return true;
+        }
+
+        // report progress if this is the first chunk of the image
+        // all chunks are the same size, but are rendered in different threads.
+        if (startRow == 0) {
+            int percentage = Math.round(100f * row / (endRow - startRow));
+            progressIndicator.progress(percentage);
+        }
+
+        // stop rendering if the user cancelled
+        return !progressIndicator.isCancelled();
     }
 
     /**
@@ -342,7 +363,11 @@ public class ColorizerOperator extends ThreadedGridOperator {
         final int nCols = dstImage.getWidth();
         final int nRows = dstImage.getHeight();
         final int[] imageBuffer = imageBuffer(dstImage);
+
         for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
             for (int col = 0; col < nCols; ++col) {
                 final double gray = shade(grid, col, row, nCols, nRows);
                 if (Double.isNaN(gray)) {
@@ -361,6 +386,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
         final float[][] gr = grid.getGrid();
         final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
             for (int col = 0; col < nCols; ++col) {
                 final double gray = shade(gr, col, row, nCols, nRows);
                 if (Double.isNaN(gray)) {
@@ -381,6 +409,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
         final int nRows = dstImage.getHeight();
         final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
             for (int col = 0; col < nCols; ++col) {
                 final double gray = shade(grid, col, row, nCols, nRows);
                 if (Double.isNaN(gray)) {
@@ -398,6 +429,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
         final int nCols = dstImage.getWidth();
         final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
             float[] gridRow = grid.getGrid()[row];
             for (int col = 0; col < nCols; ++col) {
                 final float v = gridRow[col];
@@ -415,6 +449,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
         final int nCols = dstImage.getWidth();
         final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
             for (int col = 0; col < nCols; ++col) {
                 final float slope = (float) grid.getSlope(col, row);
                 if (Float.isNaN(slope)) {
@@ -431,6 +468,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
         final int nCols = dstImage.getWidth();
         final int[] imageBuffer = imageBuffer(dstImage);
         for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
             for (int col = 0; col < nCols; ++col) {
                 final float aspect = (float) grid.getAspect(col, row);
                 if (Float.isNaN(aspect)) {

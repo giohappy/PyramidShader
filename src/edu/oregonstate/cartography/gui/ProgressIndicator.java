@@ -19,14 +19,8 @@ public interface ProgressIndicator {
     public void start();
 
     /**
-     * abort() is called when the operation encounters a problem and
-     * cannot continue. The GUI should be cleaned up.
-     */
-    public void abort();
-
-    /**
-     * complete() is called to inform that the operation terminated. The GUI should
-     * be cleaned up.
+     * complete() is called to inform that the operation terminated. The GUI 
+     * will be cleaned up.
      */
     public void completeProgress();
 
@@ -39,20 +33,23 @@ public interface ProgressIndicator {
     public boolean progress(int percentage);
 
     /**
+     * Call cancel() when the operation must stop. This will clean up
+     * the GUI and isCancelled() will return true.
+     */
+    public void cancel();
+    
+    /**
      * Return whether the user canceled the operation, e.g. by pressing a 
      * Cancel button.
+     * @return True if cancelled.
      */
-    public boolean isAborted();
+    public boolean isCancelled();
 
     /**
-     * don't allow the user to cancel the operation.
+     * Enable or disable button to cancel the operation.
+     * @param cancellable If true, the button is enabled. Default is true.
      */
-    public void disableCancel();
-
-    /**
-     * Allow the user to cancel the operation. This is the default setting.
-     */
-    public void enableCancel();
+    public void setCancellable(boolean cancellable);
 
     /**
      * Display a message to the user. The message can change regularly. HTML is legal.
@@ -81,6 +78,7 @@ public interface ProgressIndicator {
 
     /**
      * Switch to the next task and change the message text.
+     * @param message The new message text displayed in the GUI.
      */
     public void nextTask (String message);
 

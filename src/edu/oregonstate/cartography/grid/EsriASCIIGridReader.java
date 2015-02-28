@@ -81,7 +81,7 @@ public class EsriASCIIGridReader {
         InputStream fis = new FileInputStream(file.getAbsolutePath());
         EsriASCIIGridReader esriReader = new EsriASCIIGridReader();
         Grid grid = esriReader.read(fis, progressIndicator);
-        if (progressIndicator != null && progressIndicator.isAborted()) {
+        if (progressIndicator != null && progressIndicator.isCancelled()) {
             return null;
         }
         return grid;
@@ -98,7 +98,7 @@ public class EsriASCIIGridReader {
         
         EsriASCIIGridReader esriReader = new EsriASCIIGridReader();
         Grid grid = esriReader.read(input, progressIndicator);
-        if (progressIndicator != null && progressIndicator.isAborted()) {
+        if (progressIndicator != null && progressIndicator.isCancelled()) {
             return null;
         }
         return grid;

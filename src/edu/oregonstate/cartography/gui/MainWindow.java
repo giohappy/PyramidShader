@@ -77,6 +77,8 @@ public class MainWindow extends javax.swing.JFrame {
 
         // get menu keyboard events from owned dialogs
         DialogUtil.setupDialogActions(menuBar);
+        
+        progressPanel.removeMessageField();
     }
 
     /**
@@ -101,6 +103,8 @@ public class MainWindow extends javax.swing.JFrame {
         offsetTerrainFormattedTextField = new javax.swing.JFormattedTextField();
         javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
         navigableImagePanel = new edu.oregonstate.cartography.gui.NavigableImagePanel();
+        bottomPanel = new javax.swing.JPanel();
+        progressPanel = new edu.oregonstate.cartography.gui.ProgressPanel();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         javax.swing.JMenuItem openMenuItem = new javax.swing.JMenuItem();
@@ -192,6 +196,11 @@ public class MainWindow extends javax.swing.JFrame {
 
         navigableImagePanel.setNavigationImageEnabled(false);
         getContentPane().add(navigableImagePanel, java.awt.BorderLayout.CENTER);
+
+        bottomPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 1));
+        bottomPanel.add(progressPanel);
+
+        getContentPane().add(bottomPanel, java.awt.BorderLayout.SOUTH);
 
         fileMenu.setText("File");
         fileMenu.addMenuListener(new javax.swing.event.MenuListener() {
@@ -558,8 +567,8 @@ public class MainWindow extends javax.swing.JFrame {
      * terrain model.
      */
     private void exportContours(final String filePath, final String imageFormat, final int scale) {
-        SwingWorkerWithProgressIndicator worker;
         String dialogTitle = "Contours Export";
+        SwingWorkerWithProgressIndicator worker;
         worker = new SwingWorkerWithProgressIndicator<Void>(this, dialogTitle, "", true) {
             @Override
             public void done() {
@@ -607,7 +616,7 @@ public class MainWindow extends javax.swing.JFrame {
 
                 if (!isCancelled()) {
                     // writing to file cannot be canceled
-                    disableCancel();
+                    setCancellable(false);
                     setIndeterminate(true);
 
                     File file = new File(filePath);
@@ -1031,7 +1040,7 @@ public class MainWindow extends javax.swing.JFrame {
                 //import the DEM and create pyramids
                 Grid grid = EsriASCIIGridReader.read(filePath, this);
                 this.setIndeterminate(true);
-                this.disableCancel();
+                this.setCancellable(false);
                 model.setGrid(grid);
                 return null;
             }
@@ -1040,7 +1049,6 @@ public class MainWindow extends javax.swing.JFrame {
 
         worker.setMaxTimeWithoutDialogMilliseconds(2000);
         worker.setIndeterminate(false);
-        worker.disableCancel();
         worker.setMessage("Importing Terrain Model");
         worker.execute();
     }
@@ -1062,6 +1070,7 @@ public class MainWindow extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel bottomPanel;
     private javax.swing.JMenu editMenu;
     private javax.swing.JPanel imageResolutionPanel;
     private javax.swing.JSpinner imageResolutionSpinner;
@@ -1073,6 +1082,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JPanel offsetTerrainPanel;
     private javax.swing.JMenu openRecentMenu;
     private javax.swing.JMenuItem planObliqueFeaturesMenuItem;
+    private edu.oregonstate.cartography.gui.ProgressPanel progressPanel;
     private javax.swing.JMenu saveDownsampledMenu;
     private javax.swing.JMenuItem saveLocalTerrainMenuItem;
     private javax.swing.JMenuItem savePNGContoursMenuItem;

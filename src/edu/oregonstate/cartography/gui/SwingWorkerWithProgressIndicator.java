@@ -4,10 +4,13 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
+import javax.swing.border.EmptyBorder;
 
 /**
  *
@@ -22,17 +25,14 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
      */
     protected ProgressPanel progressPanel;
     /**
-     * The dialog to display the progressPanel. Must be accessed by the Swing thread only.
+     * The dialog to display the progressPanel. Must be accessed by the Swing
+     * thread only.
      */
     protected JDialog dialog;
     /**
      * The owner frame of the dialog
      */
     protected Frame owner;
-    /**
-     * aborted is true after abort() is called. Access to aborted must be synchronized.
-     */
-    private boolean aborted = false;
     /**
      * flag to remember whether the duration of the task is indeterminate.
      */
@@ -57,6 +57,7 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
 
     /**
      * Must be called in the Event Dispatching Thread.
+     *
      * @param owner
      * @param dialogTitle
      * @param message
@@ -67,8 +68,8 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
             String message,
             boolean blockOwner) {
 
-        assert(SwingUtilities.isEventDispatchThread());
-        
+        assert (SwingUtilities.isEventDispatchThread());
+
         this.owner = owner;
 
         // prepare the dialog
@@ -77,18 +78,19 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
         dialog.setModal(blockOwner);
         dialog.setResizable(false);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-        ActionListener cancelActionListener = new java.awt.event.ActionListener() {
-
+        Action cancelAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                abort();
+                cancel();
             }
         };
-        progressPanel = new ProgressPanel(message, cancelActionListener);
+        progressPanel = new ProgressPanel();
+        progressPanel.setMessage(message);
+        progressPanel.setCancelAction(cancelAction);
+        progressPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         dialog.setContentPane(progressPanel);
         dialog.pack();
         dialog.setLocationRelativeTo(owner);
-        dialog.setName(ProgressPanel.DIALOG_NAME);
         dialog.setAlwaysOnTop(true);
     }
 
@@ -99,7 +101,6 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
     public void start() {
 
         synchronized (this) {
-            this.aborted = false;
             this.startTime = System.currentTimeMillis();
         }
 
@@ -111,25 +112,24 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                progressPanel.start();
+                progressPanel.progress(0);
+                progressPanel.setIndeterminate(false);
             }
         });
     }
 
     /**
-     * Stop the operation. The dialog will be hidden and the operation will
-     * stop as soon as possible. This might not happen synchronously. Can be
-     * called from any thread.
+     * Stop the operation. The dialog will be hidden and the operation will stop
+     * as soon as possible. This might not happen synchronously. Can be called
+     * from any thread. The client must invoke SwingWorker.isCancelled at short
+     * intervals to test for cancellation.
      */
     @Override
-    public void abort() {
+    public void cancel() {
         synchronized (this) {
-            // the client must regularly check the aborted flag.
-            this.aborted = true;
-            
-            this.cancel(false);
+            cancel(false);
         }
-        
+
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
@@ -150,12 +150,15 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
             @Override
             public void run() {
                 dialog.setVisible(false);
+                dialog.dispose();
+                progressPanel.dispose();
             }
         });
     }
 
     /**
      * Update the progress indicator.
+     *
      * @param percentage A value between 0 and 100.
      * @return True if the operation should continue, false otherwise.
      */
@@ -163,41 +166,22 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
     public boolean progress(int percentage) {
         setProgress(percentage);
         publish(percentage);
-        return !isAborted();
+        return !isCancelled();
     }
 
     /**
-     * Returns whether this operation should stop.
-     * @return
+     * Enable or disable button to cancel the operation
+     * @param cancellable If true, the button is enabled.
      */
     @Override
-    public boolean isAborted() {
-        synchronized (this) {
-            return this.aborted;
-        }
-    }
-
-    @Override
-    public void disableCancel() {
+    public void setCancellable(final boolean cancellable) {
         SwingUtilities.invokeLater(new Runnable() {
-
             @Override
             public void run() {
-                progressPanel.disableCancel();
+                progressPanel.setCancellable(cancellable);
             }
         });
 
-    }
-
-    @Override
-    public void enableCancel() {
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                progressPanel.enableCancel();
-            }
-        });
     }
 
     @Override
@@ -211,14 +195,25 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
         });
     }
 
+    public void removeMessageField() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progressPanel.removeMessageField();
+            }
+        });
+    }
+
     /**
-     * Invoked when the task's publish() method is called. Update the value displayed
-     * by the progress dialog. This is called from within the event dispatching thread.
+     * Invoked when the task's publish() method is called. Update the value
+     * displayed by the progress dialog. This is called from within the event
+     * dispatching thread.
+     *
      * @param progressList
      */
     @Override
     protected void process(List<Integer> progressList) {
-        if (isAborted()) {
+        if (isCancelled()) {
             return;
         }
 
@@ -226,7 +221,7 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
         progress = progress / totalTasksCount + (currentTask - 1) * 100 / totalTasksCount;
 
         if (dialog.isVisible()) {
-            progressPanel.updateProgressGUI(progress);
+            progressPanel.progress(progress);
         } else {
             // make the dialog visible if necessary
             // Don't show the dialog for short operations.
@@ -241,9 +236,10 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
         }
     }
 
-    /** ShowDialogTask is a timer that makes sure the progress dialog
-     * is shown if progress() is not called for a long time. In this case, the
-     * dialog would never become visible.
+    /**
+     * ShowDialogTask is a timer that makes sure the progress dialog is shown if
+     * progress() is not called for a long time. In this case, the dialog would
+     * never become visible.
      */
     private class ShowDialogTask implements ActionListener {
 
@@ -273,7 +269,7 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
                 public void run() {
                     // only make the dialog visible if the operation is not
                     // yet finished
-                    if (isAborted() || dialog.isVisible() || getProgress() == 100) {
+                    if (isCancelled() || dialog.isVisible() || getProgress() == 100) {
                         return;
                     }
 
@@ -297,9 +293,10 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
     }
 
     /**
-     * Sets the number of tasks. Each task has a progress between 0 and 100.
-     * If the number of tasks is larger than 1, progress of task 1 will be
-     * rescaled to 0..50.
+     * Sets the number of tasks. Each task has a progress between 0 and 100. If
+     * the number of tasks is larger than 1, progress of task 1 will be rescaled
+     * to 0..50.
+     *
      * @param tasksCount The total number of tasks.
      */
     @Override
@@ -311,6 +308,7 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
 
     /**
      * Returns the total numbers of tasks for this progress indicator.
+     *
      * @return The total numbers of tasks.
      */
     @Override
@@ -339,13 +337,14 @@ public abstract class SwingWorkerWithProgressIndicator<T> extends SwingWorker<T,
     }
 
     @Override
-    public void nextTask (String message) {
+    public void nextTask(String message) {
         this.nextTask();
         this.setMessage(message);
     }
 
     /**
      * Returns the ID of the current task. The first task has ID 1 (and not 0).
+     *
      * @return The ID of the current task.
      */
     @Override

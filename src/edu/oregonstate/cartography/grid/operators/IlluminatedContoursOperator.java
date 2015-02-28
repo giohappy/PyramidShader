@@ -1,10 +1,10 @@
 package edu.oregonstate.cartography.grid.operators;
 
 import edu.oregonstate.cartography.grid.Grid;
+import edu.oregonstate.cartography.gui.ProgressIndicator;
 import edu.oregonstate.cartography.gui.SwingWorkerWithProgressIndicator;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import javax.swing.SwingWorker;
 
 /**
  * Computes illuminated contour lines from a digital elevation model.
@@ -17,8 +17,8 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
     // anti-aliasing width is half a cell size
     private final double AA_DIST_PX = 0.5;
 
-    // a SwingWorker for communicating progress and for checking cancel events
-    private SwingWorker progress;
+    // a progress indicator for communicating progress and for checking for cancel events
+    private ProgressIndicator progress = null;
     // this image will receive the computed contour lines
     private BufferedImage image;
     // illuminated and shaded or only shaded contours
@@ -59,7 +59,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
     private final float gridMin;
     // highest elevation in grid
     private final float gridMax;
-
+    
     /**
      *
      * @param illuminated
@@ -122,7 +122,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      * @param slopeGrid Grid with slope values.
      * @param progress Progress indicator. Not used when scale is 1.
      */
-    public void renderToImage(BufferedImage destinationImage, Grid grid, Grid slopeGrid, SwingWorker progress) {
+    public void renderToImage(BufferedImage destinationImage, Grid grid, Grid slopeGrid, ProgressIndicator progress) {
         if (destinationImage == null) {
             throw new IllegalArgumentException();
         }
@@ -142,7 +142,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
      * @param endRow The index of the first row of the source grid.
      */
     @Override
-    public void operate(Grid src, Grid slopeGrid, int startRow, int endRow) {
+    protected void operate(Grid src, Grid slopeGrid, int startRow, int endRow) {
         startRow = Math.max(1, startRow);
         endRow = Math.min(src.getRows() - 2, endRow);
         int cols = src.getCols();
@@ -157,8 +157,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         } else {
             // only report progress if this is the first chunk of the image
             // all chunks are the same size, but are rendered in different threads.
-            boolean reportProgress = startRow == 1
-                    && progress instanceof SwingWorkerWithProgressIndicator;
+            boolean reportProgress = startRow == 1 && progress != null;
 
             for (int row = startRow; row < endRow; row++) {
                 // stop rendering if the user canceled
@@ -169,7 +168,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
                 // report progress made
                 if (reportProgress) {
                     int percentage = Math.round(100f * row / (endRow - startRow));
-                    ((SwingWorkerWithProgressIndicator) progress).progress(percentage);
+                    progress.progress(percentage);
                 }
 
                 // destination has different size than source grid.

@@ -11,7 +11,7 @@ import edu.oregonstate.cartography.grid.operators.GridScaleToRangeOperator;
 import edu.oregonstate.cartography.grid.operators.GridSlopeOperator;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
 import edu.oregonstate.cartography.grid.operators.PlanObliqueOperator;
-import edu.oregonstate.cartography.grid.operators.ShaderOperator;
+import edu.oregonstate.cartography.gui.ProgressIndicator;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -415,14 +415,16 @@ public class Model implements Cloneable {
      *
      * @param destinationImage The foreground image will be rendered to this
      * image.
+     * @param progressIndicator
      * @return
      */
-    public BufferedImage renderForegroundImage(BufferedImage destinationImage) {
+    public BufferedImage renderForegroundImage(BufferedImage destinationImage, 
+            ProgressIndicator progressIndicator) {
         if (isRenderingForeground()) {
             boolean illuminated = (foregroundVisualization == ILLUMINATED_CONTOURS);
             IlluminatedContoursOperator op = setupIlluminatedContoursOperator(illuminated);
             op.renderToImage(destinationImage, generalizedGrid,
-                    generalizedSlopeGrid, null);
+                    generalizedSlopeGrid, progressIndicator);
         }
         return destinationImage;
     }

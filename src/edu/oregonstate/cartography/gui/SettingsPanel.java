@@ -27,7 +27,6 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JRootPane;
 import javax.swing.JSlider;
-import javax.swing.SwingWorker;
 import javax.swing.event.ChangeListener;
 
 /**
@@ -42,23 +41,30 @@ public class SettingsPanel extends javax.swing.JPanel {
         FAST, REGULAR
     }
 
-    // A SwingWorker for rendering the image when no progress dialog is required.
-    class BackgroundRenderer extends SwingWorker<Void, Object> {
+    // A SwingWorker for rendering the image.
+    class Renderer extends SwingWorkerWithProgressIndicator<Void> {
 
         private final BufferedImage backgroundImage;
         private final BufferedImage foregroundImage;
 
-        protected BackgroundRenderer(BufferedImage backgroundImage,
+        protected Renderer(BufferedImage backgroundImage,
                 BufferedImage foregroundImage) {
+            super(getOwnerWindow(), "Rendering High-Resolution Contour Lines", "", true);
             this.backgroundImage = backgroundImage;
             this.foregroundImage = foregroundImage;
+            this.setMaxTimeWithoutDialogMilliseconds(500);
+            this.setIndeterminate(false);
+            this.setCancellable(false);
+            this.removeMessageField();
         }
 
         @Override
         public Void doInBackground() {
             if (model.getGeneralizedGrid() != null) {
+                // initialize the progress dialog
+                start();
                 model.renderBackgroundImage(backgroundImage);
-                model.renderForegroundImage(foregroundImage);
+                model.renderForegroundImage(foregroundImage, this);
             }
             return null;
         }
@@ -93,6 +99,7 @@ public class SettingsPanel extends javax.swing.JPanel {
                 }
             } catch (Exception ignore) {
             } finally {
+                completeProgress();
                 if (g != null) {
                     g.dispose();
                 }
@@ -103,7 +110,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         }
     }
     private Model model;
-    private BackgroundRenderer renderer;
+    private Renderer renderer;
 
     public SettingsPanel() {
         initComponents();
@@ -150,15 +157,15 @@ public class SettingsPanel extends javax.swing.JPanel {
 
             // if we are currently rendering an image, first cancel the current rendering
             if (renderer != null && !renderer.isDone()) {
-                // FIXME
-                //renderer.cancel(false);
+                renderer.cancel(false);
             }
 
             // block the event dispatching thread until the BackgroundRenderer worker thread
             // is done. This is to avoid that two BackgroundRenderer threads write to 
             // the same image.
+            // get() throws a CancellationException if the worker has been cancelled.
             try {
-                if (renderer != null) {
+                if (renderer != null && !renderer.isCancelled()) {
                     renderer.get();
                 }
             } catch (InterruptedException | ExecutionException ex) {
@@ -176,7 +183,7 @@ public class SettingsPanel extends javax.swing.JPanel {
             BufferedImage foregroundImage = model.createDestinationImage(foregroundScale);
 
             // create a new renderer and run it
-            renderer = new BackgroundRenderer(backgroundImage, foregroundImage);
+            renderer = new Renderer(backgroundImage, foregroundImage);
             renderer.execute();
         } catch (Throwable e) {
             String msg = "<html>An error occured when rendering the terrain.</html>";

@@ -317,7 +317,7 @@ public class Model implements Cloneable {
 
     /**
      * re-computes generalized grid. Call this method whenever the
-     * generalization parameters have changed.
+     * generalization parameters or the Laplacian pyramid have changed.
      */
     public void updateGeneralizedGrid() {
         if (laplacianPyramid == null) {

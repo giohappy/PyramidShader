@@ -130,7 +130,6 @@ public class SettingsPanel extends javax.swing.JPanel {
         boolean isColored = false;
         boolean isLocal = false;
         boolean isSolidColor = false;
-
         if (model != null && model.backgroundVisualization != null) {
             isShading = model.backgroundVisualization.isShading();
             isColored = model.backgroundVisualization.isColored();
@@ -138,10 +137,15 @@ public class SettingsPanel extends javax.swing.JPanel {
             isSolidColor = model.backgroundVisualization == ColorVisualization.CONTINUOUS;
         }
 
+        boolean isIlluminatedContours = model != null 
+                && model.foregroundVisualization != ForegroundVisualization.NONE;
+
         verticalExaggerationPanel.setVisible(isShading);
         colorGradientPanel.setVisible(isColored);
         localHypsoPanel.setVisible(isLocal);
         solidColorPanel.setVisible(isSolidColor);
+        azimuthSlider.setEnabled(isShading || isIlluminatedContours);
+        zenithSlider.setEnabled(isShading);
 
         // adjust size of dialog to make sure all components are visible
         JRootPane rootPane = getRootPane();
@@ -1575,7 +1579,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
     private void contoursComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_contoursComboBoxItemStateChanged
         if (evt.getStateChange() == ItemEvent.SELECTED) {
-            switch (contoursComboBox.getSelectedIndex()) {
+                switch (contoursComboBox.getSelectedIndex()) {
                 case 0:
                     model.foregroundVisualization = ForegroundVisualization.NONE;
                     ((CardLayout) (contoursCardPanel.getLayout())).show(contoursCardPanel, "emptyCard");
@@ -1591,6 +1595,7 @@ public class SettingsPanel extends javax.swing.JPanel {
                     updateContoursGUI(false);
                     break;
             }
+            updateVisualizationPanelsVisibility();
             updateImage(REGULAR);
         }
 
@@ -1633,6 +1638,7 @@ public class SettingsPanel extends javax.swing.JPanel {
     private void contoursBlankBackgroundButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_contoursBlankBackgroundButtonActionPerformed
         model.backgroundVisualization = ColorVisualization.CONTINUOUS;
         visualizationComboBox.setSelectedIndex(ColorVisualization.CONTINUOUS.ordinal());
+        updateVisualizationPanelsVisibility();
         updateImage(REGULAR);
     }//GEN-LAST:event_contoursBlankBackgroundButtonActionPerformed
 

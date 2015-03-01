@@ -62,6 +62,7 @@ public class MainWindow extends javax.swing.JFrame {
     private SettingsDialog settingsDialog = null;
 
     private RecentDocumentsManager rdm;
+    private final ProgressPanel progressPanel;
 
     /**
      * Constructor for the JFrame. Initializes components and sets up the
@@ -76,7 +77,12 @@ public class MainWindow extends javax.swing.JFrame {
         initComponents();
 
         // get menu keyboard events from owned dialogs
-        DialogUtil.setupDialogActions(menuBar);       
+        DialogUtil.setupDialogActions(menuBar);
+        
+        progressPanel = new ProgressPanel();
+        progressPanel.setOpaque(false);
+        setGlassPane(progressPanel);
+        progressPanel.setVisible(false);
     }
 
     /**
@@ -101,8 +107,6 @@ public class MainWindow extends javax.swing.JFrame {
         offsetTerrainFormattedTextField = new javax.swing.JFormattedTextField();
         javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
         navigableImagePanel = new edu.oregonstate.cartography.gui.NavigableImagePanel();
-        bottomPanel = new javax.swing.JPanel();
-        progressPanel = new edu.oregonstate.cartography.gui.ProgressPanel();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         javax.swing.JMenuItem openMenuItem = new javax.swing.JMenuItem();
@@ -194,11 +198,6 @@ public class MainWindow extends javax.swing.JFrame {
 
         navigableImagePanel.setNavigationImageEnabled(false);
         getContentPane().add(navigableImagePanel, java.awt.BorderLayout.CENTER);
-
-        bottomPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 1));
-        bottomPanel.add(progressPanel);
-
-        getContentPane().add(bottomPanel, java.awt.BorderLayout.SOUTH);
 
         fileMenu.setText("File");
         fileMenu.addMenuListener(new javax.swing.event.MenuListener() {
@@ -1068,7 +1067,6 @@ public class MainWindow extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel bottomPanel;
     private javax.swing.JMenu editMenu;
     private javax.swing.JPanel imageResolutionPanel;
     private javax.swing.JSpinner imageResolutionSpinner;
@@ -1080,7 +1078,6 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JPanel offsetTerrainPanel;
     private javax.swing.JMenu openRecentMenu;
     private javax.swing.JMenuItem planObliqueFeaturesMenuItem;
-    private edu.oregonstate.cartography.gui.ProgressPanel progressPanel;
     private javax.swing.JMenu saveDownsampledMenu;
     private javax.swing.JMenuItem saveLocalTerrainMenuItem;
     private javax.swing.JMenuItem savePNGContoursMenuItem;

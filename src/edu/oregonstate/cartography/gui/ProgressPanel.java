@@ -8,6 +8,7 @@ package edu.oregonstate.cartography.gui;
 import java.awt.event.ActionListener;
 import javax.swing.Action;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
@@ -16,7 +17,7 @@ import javax.swing.SwingUtilities;
  *
  * @author Bernhard Jenny, Institute of Cartography, ETH Zurich.
  */
-public class ProgressPanel extends javax.swing.JPanel {
+public class ProgressPanel extends JPanel {
 
     /**
      * Creates new ProgressPanel. Must be called from the Swing Event Dispatch

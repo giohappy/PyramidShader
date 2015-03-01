@@ -19,7 +19,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
      * transparent white for void (NaN) values.
      */
     private static final int VOID_COLOR = 0x00000000;
-
+    
     /**
      * The type of colored visualization this operator can create.
      */
@@ -89,12 +89,17 @@ public class ColorizerOperator extends ThreadedGridOperator {
     // utility variables for accelerating gray shading computation
     private double lx, ly, lz, nz, nz_sq;
 
+    // constant abmient illumination component.
+    private double ambientLight;
+    
     // colored image output
     private BufferedImage dstImage;
 
     // the type of visualization created
     private ColorVisualization colorVisualization = ColorVisualization.GRAY_SHADING;
 
+    // progress indicator that needs to be updated periodically and be checked 
+    // for user cancellation.
     private final ProgressIndicator progressIndicator;
 
     /**
@@ -102,6 +107,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
      *
      * @param colorVisualization the type of color that is created by this
      * operator
+     * @param progressIndicator Progress indicator that will be periodically updated.
      */
     public ColorizerOperator(ColorVisualization colorVisualization,
             ProgressIndicator progressIndicator) {
@@ -230,14 +236,16 @@ public class ColorizerOperator extends ThreadedGridOperator {
      * @param image Image to write pixels to. Can be null.
      * @param minElev Lowest elevation in elevationGrid
      * @param maxElev Highest elevation in elevationGrid
-     * @param azimuth
-     * @param zenith
-     * @param vertExaggeration
+     * @param azimuth Azimuth angle of illumination.
+     * @param zenith Zenith angle of illumination.
+     * @param ambientLight Ambient light added to shading.     * 
+     * @param vertExaggeration Vertical exaggeration factor to apply to elevations
+     * before shading is computed.
      * @return An image with new pixels.
      */
     public BufferedImage operate(Grid grid,
             BufferedImage image, float minElev, float maxElev, double azimuth,
-            double zenith, float vertExaggeration) {
+            double zenith, double ambientLight, float vertExaggeration) {
 
         // FIXME does not work
         progressIndicator.setMessage("Rendering " + colorVisualization.toString());
@@ -262,6 +270,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
         // z coordinate of normal vector
         nz = 2 * cellSize / vertExaggeration;
         nz_sq = nz * nz;
+        this.ambientLight = ambientLight;
 
         super.operate(grid, grid);
         
@@ -289,7 +298,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
         final double dotProduct = (nx * lx + ny * ly + nz * lz) / nL;
 
         // scale dot product from [-1, +1] to a gray value in [0, 255]
-        return (dotProduct + 1d) * 127.5;
+        return Math.max(Math.min((dotProduct + 1d + ambientLight) * 127.5, 255.), 0);
     }
 
     private double shade(float[][] grid, int col, int row, int nCols, int nRows) {

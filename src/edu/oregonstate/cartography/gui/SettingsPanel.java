@@ -146,6 +146,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         solidColorPanel.setVisible(isSolidColor);
         azimuthSlider.setEnabled(isShading || isIlluminatedContours);
         zenithSlider.setEnabled(isShading);
+        ambientLightSlider.setEnabled(isShading);
 
         // adjust size of dialog to make sure all components are visible
         JRootPane rootPane = getRootPane();
@@ -244,10 +245,12 @@ public class SettingsPanel extends javax.swing.JPanel {
         generalizationInfoLabel = new javax.swing.JLabel();
         javax.swing.JPanel illuminationContainer = new TransparentMacPanel();
         illuminationPanel = new TransparentMacPanel();
-        javax.swing.JLabel zeLabel = new javax.swing.JLabel();
-        azimuthSlider = new javax.swing.JSlider();
-        zenithSlider = new javax.swing.JSlider();
         javax.swing.JLabel azLabel = new javax.swing.JLabel();
+        azimuthSlider = new javax.swing.JSlider();
+        javax.swing.JLabel zeLabel = new javax.swing.JLabel();
+        zenithSlider = new javax.swing.JSlider();
+        javax.swing.JLabel ambientLightLabel = new javax.swing.JLabel();
+        ambientLightSlider = new javax.swing.JSlider();
         contoursPanel = new TransparentMacPanel();
         illuminatedContoursPanel = new TransparentMacPanel();
         contoursComboBox = new javax.swing.JComboBox();
@@ -605,13 +608,12 @@ public class SettingsPanel extends javax.swing.JPanel {
         illuminationPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
         illuminationPanel.setLayout(new java.awt.GridBagLayout());
 
-        zeLabel.setText("Zenith (Vertical Direction)");
+        azLabel.setText("Azimuth (Horizontal Direction)");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
-        illuminationPanel.add(zeLabel, gridBagConstraints);
+        illuminationPanel.add(azLabel, gridBagConstraints);
 
         azimuthSlider.setMajorTickSpacing(45);
         azimuthSlider.setMaximum(360);
@@ -671,6 +673,14 @@ public class SettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         illuminationPanel.add(azimuthSlider, gridBagConstraints);
 
+        zeLabel.setText("Zenith (Vertical Direction)");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
+        illuminationPanel.add(zeLabel, gridBagConstraints);
+
         zenithSlider.setMajorTickSpacing(15);
         zenithSlider.setMaximum(90);
         zenithSlider.setMinorTickSpacing(5);
@@ -696,17 +706,51 @@ public class SettingsPanel extends javax.swing.JPanel {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         illuminationPanel.add(zenithSlider, gridBagConstraints);
 
-        azLabel.setText("Azimuth (Horizontal Direction)");
+        ambientLightLabel.setText("Ambient Light");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        illuminationPanel.add(azLabel, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
+        illuminationPanel.add(ambientLightLabel, gridBagConstraints);
+
+        ambientLightSlider.setMajorTickSpacing(10);
+        ambientLightSlider.setMaximum(50);
+        ambientLightSlider.setMinimum(-50);
+        ambientLightSlider.setMinorTickSpacing(5);
+        ambientLightSlider.setPaintLabels(true);
+        ambientLightSlider.setPaintTicks(true);
+        ambientLightSlider.setValue(0);
+        {
+            java.util.Hashtable labels = ambientLightSlider.createStandardLabels(10);
+            java.util.Enumeration e = labels.elements();
+            DecimalFormat df = new DecimalFormat("0.#");
+            while(e.hasMoreElements()) {
+                javax.swing.JComponent comp = (javax.swing.JComponent)e.nextElement();
+                if (comp instanceof javax.swing.JLabel) {
+                    javax.swing.JLabel label = (javax.swing.JLabel)(comp);
+                    double d = Double.parseDouble(label.getText()) / 100d;
+                    label.setText(df.format(d));
+                }
+            }
+            ambientLightSlider.setLabelTable(labels);
+        }
+        ambientLightSlider.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                ambientLightSliderStateChanged(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        illuminationPanel.add(ambientLightSlider, gridBagConstraints);
 
         illuminationContainer.add(illuminationPanel);
 
@@ -1312,7 +1356,8 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         azimuthSlider.setValue(model.azimuth);
         zenithSlider.setValue(model.zenith);
-
+        ambientLightSlider.setValue((int)Math.round(model.ambientLight * 100));
+        
         contoursShadowLineWidthHighValueField.setValue(model.contoursShadowWidthHigh);
         contoursShadowLineWidthLowValueField.setValue(model.contoursShadowWidthLow);
         contoursIlluminatedLineWidthHighValueField.setValue(model.contoursIlluminatedWidthHigh);
@@ -1795,7 +1840,13 @@ public class SettingsPanel extends javax.swing.JPanel {
         updateImage(REGULAR);
     }//GEN-LAST:event_contoursShadowedColorButtonActionPerformed
 
+    private void ambientLightSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_ambientLightSliderStateChanged
+        model.ambientLight = ambientLightSlider.getValue() / 100d;
+        updateImage(ambientLightSlider.getValueIsAdjusting() ? FAST : REGULAR);
+    }//GEN-LAST:event_ambientLightSliderStateChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JSlider ambientLightSlider;
     private javax.swing.JSlider azimuthSlider;
     private javax.swing.JPanel colorGradientPanel;
     private com.bric.swing.GradientSlider colorGradientSlider;

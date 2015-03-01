@@ -110,6 +110,11 @@ public class Model implements Cloneable {
     public int zenith = 45;
 
     /**
+     * ambient illumination component. Usually between -0.5 and +0.5
+     */
+    public double ambientLight = 0;
+    
+    /**
      * vertical exaggeration applied when shading
      */
     public float shadingVerticalExaggeration = 1;
@@ -406,7 +411,8 @@ public class Model implements Cloneable {
                 grid = planObliqueGeneralizedGrid;
             }
             colorizer.operate(grid, destinationImage,
-                    gridMinMax[0], gridMinMax[1], azimuth, zenith, shadingVerticalExaggeration);
+                    gridMinMax[0], gridMinMax[1], 
+                    azimuth, zenith, ambientLight, shadingVerticalExaggeration);
         }
         return destinationImage;
     }

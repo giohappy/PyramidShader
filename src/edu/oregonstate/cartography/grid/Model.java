@@ -378,6 +378,7 @@ public class Model implements Cloneable {
      *
      * @param destinationImage The background image will be rendered to this
      * image.
+     * @param progressIndicator
      * @return
      */
     public BufferedImage renderBackgroundImage(BufferedImage destinationImage,

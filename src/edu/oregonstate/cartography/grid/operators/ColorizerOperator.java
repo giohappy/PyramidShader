@@ -209,7 +209,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
         // report progress if this is the first chunk of the image
         // all chunks are the same size, but are rendered in different threads.
         if (startRow == 0) {
-            int percentage = Math.round(100f * row / (endRow - startRow));
+            int percentage = Math.round(100f * row / (endRow - startRow - 1f));
             progressIndicator.progress(percentage);
         }
 

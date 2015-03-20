@@ -3,6 +3,7 @@ package edu.oregonstate.cartography.gui;
 import com.fizzysoft.sdu.RecentDocumentsManager;
 import edu.oregonstate.cartography.app.FileUtils;
 import edu.oregonstate.cartography.app.GeometryUtils;
+import edu.oregonstate.cartography.app.ImageUtils;
 import edu.oregonstate.cartography.geometryexport.ShapeExporter;
 import edu.oregonstate.cartography.geometryimport.GeometryCollectionImporter;
 import edu.oregonstate.cartography.geometryimport.ShapeImporter;
@@ -23,6 +24,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
@@ -78,7 +80,7 @@ public class MainWindow extends javax.swing.JFrame {
 
         // get menu keyboard events from owned dialogs
         DialogUtil.setupDialogActions(menuBar);
-        
+
         progressPanel = new ProgressPanel();
         progressPanel.setOpaque(false);
         setGlassPane(progressPanel);
@@ -473,32 +475,69 @@ public class MainWindow extends javax.swing.JFrame {
         };
     }
 
+    // A SwingWorker for rendering the background image to a file.
+    class FileRenderer extends SwingWorkerWithProgressIndicatorDialog<Void> {
+
+        private final BufferedImage backgroundImage;
+        private final String filePath;
+        private final String fileFormat;
+
+        protected FileRenderer(BufferedImage backgroundImage, String filePath,
+                String fileFormat, Frame owner) {
+            super (owner, "", "", true);
+            this.backgroundImage = backgroundImage;
+            this.filePath = filePath;
+            this.fileFormat = fileFormat;
+            this.setIndeterminate(false);
+            this.setCancellable(false);
+        }
+
+        @Override
+        public Void doInBackground() {
+            if (model.getGeneralizedGrid() != null) {
+                // initialize the progress dialog
+                start();
+                model.renderBackgroundImage(backgroundImage, this);
+            }
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                if (!isCancelled()) {
+                    get();
+                    this.setIndeterminate(true);
+                    ImageIO.write(backgroundImage, fileFormat, new File(filePath));
+
+                    // create world file for image file
+                    String worldFilePath = WorldFileExporter.constructPath(filePath);
+                    Grid dem = model.getGeneralizedGrid();
+                    double cellSize = dem.getCellSize();
+                    // for each grid value, one image cell is contructed. The extent
+                    // of the image is therefore one pixel larger horizontally and
+                    // vertically.
+                    double west = dem.getWest() - cellSize / 2;
+                    double north = dem.getNorth() + cellSize / 2;
+                    WorldFileExporter.writeWorldFile(worldFilePath, cellSize, west, north);
+                }
+            } catch (Exception ignore) {
+            } finally {
+                completeProgress();
+            }
+        }
+    }
+
     private void saveImage(String format, String message) {
-        String filePath = askFile(message, false);    //call up a save file dialog
-        //Make sure the choice is a valid file
+        String filePath = askFile(message, false); // file selection dialog
+        // make sure the choice is a valid file
         if (filePath != null) {
             filePath = FileUtils.forceFileNameExtension(filePath, format);
-            try {
-                // render to image with the same size as the input grid
-                // instead of using navigableImagePanel.getImage(), which migh
-                // have a different size
-                BufferedImage img = model.createDestinationImage(1);
-                model.renderBackgroundImage(img, null);
-                ImageIO.write(img, format, new File(filePath));
-
-                // create world file for image file
-                String worldFilePath = WorldFileExporter.constructPath(filePath);
-                Grid dem = model.getGeneralizedGrid();
-                double cellSize = dem.getCellSize();
-                // for each grid value, one image cell is contructed. The extent
-                // of the image is therefore one pixel larger horizontally and
-                // vertically.
-                double west = dem.getWest() - cellSize / 2;
-                double north = dem.getNorth() + cellSize / 2;
-                WorldFileExporter.writeWorldFile(worldFilePath, cellSize, west, north);
-            } catch (IOException ex) {
-                ErrorDialog.showErrorDialog(SAVE_IMAGE_ERROR_MESSAGE, "Error", ex, this);
-            }
+            // render to image with the same size as the input grid
+            // instead of using navigableImagePanel.getImage(), which can
+            // have a different size
+            BufferedImage img = model.createDestinationImage(1);
+            new FileRenderer(img, filePath, format, this).execute();
         }
     }
     private void saveTIFFImageMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveTIFFImageMenuItemActionPerformed
@@ -862,7 +901,7 @@ public class MainWindow extends javax.swing.JFrame {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     // weights for Laplacian pyramid levels
-                    float [] w = model.laplacianPyramid.createConstantWeights(1f);
+                    float[] w = model.laplacianPyramid.createConstantWeights(1f);
                     for (int j = 0; j < saveDownsampledMenu.getMenuComponentCount(); j++) {
                         Component comp = saveDownsampledMenu.getMenuComponent(j);
                         if (comp == e.getSource()) {
@@ -870,7 +909,7 @@ public class MainWindow extends javax.swing.JFrame {
                             break;
                         }
                     }
-                    
+
                     saveTerrain(model.laplacianPyramid.sumLevels(w, false));
                 }
             });
@@ -884,7 +923,7 @@ public class MainWindow extends javax.swing.JFrame {
             filePath = FileUtils.forceFileNameExtension(filePath, format);
             try {
                 BufferedImage img = model.createDestinationImage(1);
-                NormalMapOperator op = new NormalMapOperator(Channel.R, Channel.G, Channel.B, 
+                NormalMapOperator op = new NormalMapOperator(Channel.R, Channel.G, Channel.B,
                         false, false, false, 1f);
                 op.operate(model.getGeneralizedGrid(), img, model.shadingVerticalExaggeration);
                 ImageIO.write(img, format, new File(filePath));

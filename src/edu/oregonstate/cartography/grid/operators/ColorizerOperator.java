@@ -19,7 +19,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
      * transparent white for void (NaN) values.
      */
     private static final int VOID_COLOR = 0x00000000;
-    
+
     /**
      * The type of colored visualization this operator can create.
      */
@@ -33,6 +33,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
         LOCAL_HYPSOMETRIC("Local Hypsometric Color"),
         SLOPE("Slope"),
         ASPECT("Aspect"),
+        PROFILE_CURVATURE("Profile Curvature"),
         CONTINUOUS("Continuous Tone (for Illuminated Contours)");
 
         private final String description;
@@ -91,7 +92,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
 
     // constant abmient illumination component.
     private double ambientLight;
-    
+
     // colored image output
     private BufferedImage dstImage;
 
@@ -107,7 +108,8 @@ public class ColorizerOperator extends ThreadedGridOperator {
      *
      * @param colorVisualization the type of color that is created by this
      * operator
-     * @param progressIndicator Progress indicator that will be periodically updated.
+     * @param progressIndicator Progress indicator that will be periodically
+     * updated.
      */
     public ColorizerOperator(ColorVisualization colorVisualization,
             ProgressIndicator progressIndicator) {
@@ -200,7 +202,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
                 | ((int) (mult * reds[0]) << 16)
                 | 0xFF000000;
     }
-    
+
     private boolean reportProgress(int startRow, int endRow, int row) {
         if (progressIndicator == null) {
             return true;
@@ -238,9 +240,10 @@ public class ColorizerOperator extends ThreadedGridOperator {
      * @param maxElev Highest elevation in elevationGrid
      * @param azimuth Azimuth angle of illumination.
      * @param zenith Zenith angle of illumination.
-     * @param ambientLight Ambient light added to shading.     * 
-     * @param vertExaggeration Vertical exaggeration factor to apply to elevations
-     * before shading is computed.
+     * @param ambientLight Ambient light added to shading.
+     *
+     * @param vertExaggeration Vertical exaggeration factor to apply to
+     * elevations before shading is computed.
      * @return An image with new pixels.
      */
     public BufferedImage operate(Grid grid,
@@ -273,7 +276,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
         this.ambientLight = ambientLight;
 
         super.operate(grid, grid);
-        
+
         // FIXME does not work
         progressIndicator.setMessage("Finished Rendering " + colorVisualization.toString());
         return dstImage;
@@ -374,7 +377,8 @@ public class ColorizerOperator extends ThreadedGridOperator {
         return shadeNormal(nx, ny);
     }
 
-    private void grayShading(float[][] grid, int startRow, int endRow) {
+    private void grayShading(Grid grid, int startRow, int endRow) {
+        final float[][] gridArray = grid.getGrid();
         final int nCols = dstImage.getWidth();
         final int nRows = dstImage.getHeight();
         final int[] imageBuffer = imageBuffer(dstImage);
@@ -384,7 +388,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
                 return;
             }
             for (int col = 0; col < nCols; ++col) {
-                final double gray = shade(grid, col, row, nCols, nRows);
+                final double gray = shade(gridArray, col, row, nCols, nRows);
                 if (Double.isNaN(gray)) {
                     imageBuffer[row * nCols + col] = VOID_COLOR;
                 } else {
@@ -419,7 +423,8 @@ public class ColorizerOperator extends ThreadedGridOperator {
         }
     }
 
-    private void expositionShading(float[][] grid, int startRow, int endRow) {
+    private void expositionShading(Grid grid, int startRow, int endRow) {
+        final float[][] gridArray = grid.getGrid();
         final int nCols = dstImage.getWidth();
         final int nRows = dstImage.getHeight();
         final int[] imageBuffer = imageBuffer(dstImage);
@@ -428,7 +433,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
                 return;
             }
             for (int col = 0; col < nCols; ++col) {
-                final double gray = shade(grid, col, row, nCols, nRows);
+                final double gray = shade(gridArray, col, row, nCols, nRows);
                 if (Double.isNaN(gray)) {
                     imageBuffer[row * nCols + col] = VOID_COLOR;
                 } else {
@@ -498,6 +503,25 @@ public class ColorizerOperator extends ThreadedGridOperator {
         }
     }
 
+    private void profileCurvature(Grid grid, int startRow, int endRow) {
+        final int nCols = dstImage.getWidth();
+        final int[] imageBuffer = imageBuffer(dstImage);
+        for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
+            for (int col = 0; col < nCols; ++col) {
+                final float profileCurvature = GridProfileCurvatureOperator.getProfileCurvature(grid, col, row, 3);
+                if (Float.isNaN(profileCurvature)) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                } else {
+                    final int argb = getLinearRGB(profileCurvature, 0, 1, 1);
+                    imageBuffer[row * nCols + col] = argb;
+                }
+            }
+        }
+    }
+
     /**
      * Compute a chunk of the image.
      *
@@ -510,10 +534,10 @@ public class ColorizerOperator extends ThreadedGridOperator {
     protected void operate(Grid grid, Grid ignore, int startRow, int endRow) {
         switch (colorVisualization) {
             case GRAY_SHADING:
-                grayShading(grid.getGrid(), startRow, endRow);
+                grayShading(grid, startRow, endRow);
                 break;
             case EXPOSITION:
-                expositionShading(grid.getGrid(), startRow, endRow);
+                expositionShading(grid, startRow, endRow);
                 break;
             case HYPSOMETRIC_SHADING:
             case LOCAL_HYPSOMETRIC_SHADING:
@@ -528,6 +552,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
                 break;
             case ASPECT:
                 aspect(grid, startRow, endRow);
+                break;
+            case PROFILE_CURVATURE:
+                profileCurvature(grid, startRow, endRow);
                 break;
         }
     }

@@ -3,7 +3,6 @@ package edu.oregonstate.cartography.gui;
 import com.fizzysoft.sdu.RecentDocumentsManager;
 import edu.oregonstate.cartography.app.FileUtils;
 import edu.oregonstate.cartography.app.GeometryUtils;
-import edu.oregonstate.cartography.app.ImageUtils;
 import edu.oregonstate.cartography.geometryexport.ShapeExporter;
 import edu.oregonstate.cartography.geometryimport.GeometryCollectionImporter;
 import edu.oregonstate.cartography.geometryimport.ShapeImporter;
@@ -11,7 +10,7 @@ import edu.oregonstate.cartography.grid.ESRIASCIIGridExporter;
 import edu.oregonstate.cartography.grid.EsriASCIIGridReader;
 import edu.oregonstate.cartography.grid.Grid;
 import edu.oregonstate.cartography.grid.Model;
-import static edu.oregonstate.cartography.grid.Model.ForegroundVisualization.ILLUMINATED_CONTOURS;
+import edu.oregonstate.cartography.grid.Model.ForegroundVisualization;
 import edu.oregonstate.cartography.grid.WorldFileExporter;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
 import edu.oregonstate.cartography.grid.operators.NormalMapOperator;
@@ -641,7 +640,7 @@ public class MainWindow extends javax.swing.JFrame {
                 start();
                 // compute the image with illuminated contours
                 IlluminatedContoursOperator op;
-                boolean illuminated = (model.foregroundVisualization == ILLUMINATED_CONTOURS);
+                boolean illuminated = (model.foregroundVisualization == ForegroundVisualization.ILLUMINATED_CONTOURS);
 
                 op = model.setupIlluminatedContoursOperator(illuminated);
                 int w = model.getGeneralizedGrid().getCols() * scale;
@@ -1067,6 +1066,7 @@ public class MainWindow extends javax.swing.JFrame {
                     }
                     String msg = "An error occured when rendering the terrain.";
                     ErrorDialog.showErrorDialog(msg, "Error", e, getContentPane());
+                    assert false : e.getStackTrace();
                 }
             }
 

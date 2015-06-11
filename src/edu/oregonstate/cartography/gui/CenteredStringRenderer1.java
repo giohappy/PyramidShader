@@ -14,14 +14,11 @@ import java.awt.geom.*;
  * CenteredStringRenderer draws a string centered on a point.
  * @author Bernhard Jenny, Institute of Cartography, ETH Zurich
  */
-public class CenteredStringRenderer {
+public class CenteredStringRenderer1 {
 
     public static final boolean NOFLIP = false;
     public static final boolean FLIPY = true;
 
-    private CenteredStringRenderer(){
-    }
-    
     /**
      * Draws a string centered on its mid-point.
      * From http://forum.java.sun.com/thread.jspa?forumID=20&threadID=516778

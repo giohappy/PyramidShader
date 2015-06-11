@@ -114,7 +114,6 @@
     <target name="-post-jar">
         <!-- Combine JAR files into a single jar -->
         <jar compress="true" destfile="${dist.jar}" update="true">
-            <zipfileset src="lib/ColorPicker.jar"/>
             <zipfileset src="lib/jai_imageio.jar"/>
             <manifest>
                 <attribute value="${main.class}" name="Main-Class"/>

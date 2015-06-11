@@ -28,6 +28,10 @@ public class PlanObliqueOperator implements GridOperator {
 
     @Override
     public Grid operate(Grid grid) {
+        if (grid == null) {
+            return null;
+        }
+        
         // number of rows
         int nRows = grid.getRows();
         // number of columns

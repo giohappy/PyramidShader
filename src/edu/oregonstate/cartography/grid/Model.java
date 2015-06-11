@@ -11,8 +11,10 @@ import edu.oregonstate.cartography.grid.operators.GridScaleToRangeOperator;
 import edu.oregonstate.cartography.grid.operators.GridSlopeOperator;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
 import edu.oregonstate.cartography.grid.operators.PlanObliqueOperator;
+import edu.oregonstate.cartography.gui.bivariate.BivariateColorRenderer;
 import edu.oregonstate.cartography.gui.ProgressIndicator;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -113,7 +115,7 @@ public class Model implements Cloneable {
      * ambient illumination component. Usually between -0.5 and +0.5
      */
     public double ambientLight = 0;
-    
+
     /**
      * vertical exaggeration applied when shading
      */
@@ -143,12 +145,12 @@ public class Model implements Cloneable {
      * color for illuminated contour lines. Default is white
      */
     public int contoursIlluminatedColor = 0x00FFFFFF;
-    
+
     /**
      * color for shaded contour lines. Default is black.
      */
     public int contoursShadowedColor = 0x00000000;
-    
+
     /**
      * contour interval
      */
@@ -214,6 +216,11 @@ public class Model implements Cloneable {
      * for computing a locally filtered grid for local hypsometric tinting.
      */
     private final LocalGridModel localGridModel = new LocalGridModel();
+
+    /**
+     * Contains references to 2 grids for creating a bivariate color scheme.
+     */
+    protected final BivariateColorRenderer bivariateColorRender = new BivariateColorRenderer();
 
     public Model() {
         predefinedColorRamps = new ArrayList<>();
@@ -342,7 +349,7 @@ public class Model implements Cloneable {
 
             // copy NaN values from original grid
             new GridMaskOperator().operate(grid, generalizedGrid);
-            
+
             // scale the minimum and maximum values of the output generalized grid to 
             // the same range as the input grid.
             new GridScaleToRangeOperator(gridMinMax).operate(generalizedGrid, generalizedGrid);
@@ -354,14 +361,20 @@ public class Model implements Cloneable {
     }
 
     /**
-     * Creates a new BufferedImage if the passed image is null or smaller than
-     * the current grid.
+     * Creates a new BufferedImage
      *
      * @param scale Scale factor by which the created image will be larger than
-     * the grid.
+     * the generalized grid.
      * @return A new image or null
      */
     public BufferedImage createDestinationImage(int scale) {
+        if (backgroundVisualization == ColorVisualization.BIVARIATE) {
+            Grid grid1 = bivariateColorRender.getAttribute1Grid();
+            if (grid1 != null) {
+                return new BufferedImage(grid1.getCols(), grid1.getRows(), BufferedImage.TYPE_INT_ARGB);
+            }
+        }
+
         if (generalizedGrid == null) {
             return null;
         }
@@ -383,7 +396,7 @@ public class Model implements Cloneable {
      */
     public BufferedImage renderBackgroundImage(BufferedImage destinationImage,
             ProgressIndicator progressIndicator) {
-        if (generalizedGrid == null || destinationImage == null) {
+        if (destinationImage == null) {
             return null;
         }
 
@@ -396,23 +409,40 @@ public class Model implements Cloneable {
             graphics.dispose();
         } else {
             Grid planObliqueGeneralizedGrid = generalizedGrid;
-            PlanObliqueOperator planObliqueOp = new PlanObliqueOperator(planObliqueAngle, gridMinMax[0]);
-            if (planObliqueAngle != 90) {
-                planObliqueGeneralizedGrid = planObliqueOp.operate(generalizedGrid);
+            if (generalizedGrid != null) {
+                PlanObliqueOperator planObliqueOp = new PlanObliqueOperator(planObliqueAngle, gridMinMax[0]);
+                if (planObliqueAngle != 90) {
+                    planObliqueGeneralizedGrid = planObliqueOp.operate(generalizedGrid);
+                }
             }
 
             // coloring and shading
-            ColorizerOperator colorizer = new ColorizerOperator(backgroundVisualization, progressIndicator);
+            ColorizerOperator colorizer = new ColorizerOperator(backgroundVisualization,
+                    bivariateColorRender, progressIndicator);
             colorizer.setColors(colorRamp.colors, colorRamp.colorPositions);
 
-            Grid grid;
-            if (backgroundVisualization.isLocal()) {
-                grid = localGridModel.getFilteredGrid();
+            final Grid g;
+            final float min;
+            final float max;
+            if (backgroundVisualization == ColorVisualization.BIVARIATE) {
+                g = getBivariateColorRender().getAttribute1Grid();
+                float[] minMax = getBivariateColorRender().getAttribute1MinMax();
+                if (minMax == null) {
+                    return null;
+                }
+                min = minMax[0];
+                max = minMax[1];
             } else {
-                grid = planObliqueGeneralizedGrid;
+                min = gridMinMax[0];
+                max = gridMinMax[1];
+                if (backgroundVisualization.isLocal()) {
+                    g = localGridModel.getFilteredGrid();
+                } else {
+                    g = planObliqueGeneralizedGrid;
+                }
             }
-            colorizer.operate(grid, destinationImage,
-                    gridMinMax[0], gridMinMax[1], 
+            colorizer.operate(g, destinationImage,
+                    min, max,
                     azimuth, zenith, ambientLight, shadingVerticalExaggeration);
         }
         return destinationImage;
@@ -426,7 +456,7 @@ public class Model implements Cloneable {
      * @param progressIndicator
      * @return
      */
-    public BufferedImage renderForegroundImage(BufferedImage destinationImage, 
+    public BufferedImage renderForegroundImage(BufferedImage destinationImage,
             ProgressIndicator progressIndicator) {
         if (isRenderingForeground()) {
             boolean illuminated = (foregroundVisualization == ILLUMINATED_CONTOURS);
@@ -478,6 +508,21 @@ public class Model implements Cloneable {
         return generalizedGrid;
     }
 
+    /**
+     * Returns the width and height of the un-scaled rendered image.
+     * @return 
+     */
+    public Dimension getGridDimensionForDisplay() {
+        final Grid g;
+        if (backgroundVisualization == ColorVisualization.BIVARIATE
+                && bivariateColorRender.hasGrids()) {
+            g = bivariateColorRender.getAttribute1Grid();
+        } else {
+            g = grid;
+        }
+        return g == null ? null : new Dimension(g.getCols(), g.getRows());
+    }
+    
     /**
      * Returns the locally filtered grid.
      *
@@ -542,12 +587,13 @@ public class Model implements Cloneable {
 
     /**
      * Returns true when contour lines need to be rendered in the foreground
-     * @return 
+     *
+     * @return
      */
     public boolean isRenderingForeground() {
         return foregroundVisualization != ForegroundVisualization.NONE;
     }
-    
+
     /**
      * @param generalizationDetails the generalizationDetails to set
      */
@@ -584,5 +630,12 @@ public class Model implements Cloneable {
         GridAddOperator op = new GridAddOperator(offset);
         op.operate(grid, grid);
         setGrid(grid);
+    }
+
+    /**
+     * @return the bivariateColorRender
+     */
+    public BivariateColorRenderer getBivariateColorRender() {
+        return bivariateColorRender;
     }
 }

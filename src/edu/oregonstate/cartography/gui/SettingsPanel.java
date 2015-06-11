@@ -1,7 +1,10 @@
 package edu.oregonstate.cartography.gui;
 
 import com.bric.swing.MultiThumbSlider;
+import edu.oregonstate.cartography.app.FileUtils;
 import edu.oregonstate.cartography.app.ImageUtils;
+import edu.oregonstate.cartography.grid.EsriASCIIGridReader;
+import edu.oregonstate.cartography.grid.Grid;
 import edu.oregonstate.cartography.grid.Model;
 import edu.oregonstate.cartography.grid.Model.ColorRamp;
 import edu.oregonstate.cartography.grid.Model.ForegroundVisualization;
@@ -9,6 +12,7 @@ import edu.oregonstate.cartography.grid.operators.ColorizerOperator;
 import edu.oregonstate.cartography.grid.operators.ColorizerOperator.ColorVisualization;
 import static edu.oregonstate.cartography.gui.SettingsPanel.RenderSpeed.FAST;
 import static edu.oregonstate.cartography.gui.SettingsPanel.RenderSpeed.REGULAR;
+import edu.oregonstate.cartography.gui.bivariate.BivariateColorPoint;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -16,7 +20,9 @@ import java.awt.RenderingHints;
 import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -59,12 +65,10 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         @Override
         public Void doInBackground() {
-            if (model.getGeneralizedGrid() != null) {
-                // initialize the progress dialog
-                start();
-                model.renderBackgroundImage(backgroundImage, this);
-                model.renderForegroundImage(foregroundImage, this);
-            }
+            // initialize the progress dialog
+            start();
+            model.renderBackgroundImage(backgroundImage, this);
+            model.renderForegroundImage(foregroundImage, this);
             return null;
         }
 
@@ -77,6 +81,11 @@ public class SettingsPanel extends javax.swing.JPanel {
                     get();
 
                     BufferedImage displayImage = mainWindow.getImage();
+                    if (displayImage == null) {
+                        mainWindow.initDisplayImage();
+                        displayImage = mainWindow.getImage();
+                    }
+
                     int w = displayImage.getWidth();
                     int h = displayImage.getHeight();
                     g = displayImage.getGraphics();
@@ -119,7 +128,26 @@ public class SettingsPanel extends javax.swing.JPanel {
     public void setProgressPanel(ProgressPanel progressPanel) {
         this.progressPanel = progressPanel;
     }
-    
+
+    private void updateColorPickerFromBivariatePanel() {
+        BivariateColorPoint pt = bivariateColorPanel.getSelectedPoint();
+        if (pt == null || pt.getColor() == null) {
+            colorPicker.setColor(Color.GRAY);
+        } else {
+            colorPicker.setColor(pt.getColor());
+        }
+    }
+
+    private void updateColorPickerFromColorGradientSlider() {
+        Color[] colors = colorGradientSlider.getValues();
+        int selectedID = colorGradientSlider.getSelectedThumb(false);
+        if (selectedID >= 0 && selectedID < colors.length) {
+            colorPicker.setColor(colors[selectedID]);
+        } else {
+            colorGradientSlider.setSelectedThumb(0);
+        }
+    }
+
     /**
      * Adjusts the visibility of the GUI components for configuring the
      * different visualization types.
@@ -130,20 +158,25 @@ public class SettingsPanel extends javax.swing.JPanel {
         boolean isColored = false;
         boolean isLocal = false;
         boolean isSolidColor = false;
+        boolean isBivariate = false;
+
         if (model != null && model.backgroundVisualization != null) {
             isShading = model.backgroundVisualization.isShading();
             isColored = model.backgroundVisualization.isColored();
             isLocal = model.backgroundVisualization.isLocal();
             isSolidColor = model.backgroundVisualization == ColorVisualization.CONTINUOUS;
+            isBivariate = model.backgroundVisualization == ColorVisualization.BIVARIATE;
         }
 
-        boolean isIlluminatedContours = model != null 
+        boolean isIlluminatedContours = model != null
                 && model.foregroundVisualization != ForegroundVisualization.NONE;
 
         verticalExaggerationPanel.setVisible(isShading);
-        colorGradientPanel.setVisible(isColored);
+        colorGradientPanel.setVisible(isColored && !isBivariate);
+        colorPicker.setVisible(isColored);
         localHypsoPanel.setVisible(isLocal);
         solidColorPanel.setVisible(isSolidColor);
+        bivariateColorGroupPanel.setVisible(isBivariate);
         azimuthSlider.setEnabled(isShading || isIlluminatedContours);
         zenithSlider.setEnabled(isShading);
         ambientLightSlider.setEnabled(isShading);
@@ -155,6 +188,12 @@ public class SettingsPanel extends javax.swing.JPanel {
         }
 
         contoursBlankBackgroundButton.setEnabled(!isSolidColor);
+
+        if (isBivariate) {
+            updateColorPickerFromBivariatePanel();
+        } else {
+            updateColorPickerFromColorGradientSlider();
+        }
     }
 
     public void updateImage(RenderSpeed renderSpeed) {
@@ -213,6 +252,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         java.awt.GridBagConstraints gridBagConstraints;
 
         colorPopupMenu = new javax.swing.JPopupMenu();
+        bivariateInterpolationButtonGroup = new javax.swing.ButtonGroup();
         tabbedPane = new javax.swing.JTabbedPane();
         javax.swing.JPanel visualizationContainer = new TransparentMacPanel();
         visualizationPanel = new TransparentMacPanel();
@@ -235,6 +275,20 @@ public class SettingsPanel extends javax.swing.JPanel {
         planObliquePanel = new TransparentMacPanel();
         planObliqueSlider = new javax.swing.JSlider();
         jLabel4 = new javax.swing.JLabel();
+        colorPicker = new com.bric.swing.ColorPicker();
+        bivariateColorGroupPanel = new TransparentMacPanel();
+        bivariateColorPanel = new edu.oregonstate.cartography.gui.bivariate.BivariateColorPanel();
+        idwRadioButton = new javax.swing.JRadioButton();
+        gaussRadioButton = new javax.swing.JRadioButton();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        javax.swing.JLabel idwExponentSliderLabel = new javax.swing.JLabel();
+        idwExponentSlider = new javax.swing.JSlider();
+        bivariateColorExponentValueLabel = new javax.swing.JLabel();
+        bivariateHorizontalButton = new javax.swing.JButton();
+        bivariateVerticalButton = new javax.swing.JButton();
+        bivariateVerticalLabel = new edu.oregonstate.cartography.gui.RotatedLabel();
+        bivariateHorizontalLabel = new javax.swing.JLabel();
         javax.swing.JPanel generalizationContainer = new TransparentMacPanel();
         generalizationPanel = new TransparentMacPanel();
         javax.swing.JLabel generalizationDetailsRemovalLabel = new javax.swing.JLabel();
@@ -370,7 +424,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         colorGradientPanel.setLayout(new java.awt.GridBagLayout());
 
         colorInfoLabel.setFont(colorInfoLabel.getFont().deriveFont(colorInfoLabel.getFont().getSize()-2f));
-        colorInfoLabel.setText("Click on slider to add color; double-click on triangles to change.");
+        colorInfoLabel.setText("Click on slider to add color. Hit delete key to remove selected color.");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 6;
@@ -527,9 +581,169 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 9;
         gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
         visualizationPanel.add(planObliquePanel, gridBagConstraints);
+
+        colorPicker.setPreferredSize(new java.awt.Dimension(380, 300));
+        colorPicker.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                colorPickerPropertyChange(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
+        visualizationPanel.add(colorPicker, gridBagConstraints);
+
+        bivariateColorGroupPanel.setLayout(new java.awt.GridBagLayout());
+
+        bivariateColorPanel.setPreferredSize(new java.awt.Dimension(200, 200));
+        bivariateColorPanel.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                bivariateColorPanelPropertyChange(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 7;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        bivariateColorGroupPanel.add(bivariateColorPanel, gridBagConstraints);
+
+        bivariateInterpolationButtonGroup.add(idwRadioButton);
+        idwRadioButton.setText("Inverse Distance");
+        idwRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                idwRadioButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        bivariateColorGroupPanel.add(idwRadioButton, gridBagConstraints);
+
+        bivariateInterpolationButtonGroup.add(gaussRadioButton);
+        gaussRadioButton.setSelected(true);
+        gaussRadioButton.setText("Gaussian Weight");
+        gaussRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                gaussRadioButtonidwRadioButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        bivariateColorGroupPanel.add(gaussRadioButton, gridBagConstraints);
+
+        jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getSize()-2f));
+        jLabel9.setText("Click to add a point. Click and drag to move a point.");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(4, 0, 0, 0);
+        bivariateColorGroupPanel.add(jLabel9, gridBagConstraints);
+
+        jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getSize()-2f));
+        jLabel10.setText("Hit the delete key to remove the selected point.");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        bivariateColorGroupPanel.add(jLabel10, gridBagConstraints);
+
+        idwExponentSliderLabel.setText("Exponent");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(15, 6, 0, 0);
+        bivariateColorGroupPanel.add(idwExponentSliderLabel, gridBagConstraints);
+
+        idwExponentSlider.setMajorTickSpacing(10);
+        idwExponentSlider.setMaximum(50);
+        idwExponentSlider.setMinorTickSpacing(5);
+        idwExponentSlider.setPaintTicks(true);
+        idwExponentSlider.setPreferredSize(new java.awt.Dimension(130, 38));
+        idwExponentSlider.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                idwExponentSliderStateChanged(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        bivariateColorGroupPanel.add(idwExponentSlider, gridBagConstraints);
+
+        bivariateColorExponentValueLabel.setFont(bivariateColorExponentValueLabel.getFont().deriveFont(bivariateColorExponentValueLabel.getFont().getSize()-2f));
+        bivariateColorExponentValueLabel.setText("1.3");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        bivariateColorGroupPanel.add(bivariateColorExponentValueLabel, gridBagConstraints);
+
+        bivariateHorizontalButton.setText("Horizontal Axis");
+        bivariateHorizontalButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bivariateHorizontalButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_END;
+        gridBagConstraints.weighty = 1.0;
+        bivariateColorGroupPanel.add(bivariateHorizontalButton, gridBagConstraints);
+
+        bivariateVerticalButton.setText("Vertical Axis");
+        bivariateVerticalButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bivariateVerticalButtonActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_END;
+        bivariateColorGroupPanel.add(bivariateVerticalButton, gridBagConstraints);
+
+        bivariateVerticalLabel.setText("-");
+        bivariateVerticalLabel.setFont(bivariateVerticalLabel.getFont().deriveFont(bivariateVerticalLabel.getFont().getSize()-2f));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 7;
+        bivariateColorGroupPanel.add(bivariateVerticalLabel, gridBagConstraints);
+
+        bivariateHorizontalLabel.setFont(bivariateHorizontalLabel.getFont().deriveFont(bivariateHorizontalLabel.getFont().getSize()-2f));
+        bivariateHorizontalLabel.setText("-");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 8, 0);
+        bivariateColorGroupPanel.add(bivariateHorizontalLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.insets = new java.awt.Insets(20, 0, 0, 0);
+        visualizationPanel.add(bivariateColorGroupPanel, gridBagConstraints);
 
         visualizationContainer.add(visualizationPanel);
 
@@ -1356,8 +1570,8 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         azimuthSlider.setValue(model.azimuth);
         zenithSlider.setValue(model.zenith);
-        ambientLightSlider.setValue((int)Math.round(model.ambientLight * 100));
-        
+        ambientLightSlider.setValue((int) Math.round(model.ambientLight * 100));
+
         contoursShadowLineWidthHighValueField.setValue(model.contoursShadowWidthHigh);
         contoursShadowLineWidthLowValueField.setValue(model.contoursShadowWidthLow);
         contoursIlluminatedLineWidthHighValueField.setValue(model.contoursIlluminatedWidthHigh);
@@ -1395,7 +1609,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         }
         localGridHighPassSlider.setValue((int) Math.round(model.getLocalGridHighPassWeight() * 10));
         localGridStandardDeviationFilterSizeSlider.setValue(model.getLocalGridStandardDeviationLevels());
-        
+
         colorPopupMenu.removeAll();
         for (ColorRamp cr : model.predefinedColorRamps) {
             JMenuItem colorMenuItem = new JMenuItem(cr.name);
@@ -1414,6 +1628,10 @@ public class SettingsPanel extends javax.swing.JPanel {
         contoursIlluminatedColorButton.setColor(new Color(model.contoursIlluminatedColor));
         contoursShadowedColorButton.setColor(new Color(model.contoursShadowedColor));
 
+        int exp = (int) Math.round(model.getBivariateColorRender().getExponentP() * 10);
+        idwExponentSlider.setValue(exp);
+        idwRadioButton.setSelected(model.getBivariateColorRender().isUseIDW());
+
         updateVisualizationPanelsVisibility();
         updateImage(REGULAR);
 
@@ -1421,6 +1639,8 @@ public class SettingsPanel extends javax.swing.JPanel {
 
     public void setModel(Model m) {
         this.model = m;
+        bivariateColorPanel.setBivariateColorRenderer(model.getBivariateColorRender());
+        bivariateColorPanel.selectFirstPoint();
         updateGUI();
     }
 
@@ -1484,9 +1704,12 @@ public class SettingsPanel extends javax.swing.JPanel {
         String propName = evt.getPropertyName();
         //Check if the changed property is either value or color for one of the thumbs
         if (MultiThumbSlider.VALUES_PROPERTY.equals(propName) || MultiThumbSlider.ADJUST_PROPERTY.equals(propName)) {
-            model.colorRamp.colors = colorGradientSlider.getColors();
+            model.colorRamp.colors = colorGradientSlider.getValues();
             model.colorRamp.colorPositions = colorGradientSlider.getThumbPositions();
             updateImage(colorGradientSlider.isValueAdjusting() ? FAST : REGULAR);
+        }
+        if (MultiThumbSlider.VALUES_PROPERTY.equals(propName) || MultiThumbSlider.SELECTED_THUMB_PROPERTY.equals(propName)) {
+            updateColorPickerFromColorGradientSlider();
         }
     }//GEN-LAST:event_colorGradientSliderPropertyChange
 
@@ -1624,7 +1847,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
     private void contoursComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_contoursComboBoxItemStateChanged
         if (evt.getStateChange() == ItemEvent.SELECTED) {
-                switch (contoursComboBox.getSelectedIndex()) {
+            switch (contoursComboBox.getSelectedIndex()) {
                 case 0:
                     model.foregroundVisualization = ForegroundVisualization.NONE;
                     ((CardLayout) (contoursCardPanel.getLayout())).show(contoursCardPanel, "emptyCard");
@@ -1845,11 +2068,164 @@ public class SettingsPanel extends javax.swing.JPanel {
         updateImage(ambientLightSlider.getValueIsAdjusting() ? FAST : REGULAR);
     }//GEN-LAST:event_ambientLightSliderStateChanged
 
+    private void idwRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_idwRadioButtonActionPerformed
+        model.getBivariateColorRender().setUseIDW(idwRadioButton.isSelected());
+        updateImage(REGULAR);
+        bivariateColorGroupPanel.repaint();
+    }//GEN-LAST:event_idwRadioButtonActionPerformed
+
+    private void gaussRadioButtonidwRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gaussRadioButtonidwRadioButtonActionPerformed
+        model.getBivariateColorRender().setUseIDW(idwRadioButton.isSelected());
+        updateImage(REGULAR);
+        bivariateColorGroupPanel.repaint();
+    }//GEN-LAST:event_gaussRadioButtonidwRadioButtonActionPerformed
+
+    private void idwExponentSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_idwExponentSliderStateChanged
+        double exp = idwExponentSlider.getValue() / 10d;
+        model.getBivariateColorRender().setExponentP(exp);
+        updateImage(idwExponentSlider.getValueIsAdjusting() ? FAST : REGULAR);
+        bivariateColorExponentValueLabel.setText(Double.toString(exp));
+        bivariateColorGroupPanel.repaint();
+    }//GEN-LAST:event_idwExponentSliderStateChanged
+
+    private void bivariateColorPanelPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_bivariateColorPanelPropertyChange
+        if ("selectedPoint".equals(evt.getPropertyName())) {
+            updateColorPickerFromBivariatePanel();
+        }
+
+        // color changed or point was moved
+        if ("colorChanged".equals(evt.getPropertyName()) || "colorDeleted".equals(evt.getPropertyName())) {
+            if (bivariateColorPanel.isValueAdjusting() == false || "colorDeleted".equals(evt.getPropertyName())) {
+                updateImage(REGULAR);
+            }
+        }
+    }//GEN-LAST:event_bivariateColorPanelPropertyChange
+
+    private void colorPickerPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_colorPickerPropertyChange
+        if ("selected color".equals(evt.getPropertyName()) && model != null) {
+            if (model.backgroundVisualization == ColorVisualization.BIVARIATE) {
+                bivariateColorPanel.setSelectedColor(colorPicker.getColor());
+                model.getBivariateColorRender().colorPointsChanged();
+            } else {
+                int selectedThumbID = colorGradientSlider.getSelectedThumb(false);
+                Color[] colors = colorGradientSlider.getValues();
+                if (selectedThumbID >= 0 && selectedThumbID < colors.length) {
+                    colors[selectedThumbID] = colorPicker.getColor();
+                    float[] thumbPositions = colorGradientSlider.getThumbPositions();
+                    colorGradientSlider.setValues(thumbPositions, colors);
+                }
+            }
+            updateImage(REGULAR);
+        }
+    }//GEN-LAST:event_colorPickerPropertyChange
+
+    /**
+     * Open a grid file.
+     *
+     * @param filePath The file to open
+     * @throws IOException
+     */
+    private void openGridForBivariateColor(final String filePath, final boolean horizontalGrid) throws IOException {
+        SwingWorkerWithProgressIndicatorDialog worker;
+        String dialogTitle = "Pyramid Shader";
+
+        worker = new SwingWorkerWithProgressIndicatorDialog<Void>(null, dialogTitle, "", true) {
+
+            @Override
+            public void done() {
+                try {
+                    // a call to get() will throw an ExecutionException if an 
+                    // exception occured in doInBackground
+                    get();
+
+                    // hide the progress dialog before rendering the image
+                    // if rendering throws an error, the progress dialog should 
+                    // have been closed
+                    completeProgress();
+
+                    String fileName = FileUtils.getFileNameWithoutExtension(filePath);
+                    if (horizontalGrid) {
+                        bivariateHorizontalLabel.setText(fileName);
+                    } else {
+                        bivariateVerticalLabel.setText(fileName);
+                    }
+                    updateImage(REGULAR);
+                    bivariateColorPanel.repaint();
+                } catch (InterruptedException | CancellationException e) {
+
+                } catch (Throwable e) {
+                    // hide the progress dialog
+                    completeProgress();
+                    // an exception was thrown in doInBackground
+                    String msg = "<html>An error occured when importing the terrain model."
+                            + "<br>The file must be in Esri ASCII Grid format.</html>";
+                    ErrorDialog.showErrorDialog(msg, "Error", null, null);
+                } finally {
+                    // hide the progress dialog
+                    completeProgress();
+                }
+            }
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                start();
+                //import the DEM and create pyramids
+                Grid grid = EsriASCIIGridReader.read(filePath, this);
+                this.setIndeterminate(true);
+                this.setCancellable(false);
+                if (horizontalGrid) {
+                    model.getBivariateColorRender().setAttribute1Grid(grid);
+                } else {
+                    model.getBivariateColorRender().setAttribute2Grid(grid);
+                }
+                return null;
+            }
+        };
+
+        worker.setMaxTimeWithoutDialogMilliseconds(1000);
+        worker.setIndeterminate(false);
+        worker.setMessage("Importing Terrain Model");
+        worker.execute();
+    }
+
+    private void bivariateHorizontalButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bivariateHorizontalButtonActionPerformed
+        try {
+            // ask the user for a file
+            String filePath = FileUtils.askFile(null, "Select an Esri ASCII Grid", true);
+            if (filePath != null) {
+                openGridForBivariateColor(filePath, true);
+            }
+        } catch (IOException ex) {
+            ErrorDialog.showErrorDialog("Could not open grid file.", "Error", ex, this);
+        }
+    }//GEN-LAST:event_bivariateHorizontalButtonActionPerformed
+
+    private void bivariateVerticalButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bivariateVerticalButtonActionPerformed
+        try {
+            // ask the user for a file
+            String filePath = FileUtils.askFile(null, "Select an Esri ASCII Grid", true);
+            if (filePath != null) {
+                openGridForBivariateColor(filePath, false);
+            }
+        } catch (IOException ex) {
+            ErrorDialog.showErrorDialog("Could not open grid file.", "Error", ex, this);
+        }
+    }//GEN-LAST:event_bivariateVerticalButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSlider ambientLightSlider;
     private javax.swing.JSlider azimuthSlider;
+    private javax.swing.JLabel bivariateColorExponentValueLabel;
+    private javax.swing.JPanel bivariateColorGroupPanel;
+    private edu.oregonstate.cartography.gui.bivariate.BivariateColorPanel bivariateColorPanel;
+    private javax.swing.JButton bivariateHorizontalButton;
+    private javax.swing.JLabel bivariateHorizontalLabel;
+    private javax.swing.ButtonGroup bivariateInterpolationButtonGroup;
+    private javax.swing.JButton bivariateVerticalButton;
+    private edu.oregonstate.cartography.gui.RotatedLabel bivariateVerticalLabel;
     private javax.swing.JPanel colorGradientPanel;
     private com.bric.swing.GradientSlider colorGradientSlider;
+    private com.bric.swing.ColorPicker colorPicker;
     private javax.swing.JPopupMenu colorPopupMenu;
     private edu.oregonstate.cartography.gui.MenuToggleButton colorPresetsButton;
     private javax.swing.JButton contoursBlankBackgroundButton;
@@ -1879,16 +2255,21 @@ public class SettingsPanel extends javax.swing.JPanel {
     private edu.oregonstate.cartography.gui.ColorButton contoursShadowedColorButton;
     private javax.swing.JToggleButton contoursShadowedLockedToggleButton;
     private javax.swing.JSlider contoursTransitionSlider;
+    private javax.swing.JRadioButton gaussRadioButton;
     private javax.swing.JLabel generalizationDetaiIsLabel;
     private javax.swing.JSlider generalizationDetailSlider;
     private javax.swing.JLabel generalizationInfoLabel;
     private javax.swing.JSpinner generalizationMaxLevelsSpinner;
     private javax.swing.JPanel generalizationPanel;
+    private javax.swing.JSlider idwExponentSlider;
+    private javax.swing.JRadioButton idwRadioButton;
     private javax.swing.JPanel illuminatedContoursPanel;
     private javax.swing.JPanel illuminationPanel;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JSlider localGridHighPassSlider;
     private javax.swing.JSlider localGridStandardDeviationFilterSizeSlider;
     private javax.swing.JPanel localHypsoPanel;

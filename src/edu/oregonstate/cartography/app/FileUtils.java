@@ -7,9 +7,12 @@ package edu.oregonstate.cartography.app;
 
 import edu.oregonstate.cartography.gui.ErrorDialog;
 import java.io.*;
+import java.awt.*;
 import java.nio.*;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 /**
  * FileUtils - file related utility methods.
@@ -17,12 +20,9 @@ import java.nio.charset.Charset;
  * @author Bernhard Jenny, Institute of Cartography, ETH Zurich.
  */
 public class FileUtils {
-    
+
     private static final boolean IS_MAC_OSX;
 
-    private FileUtils(){
-    }
-    
     static {
         String osname = System.getProperty("os.name");
         IS_MAC_OSX = osname.toLowerCase().startsWith("mac os x");
@@ -262,6 +262,213 @@ public class FileUtils {
             return fileName.substring(0, dotIndex);
         }
         return fileName;
+    }
+
+    /**
+     * Ask the user for a file using the AWT FileDialog.
+     */
+    private static String askAWTFile(java.awt.Frame frame, String message,
+            String defaultFile, boolean load) {
+        // use AWT FileDialog on mac
+        final int flag = load ? FileDialog.LOAD : FileDialog.SAVE;
+
+        // build dummy Frame if none is passed as parameter.
+        if (frame == null) {
+            frame = new Frame();
+        }
+
+        FileDialog fd = new FileDialog(frame, message, flag);
+        fd.setFile(defaultFile);
+        fd.setVisible(true);
+        String fileName = fd.getFile();
+        String directory = fd.getDirectory();
+        if (fileName == null || directory == null) {
+            return null;
+        }
+        return directory + fileName;
+    }
+
+    /**
+     * Returns true if the passed file can be written.
+     *
+     * @param file
+     * @param parent
+     * @return
+     */
+    private static boolean askOverwrite(File file, Component parent) {
+
+        if (file.exists()) {
+            StringBuilder sb = new StringBuilder("<html>\"");
+            sb.append(file.getName());
+            sb.append("\" already exists. Do you want<br>to replace it?</html>");
+            String msg = sb.toString();
+            String title = "";
+            String[] options = new String[]{"Cancel", "Replace"};
+            int res = JOptionPane.showOptionDialog(parent,
+                    msg,
+                    title,
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE,
+                    null,
+                    options,
+                    options[0]);
+            return res == 1;
+        }
+        return true;
+    }
+
+    /**
+     * Ask the user for a file using the Swing JFileChooser.
+     */
+    private static String askSwingFile(java.awt.Frame frame, String message,
+            String defaultFile, boolean load) {
+        // use Swing FileChooser on other systems
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle(message);
+
+        File selFile;
+        // set default file
+        try {
+            File f = new File(new File(defaultFile).getCanonicalPath());
+            fc.setSelectedFile(f);
+        } catch (Exception e) {
+        }
+
+        int result = JFileChooser.ERROR_OPTION;
+        do {
+            if (load) {
+                // Show open dialog
+                result = fc.showOpenDialog(frame);
+            } else {
+                // Show save dialog
+                result = fc.showSaveDialog(frame);
+            }
+
+            if (result != JFileChooser.APPROVE_OPTION) {
+                return null;
+            }
+
+            selFile = fc.getSelectedFile();
+            if (selFile == null) {
+                return null;
+            }
+
+        } while (!load && !askOverwrite(selFile, fc));
+
+        return selFile.getPath();
+    }
+
+    /**
+     * A private utility class that wraps calls to FileUtils.askAWTFile and
+     * FileUtils.askSwingFile into a Runnable object.
+     */
+    private static class GUI implements Runnable {
+
+        public String filePath;
+        public Frame frame;
+        public String message;
+        public String defaultFile;
+        public boolean load;
+        public String ext;
+
+        public void run() {
+            if (FileUtils.IS_MAC_OSX) {
+                filePath = FileUtils.askAWTFile(frame, message, defaultFile, load);
+            } else {
+                filePath = FileUtils.askSwingFile(frame, message, defaultFile, load);
+            }
+
+            // append the required file extension if necessary
+            if (!load && filePath != null && ext != null) {
+
+                //
+                if (new File(filePath).exists() && FileUtils.hasExtension(filePath, ext)) {
+                    return;
+                }
+
+                // append the extension if necessary
+                String extendedFilePath = forceFileNameExtension(filePath, ext);
+                if (!extendedFilePath.equals(filePath)) {
+                    // make sure there is not a conflict with an existing file
+                    if (FileUtils.warningIfFileExists(extendedFilePath, ext)) {
+                        filePath = null;
+                    } else {
+                        filePath = extendedFilePath;
+                    }
+                }
+            }
+        }
+    };
+
+    /**
+     * Ask the user for a file to load or to write to. Uses the awt FileDialog
+     * on Mac and the JFileChooser on other platforms. Makes sure the dialog is
+     * displayed in the event dispatch thread.
+     *
+     * @param frame A Frame for which to display the dialog. Cannot be null.
+     * @param message A message that will be displayed in the dialog.
+     * @param defaultFile The default file name.
+     * @param load Pass true if an existing file for reading should be selected.
+     * Pass false if a new file for writing should be specified.
+     * @param ext A file extension that is required when selecting a file name
+     * for saving a file. Can be null.
+     * @return A path to the file, including the file name.
+     */
+    public static String askFile(final java.awt.Frame frame, final String message,
+            final String defaultFile, final boolean load, final String ext) {
+
+        GUI gui = new GUI();
+        gui.frame = frame;
+        gui.message = message;
+        gui.defaultFile = defaultFile;
+        gui.load = load;
+        gui.ext = ext;
+
+        // make sure we run in the event dispatch thread.
+        SwingThreadUtils.invokeAndWait(gui);
+        return gui.filePath;
+    }
+
+    /**
+     * Ask the user for a file to load or to write to. Makes sure the dialog is
+     * displayed in the event dispatch thread.
+     *
+     * @param frame A Frame for which to display the dialog. Cannot be null.
+     * @param message A message that will be displayed in the dialog.
+     * @param load Pass true if an existing file for reading should be selected.
+     * Pass false if a new file for writing should be specified.
+     * @return A path to the file, including the file name.
+     */
+    public static String askFile(java.awt.Frame frame, String message, boolean load) {
+        return FileUtils.askFile(frame, message, null, load, null);
+    }
+
+    public static String askDirectory(java.awt.Frame frame,
+            String message,
+            boolean load,
+            String defaultDirectory) throws IOException {
+
+        if (FileUtils.IS_MAC_OSX) {
+            try {
+                System.setProperty("apple.awt.fileDialogForDirectories", "true");
+                FileDialog fd = new FileDialog(frame, message, load ? FileDialog.LOAD : FileDialog.SAVE);
+                fd.setFile(defaultDirectory);
+                fd.setVisible(true);
+                String fileName = fd.getFile();
+                String directory = fd.getDirectory();
+                return (fileName == null || directory == null) ? null : directory + fileName;
+            } finally {
+                System.setProperty("apple.awt.fileDialogForDirectories", "false");
+            }
+        } else {
+            JFileChooser fc = new JFileChooser(defaultDirectory);
+            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            fc.setDialogTitle(message);
+            fc.showOpenDialog(null);
+
+            File selFile = fc.getSelectedFile();
+            return selFile.getCanonicalPath();
+        }
     }
 
     /**

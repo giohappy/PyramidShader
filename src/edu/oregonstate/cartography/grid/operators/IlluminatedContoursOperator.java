@@ -335,7 +335,7 @@ public class IlluminatedContoursOperator extends ThreadedGridOperator {
         // maximum possible line width such that contours lines keep a minimum
         // distance to each other for the given slope
         // The line is shrunk by half of the minimum line distance if it is too 
-        // close to a neighbor. (The neighbor is shrunkg by the other half.)
+        // close to a neighbor. (The neighbor is shrunk by the other half.)
         double maxLineWidth_m = interval / slopePerc - minLineDist * cellSize / 2;
 
         // make very thick lines thinner to avoid overlapping lines.

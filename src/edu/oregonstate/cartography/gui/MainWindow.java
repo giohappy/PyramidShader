@@ -483,7 +483,7 @@ public class MainWindow extends javax.swing.JFrame {
 
         protected FileRenderer(BufferedImage backgroundImage, String filePath,
                 String fileFormat, Frame owner) {
-            super (owner, "", "", true);
+            super(owner, "", "", true);
             this.backgroundImage = backgroundImage;
             this.filePath = filePath;
             this.fileFormat = fileFormat;
@@ -975,6 +975,26 @@ public class MainWindow extends javax.swing.JFrame {
         return directory + fileName;
     }
 
+    public void initDisplayImage() {
+        // compute a scale factor for the display image
+        // this makes sure contour lines for small grids do not 
+        // appear overly pixelated
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        int screenWidth = gd.getDisplayMode().getWidth();
+        int screenHeight = gd.getDisplayMode().getHeight();
+        int imageScaleFactor = 1;
+        Dimension dim = model.getGridDimensionForDisplay();
+        double heightRatio = (double) screenHeight / dim.getHeight();
+        double widthRatio = (double) screenWidth / dim.getWidth();
+        double maxRatio = Math.max(heightRatio, widthRatio);
+        if (maxRatio > 1) {
+            imageScaleFactor = (int) Math.ceil(maxRatio);
+        }
+        // initialize the display image
+        BufferedImage image = model.createDestinationImage(imageScaleFactor);
+        navigableImagePanel.setImage(image);
+    }
+
     /**
      * Open a grid file and initialize the data model.
      *
@@ -1020,25 +1040,8 @@ public class MainWindow extends javax.swing.JFrame {
                 }
 
                 try {
-                    // compute a scale factor for the display image
-                    // this makes sure contour lines for small grids do not 
-                    // appear overly pixelated
-                    GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-                    int screenWidth = gd.getDisplayMode().getWidth();
-                    int screenHeight = gd.getDisplayMode().getHeight();
-                    int imageScaleFactor = 1;
-                    int gridWidth = model.getGrid().getCols();
-                    int gridHeight = model.getGrid().getRows();
-                    double heightRatio = (double) screenHeight / gridHeight;
-                    double widthRatio = (double) screenWidth / gridWidth;
-                    double maxRatio = Math.max(heightRatio, widthRatio);
-                    if (maxRatio > 1) {
-                        imageScaleFactor = (int) Math.ceil(maxRatio);
-                    }
-                    // initialize the display image
-                    BufferedImage image = model.createDestinationImage(imageScaleFactor);
-                    navigableImagePanel.setImage(image);
-
+                    initDisplayImage();
+                    
                     // this will render the image
                     settingsDialog.modelChanged();
 
@@ -1102,7 +1105,6 @@ public class MainWindow extends javax.swing.JFrame {
         } catch (IOException ex) {
             ErrorDialog.showErrorDialog(OPEN_ERROR_MESSAGE, "Error", ex, this);
         }
-
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -3,6 +3,7 @@ package edu.oregonstate.cartography.grid.operators;
 import edu.oregonstate.cartography.app.Vector3D;
 import edu.oregonstate.cartography.grid.Grid;
 import edu.oregonstate.cartography.gui.ProgressIndicator;
+import edu.oregonstate.cartography.gui.bivariate.BivariateColorRenderer;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -27,6 +28,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
 
         GRAY_SHADING("Gray Shading"),
         EXPOSITION("Exposition Color"),
+        BIVARIATE("Bivariate Color"),
         HYPSOMETRIC_SHADING("Hypsometric Color with Shading"),
         HYPSOMETRIC("Hypsometric Color"),
         LOCAL_HYPSOMETRIC_SHADING("Local Hypsometric Color with Shading"),
@@ -56,6 +58,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
 
         public boolean isColored() {
             return this == EXPOSITION
+                    || this == BIVARIATE
                     || this == HYPSOMETRIC
                     || this == HYPSOMETRIC_SHADING
                     || this == LOCAL_HYPSOMETRIC
@@ -93,6 +96,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
     // constant abmient illumination component.
     private double ambientLight;
 
+    // renderer for bivariate color images
+    private final BivariateColorRenderer bivariateColorRenderer;
+
     // colored image output
     private BufferedImage dstImage;
 
@@ -108,13 +114,16 @@ public class ColorizerOperator extends ThreadedGridOperator {
      *
      * @param colorVisualization the type of color that is created by this
      * operator
+     * @param bivariateColorRenderer Bivariate color renderer
      * @param progressIndicator Progress indicator that will be periodically
      * updated.
      */
     public ColorizerOperator(ColorVisualization colorVisualization,
+            BivariateColorRenderer bivariateColorRenderer,
             ProgressIndicator progressIndicator) {
         this.colorVisualization = colorVisualization;
         this.progressIndicator = progressIndicator;
+        this.bivariateColorRenderer = bivariateColorRenderer;
     }
 
     /**
@@ -445,6 +454,26 @@ public class ColorizerOperator extends ThreadedGridOperator {
         }
     }
 
+    private void bivariate(int startRow, int endRow) {
+        final int nCols = dstImage.getWidth();
+        final int[] imageBuffer = imageBuffer(dstImage);
+        for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
+            if (bivariateColorRenderer.hasGrids() == false) {
+                for (int col = 0; col < nCols; ++col) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                }
+            } else {
+                for (int col = 0; col < nCols; ++col) {
+                    int argb = bivariateColorRenderer.renderPixel(col, row);
+                    imageBuffer[row * nCols + col] = argb;
+                }
+            }
+        }
+    }
+
     private void hypsometric(Grid grid, int startRow, int endRow) {
         final int nCols = dstImage.getWidth();
         final int[] imageBuffer = imageBuffer(dstImage);
@@ -538,6 +567,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
                 break;
             case EXPOSITION:
                 expositionShading(grid, startRow, endRow);
+                break;
+            case BIVARIATE:
+                bivariate(startRow, endRow);
                 break;
             case HYPSOMETRIC_SHADING:
             case LOCAL_HYPSOMETRIC_SHADING:

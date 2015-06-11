@@ -322,6 +322,12 @@ public final class Grid {
 
     }
 
+    /**
+     * Returns the aspect angle in radians
+     * @param col Column
+     * @param row Row
+     * @return Aspect in radians in counter-clockwise direction. East is 0.
+     */
     public double getAspect(int col, int row) {
         final int cols = grid[0].length;
         final int rows = grid.length;

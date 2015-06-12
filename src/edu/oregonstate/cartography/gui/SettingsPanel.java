@@ -12,10 +12,14 @@ import edu.oregonstate.cartography.grid.operators.ColorizerOperator;
 import edu.oregonstate.cartography.grid.operators.ColorizerOperator.ColorVisualization;
 import static edu.oregonstate.cartography.gui.SettingsPanel.RenderSpeed.FAST;
 import static edu.oregonstate.cartography.gui.SettingsPanel.RenderSpeed.REGULAR;
+import edu.oregonstate.cartography.gui.bivariate.BivariateColorPanel;
 import edu.oregonstate.cartography.gui.bivariate.BivariateColorPoint;
+import edu.oregonstate.cartography.gui.bivariate.BivariateColorRenderer;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
@@ -281,7 +285,6 @@ public class SettingsPanel extends javax.swing.JPanel {
         idwRadioButton = new javax.swing.JRadioButton();
         gaussRadioButton = new javax.swing.JRadioButton();
         jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
         javax.swing.JLabel idwExponentSliderLabel = new javax.swing.JLabel();
         idwExponentSlider = new javax.swing.JSlider();
         bivariateColorExponentValueLabel = new javax.swing.JLabel();
@@ -642,7 +645,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         bivariateColorGroupPanel.add(gaussRadioButton, gridBagConstraints);
 
         jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getSize()-2f));
-        jLabel9.setText("Click to add a point. Click and drag to move a point.");
+        jLabel9.setText("<html>Click to add a point. Click and drag to move a point. Press the<br>delete key to remove the selected point. Right-click on the map<br>to add color points to the diagram.</html>");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 8;
@@ -650,15 +653,6 @@ public class SettingsPanel extends javax.swing.JPanel {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(4, 0, 0, 0);
         bivariateColorGroupPanel.add(jLabel9, gridBagConstraints);
-
-        jLabel10.setFont(jLabel10.getFont().deriveFont(jLabel10.getFont().getSize()-2f));
-        jLabel10.setText("Hit the delete key to remove the selected point.");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 9;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        bivariateColorGroupPanel.add(jLabel10, gridBagConstraints);
 
         idwExponentSliderLabel.setText("Exponent");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -2212,6 +2206,54 @@ public class SettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_bivariateVerticalButtonActionPerformed
 
+    /**
+     * user right-clicked on the map. Use the clicked location to add a color point
+     * to the bivariate color panel
+     * @param xPerc
+     * @param yPerc 
+     */
+    public void mouseRightClicked(double xPerc, double yPerc) {
+        if (model.getBivariateColorRenderer().hasGrids() == false
+                || model.backgroundVisualization.isBivariate() == false) {
+            return;
+        }
+        BivariateColorRenderer bivariateRenderer = model.getBivariateColorRenderer();
+        Point lutPt = bivariateRenderer.getLUTCoordinates(xPerc, yPerc);
+        BivariateColorPoint pt = new BivariateColorPoint();
+        int rgb = bivariateRenderer.getLUTColor(lutPt.x, lutPt.y);
+        Color color = new Color(rgb);
+        pt.setColor(color);
+        pt.setAttribute1((double) lutPt.x / BivariateColorRenderer.LUT_SIZE);
+        pt.setAttribute2(1 - (double) lutPt.y / BivariateColorRenderer.LUT_SIZE);
+        bivariateRenderer.addPoint(pt);
+        bivariateRenderer.colorPointsChanged();
+        bivariateColorPanel.selectPoint(pt);
+        updateImage(RenderSpeed.REGULAR);
+        bivariateColorPanel.repaint();
+    }
+
+    /**
+     * Mouse pointer was moved over the map. Extract LUT location for the passed
+     * location.
+     * @param xPerc Horizontal pointer location in percentage.
+     * @param yPerc Vertical pointer location in percentage, from top to bottom.
+     */
+    public void mouseMoved(double xPerc, double yPerc) {
+        if (model.getBivariateColorRenderer().hasGrids() == false
+                || model.backgroundVisualization.isBivariate() == false) {
+            return;
+        }
+        Point pt = model.getBivariateColorRenderer().getLUTCoordinates(xPerc, yPerc);
+        if (pt != null) {
+            xPerc = 100d * pt.x / BivariateColorRenderer.LUT_SIZE;
+            yPerc = 100d * pt.y / BivariateColorRenderer.LUT_SIZE;
+        } else {
+            xPerc = -1;
+            yPerc = -1;
+        }
+        bivariateColorPanel.setCrossPerc(xPerc, yPerc);
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSlider ambientLightSlider;
     private javax.swing.JSlider azimuthSlider;
@@ -2265,7 +2307,6 @@ public class SettingsPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton idwRadioButton;
     private javax.swing.JPanel illuminatedContoursPanel;
     private javax.swing.JPanel illuminationPanel;
-    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;

@@ -2,13 +2,15 @@
 package edu.oregonstate.cartography.gui;
 
 import edu.oregonstate.cartography.grid.Model;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  *
  * @author Bernhard Jenny, Cartography and Geovisualization Group, Oregon State
  * University
  */
-public class SettingsDialog extends javax.swing.JDialog {
+public class SettingsDialog extends javax.swing.JDialog implements PropertyChangeListener{
 
     /**
      * Creates new form SettingsDialog
@@ -58,5 +60,19 @@ public class SettingsDialog extends javax.swing.JDialog {
 
     void setProgressPanel(ProgressPanel progressPanel) {
         settingsPanel.setProgressPanel(progressPanel);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if ("mouseRightClicked".equals(evt.getPropertyName())) {
+            double x = (Double)evt.getOldValue();
+            double y = (Double)evt.getNewValue();
+            settingsPanel.mouseRightClicked(x, y);
+        }
+        if ("mouseMoved".equals(evt.getPropertyName())) {
+            double x = (Double)evt.getOldValue();
+            double y = (Double)evt.getNewValue();
+            settingsPanel.mouseMoved(x, y);
+        }
     }
 }

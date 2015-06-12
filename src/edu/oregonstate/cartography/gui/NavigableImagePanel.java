@@ -1,12 +1,10 @@
 package edu.oregonstate.cartography.gui;
 
 import edu.oregonstate.cartography.app.ImageUtils;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -19,12 +17,9 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import javax.imageio.ImageIO;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
@@ -307,6 +302,18 @@ public class NavigableImagePanel extends JPanel {
                     }
                 }
             }
+
+            // FIXME hack
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    double w = 100 * (e.getX() - originX) / scale / image.getWidth();
+                    double h = 100 * (e.getY() - originY) / scale / image.getHeight();
+                    if (w < 0 || w > 100 || h < 0 || h > 100) {
+                        w = h = -1;
+                    }
+                    firePropertyChange("mouseRightClicked", w, h);
+                }
+            }
         });
 
         addMouseMotionListener(new MouseMotionListener() {
@@ -322,6 +329,15 @@ public class NavigableImagePanel extends JPanel {
                 //we need the mouse position so that after zooming
                 //that position of the image is maintained
                 mousePosition = e.getPoint();
+
+                if (image != null) {
+                    double w = 100 * (e.getX() - originX) / scale / image.getWidth();
+                    double h = 100 * (e.getY() - originY) / scale / image.getHeight();
+                    if (w < 0 || w > 100 || h < 0 || h > 100) {
+                        w = h = -1;
+                    }
+                    firePropertyChange("mouseMoved", w, h);
+                }
             }
         });
 
@@ -798,8 +814,8 @@ public class NavigableImagePanel extends JPanel {
                     rect.height);
             Graphics2D g2 = (Graphics2D) g;
             /*
-            // modified by Bernie to use getScaledInstance, which returns a better image
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, INTERPOLATION_TYPE);
+             // modified by Bernie to use getScaledInstance, which returns a better image
+             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, INTERPOLATION_TYPE);
              g2.drawImage(subimage, Math.max(0, originX), Math.max(0, originY),
              Math.min((int) (subimage.getWidth() * scale), getWidth()),
              Math.min((int) (subimage.getHeight() * scale), getHeight()), null);
@@ -821,7 +837,6 @@ public class NavigableImagePanel extends JPanel {
             drawZoomAreaOutline(g);
         }
     }
-
 
     //Paints a white outline over the navigation image indicating 
     //the area of the image currently displayed in the panel.

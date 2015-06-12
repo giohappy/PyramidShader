@@ -2,6 +2,7 @@ package edu.oregonstate.cartography.gui.bivariate;
 
 import edu.oregonstate.cartography.grid.Grid;
 import edu.oregonstate.cartography.grid.operators.ColorizerOperator;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.ArrayList;
  */
 public class BivariateColorRenderer {
 
-    private static final int LUT_SIZE = 256;
+    public static final int LUT_SIZE = 256;
 
     private final ArrayList<BivariateColorPoint> points = new ArrayList<>();
     private double exponentP = 1.3;
@@ -84,21 +85,55 @@ public class BivariateColorRenderer {
     public final int renderPixel(int col, int row) {
         double attr1AtPixel = attribute1Grid.getValue(col, row);
         // scale to 0..1
-        attr1AtPixel = (attr1AtPixel - attribute1MinMax[0]) 
+        attr1AtPixel = (attr1AtPixel - attribute1MinMax[0])
                 / (attribute1MinMax[1] - attribute1MinMax[0]);
 
         double attr2AtPixel = attribute2Grid.getValue(col, row);
         // scale to 0..1 and invert vertical axis
-        attr2AtPixel = 1 - (attr2AtPixel - attribute2MinMax[0]) 
+        attr2AtPixel = (attr2AtPixel - attribute2MinMax[0])
                 / (attribute2MinMax[1] - attribute2MinMax[0]);
 
         if (Double.isNaN(attr1AtPixel) || Double.isNaN(attr2AtPixel)) {
             return ColorizerOperator.VOID_COLOR;
         }
-        
+
         int lutCol = (int) Math.round(attr1AtPixel * (LUT_SIZE - 1));
         int lutRow = (int) Math.round(attr2AtPixel * (LUT_SIZE - 1));
         return lut[lutRow][lutCol];
+    }
+
+    public int getLUTColor(int lutCol, int lutRow) {
+        return lut[LUT_SIZE - 1 - lutRow][lutCol];
+    }
+    
+    /**
+     * Returns the coordinates of the LUT cell that is closest to the passed 
+     * location. The location is in percentage, relative to attribute grid 1.
+     * @param xPerc Horizontal location in percentage.
+     * @param yPerc Vertical location in percentage, from top to bottom.
+     * @return 
+     */
+    public Point getLUTCoordinates(double xPerc, double yPerc) {
+        int col = (int) Math.round(attribute1Grid.getCols() * xPerc / 100d);
+        int row = (int) Math.round(attribute1Grid.getRows() * yPerc / 100d);
+        
+        double attr1AtPixel = attribute1Grid.getValue(col, row);
+        // scale to 0..1
+        attr1AtPixel = (attr1AtPixel - attribute1MinMax[0])
+                / (attribute1MinMax[1] - attribute1MinMax[0]);
+
+        double attr2AtPixel = attribute2Grid.getValue(col, row);
+        // scale to 0..1 and invert vertical axis
+        attr2AtPixel = (attr2AtPixel - attribute2MinMax[0])
+                / (attribute2MinMax[1] - attribute2MinMax[0]);
+
+        if (Double.isNaN(attr1AtPixel) || Double.isNaN(attr2AtPixel)) {
+            return null;
+        }
+
+        int lutCol = (int) Math.round(attr1AtPixel * (LUT_SIZE - 1));
+        int lutRow = LUT_SIZE - 1 - (int) Math.round(attr2AtPixel * (LUT_SIZE - 1));
+        return new Point(lutCol, lutRow);
     }
 
     public void renderImage(BufferedImage img, Grid attribute1Grid, Grid attribute2Grid) {
@@ -308,7 +343,7 @@ public class BivariateColorRenderer {
     public float[] getAttribute1MinMax() {
         return attribute1MinMax;
     }
-    
+
     /**
      * @return the attribute2MinMax
      */

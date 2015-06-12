@@ -1238,6 +1238,7 @@ public class MainWindow extends javax.swing.JFrame {
      */
     public void setSettingsDialog(SettingsDialog settingsDialog) {
         this.settingsDialog = settingsDialog;
+        navigableImagePanel.addPropertyChangeListener(settingsDialog);
     }
 
     private void saveTerrain(Grid grid) {

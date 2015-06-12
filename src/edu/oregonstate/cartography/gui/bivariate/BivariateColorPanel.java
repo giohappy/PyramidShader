@@ -23,7 +23,7 @@ import javax.swing.KeyStroke;
  * University
  */
 public class BivariateColorPanel extends BivariatedColorPreview {
-    
+
     private static final int RECT_DIM = 10;
 
     /**
@@ -46,7 +46,10 @@ public class BivariateColorPanel extends BivariatedColorPreview {
      * selected point.
      */
     private int dragDY = 0;
-    
+
+    private double crossXPerc = -1;
+    private double crossYPerc = -1;
+
     public BivariateColorPanel() {
         addMouseListener(new MouseAdapter() {
             @Override
@@ -59,7 +62,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
                 }
             }
         });
-        
+
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -70,7 +73,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
                 selectPoint(pt);
                 repaint();
             }
-            
+
             @Override
             public void mouseReleased(MouseEvent e) {
                 if (draggingPoint) {
@@ -80,7 +83,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
                 firePropertyChange("colorChanged", null, null);
             }
         });
-        
+
         addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
@@ -104,14 +107,14 @@ public class BivariateColorPanel extends BivariatedColorPreview {
                 repaint();
                 firePropertyChange("colorDeleted", null, null);
             }
-        });        
+        });
     }
-    
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
-        if (getBivariateColorRenderer() != null) {   
+        if (getBivariateColorRenderer() != null) {
             //Antialiasing ON
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             ArrayList<BivariateColorPoint> points = getBivariateColorRenderer().getPoints();
@@ -143,34 +146,43 @@ public class BivariateColorPanel extends BivariatedColorPreview {
                     g2d.drawRect(px - RECT_DIM / 2, py - RECT_DIM / 2, RECT_DIM, RECT_DIM);
                 }
             }
+
+            int D = 3;
+            g2d.setColor(Color.BLACK);
+            if (crossXPerc >= 0 && crossYPerc >= 0) {
+                int x = (int) Math.round(crossXPerc * getWidth() / 100d);
+                int y = (int) Math.round(crossYPerc * getHeight() / 100d);
+                g2d.drawLine(x - D, y, x + D, y);
+                g2d.drawLine(x, y - D, x, y + D);
+            }
         }
         paintWarningString(g2d);
     }
-    
+
     private int attr1ToPixelX(double attr1) {
         int insetX = getInsets().left;
         int w = getWidth() - getInsets().left - getInsets().right;
         return insetX + (int) Math.round(attr1 * w);
     }
-    
+
     private int attr2ToPixelY(double attr2) {
         int insetY = getInsets().top;
         int h = getHeight() - getInsets().top - getInsets().bottom;
         return insetY + (int) Math.round((1 - attr2) * h);
     }
-    
+
     private double pixelXToAttr1(int x) {
         int insetX = getInsets().left;
         double w = getWidth() - getInsets().left - getInsets().right;
         return (x - insetX) / w;
     }
-    
+
     private double pixelYToAttr2(int y) {
         int insetY = getInsets().top;
         double h = getHeight() - getInsets().top - getInsets().bottom;
         return (h - y + insetY) / h;
     }
-    
+
     private BivariateColorPoint addPoint(int pixelX, int pixelY) {
         BivariateColorPoint p = new BivariateColorPoint();
         p.setAttribute1(pixelXToAttr1(pixelX));
@@ -180,7 +192,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
         getBivariateColorRenderer().addPoint(p);
         return p;
     }
-    
+
     private BivariateColorPoint findPoint(int pixelX, int pixelY) {
         ArrayList<BivariateColorPoint> points = getBivariateColorRenderer().getPoints();
         for (BivariateColorPoint point : points) {
@@ -194,7 +206,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
         }
         return null;
     }
-    
+
     private void movePoint(int mouseX, int mouseY) {
         if (selectedPoint == null) {
             return;
@@ -202,13 +214,13 @@ public class BivariateColorPanel extends BivariatedColorPreview {
         double attr1 = pixelXToAttr1(mouseX + dragDX);
         attr1 = Math.min(Math.max(0d, attr1), 1d);
         selectedPoint.setAttribute1(attr1);
-        
+
         double attr2 = pixelYToAttr2(mouseY + dragDY);
         attr2 = Math.min(Math.max(0d, attr2), 1d);
         selectedPoint.setAttribute2(attr2);
-        
+
         selectedPoint.setLonLat(Double.NaN, Double.NaN);
-        
+
         getBivariateColorRenderer().colorPointsChanged();
         repaint();
     }
@@ -226,12 +238,12 @@ public class BivariateColorPanel extends BivariatedColorPreview {
      *
      * @param pt
      */
-    private void selectPoint(BivariateColorPoint pt) {
+    public void selectPoint(BivariateColorPoint pt) {
         selectedPoint = pt;
         repaint();
         firePropertyChange("selectedPoint", null, selectedPoint);
     }
-    
+
     /**
      * Selects the first point
      */
@@ -241,15 +253,15 @@ public class BivariateColorPanel extends BivariatedColorPreview {
             selectPoint(points.get(0));
         }
     }
-    
+
     public void setSelectedColor(Color color) {
         if (selectedPoint == null) {
             ArrayList<BivariateColorPoint> points = getBivariateColorRenderer().getPoints();
             if (points.size() > 0) {
                 selectedPoint = points.get(0);
             }
-        }        
-        
+        }
+
         if (selectedPoint != null) {
             selectedPoint.setColor(color);
             repaint();
@@ -264,5 +276,11 @@ public class BivariateColorPanel extends BivariatedColorPreview {
      */
     public boolean isValueAdjusting() {
         return draggingPoint;
+    }
+
+    public void setCrossPerc(double crossXPerc, double crossYPerc) {
+        this.crossXPerc = crossXPerc;
+        this.crossYPerc = crossYPerc;
+        repaint();
     }
 }

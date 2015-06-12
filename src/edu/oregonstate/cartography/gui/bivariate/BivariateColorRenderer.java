@@ -1,6 +1,7 @@
 package edu.oregonstate.cartography.gui.bivariate;
 
 import edu.oregonstate.cartography.grid.Grid;
+import edu.oregonstate.cartography.grid.operators.ColorizerOperator;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public class BivariateColorRenderer {
 
     /**
      * Updates the color look-up table. Needs to be called after any point or
-     * the exponent changes.
+     * the exponent change.
      */
     private void updateLUT() {
         lut = new int[LUT_SIZE][LUT_SIZE];
@@ -87,10 +88,14 @@ public class BivariateColorRenderer {
                 / (attribute1MinMax[1] - attribute1MinMax[0]);
 
         double attr2AtPixel = attribute2Grid.getValue(col, row);
-        // scale to 0..1
-        attr2AtPixel = (attr2AtPixel - attribute2MinMax[0]) 
+        // scale to 0..1 and invert vertical axis
+        attr2AtPixel = 1 - (attr2AtPixel - attribute2MinMax[0]) 
                 / (attribute2MinMax[1] - attribute2MinMax[0]);
 
+        if (Double.isNaN(attr1AtPixel) || Double.isNaN(attr2AtPixel)) {
+            return ColorizerOperator.VOID_COLOR;
+        }
+        
         int lutCol = (int) Math.round(attr1AtPixel * (LUT_SIZE - 1));
         int lutRow = (int) Math.round(attr2AtPixel * (LUT_SIZE - 1));
         return lut[lutRow][lutCol];
@@ -276,6 +281,8 @@ public class BivariateColorRenderer {
     public void setAttribute1Grid(Grid attribute1Grid) {
         this.attribute1Grid = attribute1Grid;
         this.attribute1MinMax = attribute1Grid.getMinMax();
+        System.out.println("Attribute Grid 1 (Horizontal");
+        System.out.println(attribute1MinMax[0] + " to " + attribute1MinMax[1]);
     }
 
     /**
@@ -291,6 +298,8 @@ public class BivariateColorRenderer {
     public void setAttribute2Grid(Grid attribute2Grid) {
         this.attribute2Grid = attribute2Grid;
         this.attribute2MinMax = attribute2Grid.getMinMax();
+        System.out.println("Attribute Grid 2 (Horizontal");
+        System.out.println(attribute2MinMax[0] + " to " + attribute2MinMax[1]);
     }
 
     public boolean hasGrids() {

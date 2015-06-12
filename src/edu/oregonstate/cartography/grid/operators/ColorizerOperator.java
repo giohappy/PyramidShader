@@ -19,7 +19,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
     /**
      * transparent white for void (NaN) values.
      */
-    private static final int VOID_COLOR = 0x00000000;
+    public static final int VOID_COLOR = 0x00000000;
 
     /**
      * The type of colored visualization this operator can create.

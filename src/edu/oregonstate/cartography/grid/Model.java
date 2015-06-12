@@ -9,6 +9,7 @@ import edu.oregonstate.cartography.grid.operators.GridMaskOperator;
 import edu.oregonstate.cartography.grid.operators.GridScaleOperator;
 import edu.oregonstate.cartography.grid.operators.GridScaleToRangeOperator;
 import edu.oregonstate.cartography.grid.operators.GridSlopeOperator;
+import edu.oregonstate.cartography.grid.operators.GridVoidOperator;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
 import edu.oregonstate.cartography.grid.operators.PlanObliqueOperator;
 import edu.oregonstate.cartography.gui.bivariate.BivariateColorRenderer;
@@ -620,18 +621,24 @@ public class Model implements Cloneable {
         localGridModel.setLocalGridStandardDeviationLevels(levels);
     }
 
-    public void scaleTerrain(float scale) {
+    public void scaleGrid(float scale) {
         GridScaleOperator op = new GridScaleOperator(scale);
         op.operate(grid, grid);
         setGrid(grid);
     }
 
-    public void verticallyOffsetTerrain(float offset) {
+    public void verticallyOffsetGrid(float offset) {
         GridAddOperator op = new GridAddOperator(offset);
         op.operate(grid, grid);
         setGrid(grid);
     }
 
+    public void voidGridValue(float v) {
+        GridVoidOperator op = new GridVoidOperator(v);
+        op.operate(grid, grid);
+        setGrid(grid);
+    }
+    
     /**
      * @return the bivariateColorRender
      */

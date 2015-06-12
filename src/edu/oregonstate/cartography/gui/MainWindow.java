@@ -99,22 +99,27 @@ public class MainWindow extends javax.swing.JFrame {
         imageResolutionPanel = new javax.swing.JPanel();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
         imageResolutionSpinner = new javax.swing.JSpinner();
-        scaleTerrainPanel = new javax.swing.JPanel();
+        scaleGridPanel = new javax.swing.JPanel();
         javax.swing.JLabel jLabel8 = new javax.swing.JLabel();
         scaleTerrainFormattedTextField = new javax.swing.JFormattedTextField();
         javax.swing.JLabel jLabel9 = new javax.swing.JLabel();
-        offsetTerrainPanel = new javax.swing.JPanel();
+        offsetGridPanel = new javax.swing.JPanel();
         javax.swing.JLabel jLabel10 = new javax.swing.JLabel();
         offsetTerrainFormattedTextField = new javax.swing.JFormattedTextField();
         javax.swing.JLabel jLabel11 = new javax.swing.JLabel();
+        voidGridPanel = new javax.swing.JPanel();
+        javax.swing.JLabel jLabel12 = new javax.swing.JLabel();
+        voidGridFormattedTextField = new javax.swing.JFormattedTextField();
+        javax.swing.JLabel jLabel13 = new javax.swing.JLabel();
         navigableImagePanel = new edu.oregonstate.cartography.gui.NavigableImagePanel();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         javax.swing.JMenuItem openMenuItem = new javax.swing.JMenuItem();
         openRecentMenu = rdm.createOpenRecentMenu();
         javax.swing.JPopupMenu.Separator jSeparator1 = new javax.swing.JPopupMenu.Separator();
-        saveTerrainMenuItem = new javax.swing.JMenuItem();
-        saveLocalTerrainMenuItem = new javax.swing.JMenuItem();
+        saveGridMenuItem = new javax.swing.JMenuItem();
+        saveGeneralizedGridMenuItem = new javax.swing.JMenuItem();
+        saveLocalGridMenuItem = new javax.swing.JMenuItem();
         saveDownsampledMenu = new javax.swing.JMenu();
         javax.swing.JPopupMenu.Separator jSeparator5 = new javax.swing.JPopupMenu.Separator();
         javax.swing.JMenu saveImageMenu = new javax.swing.JMenu();
@@ -129,8 +134,9 @@ public class MainWindow extends javax.swing.JFrame {
         javax.swing.JPopupMenu.Separator jSeparator6 = new javax.swing.JPopupMenu.Separator();
         planObliqueFeaturesMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
-        scaleTerrainModelMenuItem = new javax.swing.JMenuItem();
-        offsetTerrainModelMenuItem = new javax.swing.JMenuItem();
+        scaleGridMenuItem = new javax.swing.JMenuItem();
+        offsetGridMenuItem = new javax.swing.JMenuItem();
+        voidGridMenuItem = new javax.swing.JMenuItem();
         viewMenu = new javax.swing.JMenu();
         viewResetMenuItem = new javax.swing.JMenuItem();
         javax.swing.JPopupMenu.Separator jSeparator4 = new javax.swing.JPopupMenu.Separator();
@@ -151,15 +157,15 @@ public class MainWindow extends javax.swing.JFrame {
         imageResolutionSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 1, 25, 1));
         imageResolutionPanel.add(imageResolutionSpinner, new java.awt.GridBagConstraints());
 
-        scaleTerrainPanel.setLayout(new java.awt.GridBagLayout());
+        scaleGridPanel.setLayout(new java.awt.GridBagLayout());
 
         jLabel8.setText("Scale Factor:");
-        scaleTerrainPanel.add(jLabel8, new java.awt.GridBagConstraints());
+        scaleGridPanel.add(jLabel8, new java.awt.GridBagConstraints());
 
         scaleTerrainFormattedTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter()));
         scaleTerrainFormattedTextField.setPreferredSize(new java.awt.Dimension(200, 28));
         scaleTerrainFormattedTextField.setValue(new Float(1));
-        scaleTerrainPanel.add(scaleTerrainFormattedTextField, new java.awt.GridBagConstraints());
+        scaleGridPanel.add(scaleTerrainFormattedTextField, new java.awt.GridBagConstraints());
 
         jLabel9.setFont(jLabel9.getFont().deriveFont(jLabel9.getFont().getSize()-2f));
         jLabel9.setText("All values in the terrain grid are scaled by this factor.");
@@ -170,17 +176,17 @@ public class MainWindow extends javax.swing.JFrame {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
-        scaleTerrainPanel.add(jLabel9, gridBagConstraints);
+        scaleGridPanel.add(jLabel9, gridBagConstraints);
 
-        offsetTerrainPanel.setLayout(new java.awt.GridBagLayout());
+        offsetGridPanel.setLayout(new java.awt.GridBagLayout());
 
         jLabel10.setText("Value to Add:");
-        offsetTerrainPanel.add(jLabel10, new java.awt.GridBagConstraints());
+        offsetGridPanel.add(jLabel10, new java.awt.GridBagConstraints());
 
         offsetTerrainFormattedTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter()));
         offsetTerrainFormattedTextField.setPreferredSize(new java.awt.Dimension(200, 28));
         offsetTerrainFormattedTextField.setValue(new Float(1));
-        offsetTerrainPanel.add(offsetTerrainFormattedTextField, new java.awt.GridBagConstraints());
+        offsetGridPanel.add(offsetTerrainFormattedTextField, new java.awt.GridBagConstraints());
 
         jLabel11.setFont(jLabel11.getFont().deriveFont(jLabel11.getFont().getSize()-2f));
         jLabel11.setText("The value entered is added to all values in the terrain grid.");
@@ -191,7 +197,28 @@ public class MainWindow extends javax.swing.JFrame {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
-        offsetTerrainPanel.add(jLabel11, gridBagConstraints);
+        offsetGridPanel.add(jLabel11, gridBagConstraints);
+
+        voidGridPanel.setLayout(new java.awt.GridBagLayout());
+
+        jLabel12.setText("Mark this value as void:");
+        voidGridPanel.add(jLabel12, new java.awt.GridBagConstraints());
+
+        voidGridFormattedTextField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter()));
+        voidGridFormattedTextField.setPreferredSize(new java.awt.Dimension(200, 28));
+        voidGridFormattedTextField.setValue(new Float(0));
+        voidGridPanel.add(voidGridFormattedTextField, new java.awt.GridBagConstraints());
+
+        jLabel13.setFont(jLabel13.getFont().deriveFont(jLabel13.getFont().getSize()-2f));
+        jLabel13.setText("All values in the grid with this value will be set to the void value.");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
+        voidGridPanel.add(jLabel13, gridBagConstraints);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Pyramid Shader");
@@ -224,21 +251,29 @@ public class MainWindow extends javax.swing.JFrame {
         fileMenu.add(openRecentMenu);
         fileMenu.add(jSeparator1);
 
-        saveTerrainMenuItem.setText("Save Generalized Grid…");
-        saveTerrainMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        saveGridMenuItem.setText("Save Grid…");
+        saveGridMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveTerrainMenuItemActionPerformed(evt);
+                saveGridMenuItemActionPerformed(evt);
             }
         });
-        fileMenu.add(saveTerrainMenuItem);
+        fileMenu.add(saveGridMenuItem);
 
-        saveLocalTerrainMenuItem.setText("Save Locally Filtered Grid…");
-        saveLocalTerrainMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        saveGeneralizedGridMenuItem.setText("Save Generalized Grid…");
+        saveGeneralizedGridMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveLocalTerrainMenuItemActionPerformed(evt);
+                saveGeneralizedGridMenuItemActionPerformed(evt);
             }
         });
-        fileMenu.add(saveLocalTerrainMenuItem);
+        fileMenu.add(saveGeneralizedGridMenuItem);
+
+        saveLocalGridMenuItem.setText("Save Locally Filtered Grid…");
+        saveLocalGridMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveLocalGridMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(saveLocalGridMenuItem);
 
         saveDownsampledMenu.setText("Save Downsampled Grid");
         saveDownsampledMenu.addMenuListener(new javax.swing.event.MenuListener() {
@@ -335,21 +370,29 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
 
-        scaleTerrainModelMenuItem.setText("Scale Grid Values");
-        scaleTerrainModelMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        scaleGridMenuItem.setText("Scale Grid Values…");
+        scaleGridMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                scaleTerrainModelMenuItemActionPerformed(evt);
+                scaleGridMenuItemActionPerformed(evt);
             }
         });
-        editMenu.add(scaleTerrainModelMenuItem);
+        editMenu.add(scaleGridMenuItem);
 
-        offsetTerrainModelMenuItem.setText("Offset Grid Values");
-        offsetTerrainModelMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        offsetGridMenuItem.setText("Offset Grid Values…");
+        offsetGridMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                offsetTerrainModelMenuItemActionPerformed(evt);
+                offsetGridMenuItemActionPerformed(evt);
             }
         });
-        editMenu.add(offsetTerrainModelMenuItem);
+        editMenu.add(offsetGridMenuItem);
+
+        voidGridMenuItem.setText("Void Grid Values…");
+        voidGridMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                voidGridMenuItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(voidGridMenuItem);
 
         menuBar.add(editMenu);
 
@@ -543,9 +586,9 @@ public class MainWindow extends javax.swing.JFrame {
         saveImage("tif", "Save TIFF Image");
     }//GEN-LAST:event_saveTIFFImageMenuItemActionPerformed
 
-    private void saveTerrainMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveTerrainMenuItemActionPerformed
+    private void saveGeneralizedGridMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveGeneralizedGridMenuItemActionPerformed
         saveTerrain(model.getGeneralizedGrid());
-    }//GEN-LAST:event_saveTerrainMenuItemActionPerformed
+    }//GEN-LAST:event_saveGeneralizedGridMenuItemActionPerformed
 
     private void openMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openMenuItemActionPerformed
         openGrid();
@@ -697,8 +740,9 @@ public class MainWindow extends javax.swing.JFrame {
         boolean gridLoaded = (model.getGrid() != null);
         boolean contoursVisible
                 = model.foregroundVisualization != Model.ForegroundVisualization.NONE;
-        saveTerrainMenuItem.setEnabled(gridLoaded);
-        saveLocalTerrainMenuItem.setEnabled(model.backgroundVisualization.isLocal());
+        saveGridMenuItem.setEnabled(gridLoaded);
+        saveGeneralizedGridMenuItem.setEnabled(gridLoaded);
+        saveLocalGridMenuItem.setEnabled(model.backgroundVisualization.isLocal());
         saveDownsampledMenu.setEnabled(gridLoaded);
         saveTIFFImageMenuItem.setEnabled(gridLoaded);
         savePNGImageMenuItem.setEnabled(gridLoaded);
@@ -715,13 +759,13 @@ public class MainWindow extends javax.swing.JFrame {
         viewZoomOutMenuItem.setEnabled(gridLoaded);
     }//GEN-LAST:event_viewMenuMenuSelected
 
-    private void saveLocalTerrainMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveLocalTerrainMenuItemActionPerformed
+    private void saveLocalGridMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveLocalGridMenuItemActionPerformed
         saveTerrain(model.getLocalGrid());
-    }//GEN-LAST:event_saveLocalTerrainMenuItemActionPerformed
+    }//GEN-LAST:event_saveLocalGridMenuItemActionPerformed
 
-    private void scaleTerrainModelMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scaleTerrainModelMenuItemActionPerformed
+    private void scaleGridMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scaleGridMenuItemActionPerformed
         int option = JOptionPane.showOptionDialog(this,
-                scaleTerrainPanel,
+                scaleGridPanel,
                 "Scale Terrain",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
@@ -734,17 +778,17 @@ public class MainWindow extends javax.swing.JFrame {
             scaleTerrainFormattedTextField.commitEdit();
             java.lang.Number f = (java.lang.Number) (scaleTerrainFormattedTextField.getValue());
             float scale = f.floatValue();
-            model.scaleTerrain(scale);
+            model.scaleGrid(scale);
             settingsDialog.modelChanged();
         } catch (Exception exc) {
             ErrorDialog.showErrorDialog("An error occured while scaling the terrain.",
                     "Error", exc, this);
         }
-    }//GEN-LAST:event_scaleTerrainModelMenuItemActionPerformed
+    }//GEN-LAST:event_scaleGridMenuItemActionPerformed
 
-    private void offsetTerrainModelMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_offsetTerrainModelMenuItemActionPerformed
+    private void offsetGridMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_offsetGridMenuItemActionPerformed
         int option = JOptionPane.showOptionDialog(this,
-                offsetTerrainPanel,
+                offsetGridPanel,
                 "Vertically Offset Terrain",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
@@ -757,18 +801,19 @@ public class MainWindow extends javax.swing.JFrame {
             offsetTerrainFormattedTextField.commitEdit();
             java.lang.Number f = (java.lang.Number) (offsetTerrainFormattedTextField.getValue());
             float offset = f.floatValue();
-            model.verticallyOffsetTerrain(offset);
+            model.verticallyOffsetGrid(offset);
             settingsDialog.modelChanged();
         } catch (Exception exc) {
             ErrorDialog.showErrorDialog("An error occured while changing the terrain.",
                     "Error", exc, this);
         }
-    }//GEN-LAST:event_offsetTerrainModelMenuItemActionPerformed
+    }//GEN-LAST:event_offsetGridMenuItemActionPerformed
 
     private void editMenuMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_editMenuMenuSelected
         boolean gridLoaded = (model.getGrid() != null);
-        scaleTerrainModelMenuItem.setEnabled(gridLoaded);
-        offsetTerrainModelMenuItem.setEnabled(gridLoaded);
+        scaleGridMenuItem.setEnabled(gridLoaded);
+        offsetGridMenuItem.setEnabled(gridLoaded);
+        voidGridMenuItem.setEnabled(gridLoaded);
     }//GEN-LAST:event_editMenuMenuSelected
 
     /**
@@ -950,6 +995,32 @@ public class MainWindow extends javax.swing.JFrame {
         saveNormalMap("png");
     }//GEN-LAST:event_savePNGNormalMapMenuItemActionPerformed
 
+    private void voidGridMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_voidGridMenuItemActionPerformed
+                int option = JOptionPane.showOptionDialog(this,
+                voidGridPanel,
+                "Void Values",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null, null, null);
+        if (option != JOptionPane.OK_OPTION) {
+            return;
+        }
+
+        try {
+            voidGridFormattedTextField.commitEdit();
+            java.lang.Number f = (java.lang.Number) (voidGridFormattedTextField.getValue());
+            model.voidGridValue(f.floatValue());
+            settingsDialog.modelChanged();
+        } catch (Exception exc) {
+            ErrorDialog.showErrorDialog("An error occured while changing the terrain.",
+                    "Error", exc, this);
+        }
+    }//GEN-LAST:event_voidGridMenuItemActionPerformed
+
+    private void saveGridMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveGridMenuItemActionPerformed
+        saveTerrain(model.getGrid());
+    }//GEN-LAST:event_saveGridMenuItemActionPerformed
+
     /**
      * Ask the user for a file to read or write.
      *
@@ -1053,7 +1124,7 @@ public class MainWindow extends javax.swing.JFrame {
                         String msg = "<html>"
                                 + "This grid is rather flat and the shading may "
                                 + "not show any variation."
-                                + "<br>Use <i>Edit > " + scaleTerrainModelMenuItem.getText()
+                                + "<br>Use <i>Edit > " + scaleGridMenuItem.getText()
                                 + "</i> to vertically exaggerate the grid."
                                 + "</html>";
                         JOptionPane.showMessageDialog(getContentPane(), msg,
@@ -1114,29 +1185,33 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenuItem infoMenuItem;
     private javax.swing.JMenuBar menuBar;
     private edu.oregonstate.cartography.gui.NavigableImagePanel navigableImagePanel;
+    private javax.swing.JMenuItem offsetGridMenuItem;
+    private javax.swing.JPanel offsetGridPanel;
     private javax.swing.JFormattedTextField offsetTerrainFormattedTextField;
-    private javax.swing.JMenuItem offsetTerrainModelMenuItem;
-    private javax.swing.JPanel offsetTerrainPanel;
     private javax.swing.JMenu openRecentMenu;
     private javax.swing.JMenuItem planObliqueFeaturesMenuItem;
     private javax.swing.JMenu saveDownsampledMenu;
-    private javax.swing.JMenuItem saveLocalTerrainMenuItem;
+    private javax.swing.JMenuItem saveGeneralizedGridMenuItem;
+    private javax.swing.JMenuItem saveGridMenuItem;
+    private javax.swing.JMenuItem saveLocalGridMenuItem;
     private javax.swing.JMenuItem savePNGContoursMenuItem;
     private javax.swing.JMenuItem savePNGImageMenuItem;
     private javax.swing.JMenuItem savePNGNormalMapMenuItem;
     private javax.swing.JMenuItem saveTIFFContoursMenuItem;
     private javax.swing.JMenuItem saveTIFFImageMenuItem;
     private javax.swing.JMenuItem saveTIFFNormalMapMenuItem;
-    private javax.swing.JMenuItem saveTerrainMenuItem;
+    private javax.swing.JMenuItem scaleGridMenuItem;
+    private javax.swing.JPanel scaleGridPanel;
     private javax.swing.JFormattedTextField scaleTerrainFormattedTextField;
-    private javax.swing.JMenuItem scaleTerrainModelMenuItem;
-    private javax.swing.JPanel scaleTerrainPanel;
     private javax.swing.JMenuItem settingsMenuItem;
     private javax.swing.JMenuItem terrainInfoMenuItem;
     private javax.swing.JMenu viewMenu;
     private javax.swing.JMenuItem viewResetMenuItem;
     private javax.swing.JMenuItem viewZoomInMenuItem;
     private javax.swing.JMenuItem viewZoomOutMenuItem;
+    private javax.swing.JFormattedTextField voidGridFormattedTextField;
+    private javax.swing.JMenuItem voidGridMenuItem;
+    private javax.swing.JPanel voidGridPanel;
     // End of variables declaration//GEN-END:variables
 
     /**

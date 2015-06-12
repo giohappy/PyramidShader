@@ -29,6 +29,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
         GRAY_SHADING("Gray Shading"),
         EXPOSITION("Exposition Color"),
         BIVARIATE("Bivariate Color"),
+        BIVARIATE_SHADING("Bivariate Color with Shading"),
         HYPSOMETRIC_SHADING("Hypsometric Color with Shading"),
         HYPSOMETRIC("Hypsometric Color"),
         LOCAL_HYPSOMETRIC_SHADING("Local Hypsometric Color with Shading"),
@@ -52,6 +53,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
         public boolean isShading() {
             return this == GRAY_SHADING
                     || this == EXPOSITION
+                    || this == BIVARIATE_SHADING
                     || this == HYPSOMETRIC_SHADING
                     || this == LOCAL_HYPSOMETRIC_SHADING;
         }
@@ -59,12 +61,18 @@ public class ColorizerOperator extends ThreadedGridOperator {
         public boolean isColored() {
             return this == EXPOSITION
                     || this == BIVARIATE
+                    || this == BIVARIATE_SHADING
                     || this == HYPSOMETRIC
                     || this == HYPSOMETRIC_SHADING
                     || this == LOCAL_HYPSOMETRIC
                     || this == LOCAL_HYPSOMETRIC_SHADING
                     || this == SLOPE
                     || this == ASPECT;
+        }
+
+        public boolean isBivariate() {
+            return this == ColorVisualization.BIVARIATE
+                    || this == ColorVisualization.BIVARIATE_SHADING;
         }
 
         @Override
@@ -313,6 +321,16 @@ public class ColorizerOperator extends ThreadedGridOperator {
         return Math.max(Math.min((dotProduct + 1d + ambientLight) * 127.5, 255.), 0);
     }
 
+    /**
+     * Computes a shading value in 0..255
+     *
+     * @param grid
+     * @param col
+     * @param row
+     * @param nCols
+     * @param nRows
+     * @return
+     */
     private double shade(float[][] grid, int col, int row, int nCols, int nRows) {
         if (row == 0) {
             // top-left corner
@@ -474,6 +492,47 @@ public class ColorizerOperator extends ThreadedGridOperator {
         }
     }
 
+    private void bivariateShading(Grid grid, int startRow, int endRow) {
+        if (grid == null) {
+            return;
+        }
+        final int nCols = dstImage.getWidth();
+        final int nRows = grid.getRows();
+        final float[][] gr = grid.getGrid();
+        final int[] imageBuffer = imageBuffer(dstImage);
+        for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
+            if (bivariateColorRenderer.hasGrids() == false) {
+                for (int col = 0; col < nCols; ++col) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                }
+            } else {
+                for (int col = 0; col < nCols; ++col) {
+                    int gray = (int) shade(gr, col, row, nCols, nRows);
+                    if (Double.isNaN(gray)) {
+                        imageBuffer[row * nCols + col] = VOID_COLOR;
+                        continue;
+                    }
+                    int rgb = bivariateColorRenderer.renderPixel(col, row);
+                    if (rgb == VOID_COLOR) {
+                        imageBuffer[row * nCols + col] = VOID_COLOR;
+                        continue;
+                    }
+                    int r = (rgb & 0xFF0000) >> 16;
+                    int g = (rgb & 0xFF00) >> 8;
+                    int b = rgb & 0xFF;
+                    r = r * gray / 255;
+                    g = g * gray / 255;
+                    b = b * gray / 255;
+                    imageBuffer[row * nCols + col] = b | (g << 8) | (r << 16) | 0xFF000000;
+                }
+
+            }
+        }
+    }
+
     private void hypsometric(Grid grid, int startRow, int endRow) {
         final int nCols = dstImage.getWidth();
         final int[] imageBuffer = imageBuffer(dstImage);
@@ -570,6 +629,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
                 break;
             case BIVARIATE:
                 bivariate(startRow, endRow);
+                break;
+            case BIVARIATE_SHADING:
+                bivariateShading(grid, startRow, endRow);
                 break;
             case HYPSOMETRIC_SHADING:
             case LOCAL_HYPSOMETRIC_SHADING:

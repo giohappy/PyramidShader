@@ -281,8 +281,6 @@ public class BivariateColorRenderer {
     public void setAttribute1Grid(Grid attribute1Grid) {
         this.attribute1Grid = attribute1Grid;
         this.attribute1MinMax = attribute1Grid.getMinMax();
-        System.out.println("Attribute Grid 1 (Horizontal");
-        System.out.println(attribute1MinMax[0] + " to " + attribute1MinMax[1]);
     }
 
     /**
@@ -298,8 +296,6 @@ public class BivariateColorRenderer {
     public void setAttribute2Grid(Grid attribute2Grid) {
         this.attribute2Grid = attribute2Grid;
         this.attribute2MinMax = attribute2Grid.getMinMax();
-        System.out.println("Attribute Grid 2 (Horizontal");
-        System.out.println(attribute2MinMax[0] + " to " + attribute2MinMax[1]);
     }
 
     public boolean hasGrids() {

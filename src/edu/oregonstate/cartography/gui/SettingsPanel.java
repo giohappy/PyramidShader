@@ -165,7 +165,7 @@ public class SettingsPanel extends javax.swing.JPanel {
             isColored = model.backgroundVisualization.isColored();
             isLocal = model.backgroundVisualization.isLocal();
             isSolidColor = model.backgroundVisualization == ColorVisualization.CONTINUOUS;
-            isBivariate = model.backgroundVisualization == ColorVisualization.BIVARIATE;
+            isBivariate = model.backgroundVisualization.isBivariate();
         }
 
         boolean isIlluminatedContours = model != null
@@ -1628,9 +1628,9 @@ public class SettingsPanel extends javax.swing.JPanel {
         contoursIlluminatedColorButton.setColor(new Color(model.contoursIlluminatedColor));
         contoursShadowedColorButton.setColor(new Color(model.contoursShadowedColor));
 
-        int exp = (int) Math.round(model.getBivariateColorRender().getExponentP() * 10);
+        int exp = (int) Math.round(model.getBivariateColorRenderer().getExponentP() * 10);
         idwExponentSlider.setValue(exp);
-        idwRadioButton.setSelected(model.getBivariateColorRender().isUseIDW());
+        idwRadioButton.setSelected(model.getBivariateColorRenderer().isUseIDW());
 
         updateVisualizationPanelsVisibility();
         updateImage(REGULAR);
@@ -1639,7 +1639,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
     public void setModel(Model m) {
         this.model = m;
-        bivariateColorPanel.setBivariateColorRenderer(model.getBivariateColorRender());
+        bivariateColorPanel.setBivariateColorRenderer(model.getBivariateColorRenderer());
         bivariateColorPanel.selectFirstPoint();
         updateGUI();
     }
@@ -2069,20 +2069,20 @@ public class SettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_ambientLightSliderStateChanged
 
     private void idwRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_idwRadioButtonActionPerformed
-        model.getBivariateColorRender().setUseIDW(idwRadioButton.isSelected());
+        model.getBivariateColorRenderer().setUseIDW(idwRadioButton.isSelected());
         updateImage(REGULAR);
         bivariateColorGroupPanel.repaint();
     }//GEN-LAST:event_idwRadioButtonActionPerformed
 
     private void gaussRadioButtonidwRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gaussRadioButtonidwRadioButtonActionPerformed
-        model.getBivariateColorRender().setUseIDW(idwRadioButton.isSelected());
+        model.getBivariateColorRenderer().setUseIDW(idwRadioButton.isSelected());
         updateImage(REGULAR);
         bivariateColorGroupPanel.repaint();
     }//GEN-LAST:event_gaussRadioButtonidwRadioButtonActionPerformed
 
     private void idwExponentSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_idwExponentSliderStateChanged
         double exp = idwExponentSlider.getValue() / 10d;
-        model.getBivariateColorRender().setExponentP(exp);
+        model.getBivariateColorRenderer().setExponentP(exp);
         updateImage(idwExponentSlider.getValueIsAdjusting() ? FAST : REGULAR);
         bivariateColorExponentValueLabel.setText(Double.toString(exp));
         bivariateColorGroupPanel.repaint();
@@ -2103,9 +2103,9 @@ public class SettingsPanel extends javax.swing.JPanel {
 
     private void colorPickerPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_colorPickerPropertyChange
         if ("selected color".equals(evt.getPropertyName()) && model != null) {
-            if (model.backgroundVisualization == ColorVisualization.BIVARIATE) {
+            if (model.backgroundVisualization.isBivariate()) {
                 bivariateColorPanel.setSelectedColor(colorPicker.getColor());
-                model.getBivariateColorRender().colorPointsChanged();
+                model.getBivariateColorRenderer().colorPointsChanged();
             } else {
                 int selectedThumbID = colorGradientSlider.getSelectedThumb(false);
                 Color[] colors = colorGradientSlider.getValues();
@@ -2174,9 +2174,9 @@ public class SettingsPanel extends javax.swing.JPanel {
                 this.setIndeterminate(true);
                 this.setCancellable(false);
                 if (horizontalGrid) {
-                    model.getBivariateColorRender().setAttribute1Grid(grid);
+                    model.getBivariateColorRenderer().setAttribute1Grid(grid);
                 } else {
-                    model.getBivariateColorRender().setAttribute2Grid(grid);
+                    model.getBivariateColorRenderer().setAttribute2Grid(grid);
                 }
                 return null;
             }

@@ -426,8 +426,8 @@ public class Model implements Cloneable {
             final float min;
             final float max;
             if (backgroundVisualization == ColorVisualization.BIVARIATE) {
-                g = getBivariateColorRender().getAttribute1Grid();
-                float[] minMax = getBivariateColorRender().getAttribute1MinMax();
+                g = getBivariateColorRenderer().getAttribute1Grid();
+                float[] minMax = getBivariateColorRenderer().getAttribute1MinMax();
                 if (minMax == null) {
                     return null;
                 }
@@ -642,7 +642,7 @@ public class Model implements Cloneable {
     /**
      * @return the bivariateColorRender
      */
-    public BivariateColorRenderer getBivariateColorRender() {
+    public BivariateColorRenderer getBivariateColorRenderer() {
         return bivariateColorRender;
     }
 }

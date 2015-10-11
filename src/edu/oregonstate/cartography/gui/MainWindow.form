@@ -191,7 +191,7 @@
                 <Font component="jLabel13" property="font" relativeSize="true" size="-2"/>
               </FontInfo>
             </Property>
-            <Property name="text" type="java.lang.String" value="All values in the grid with this value will be set to the void value."/>
+            <Property name="text" type="java.lang.String" value="All values in the grid with the selected value will be set to the void value."/>
           </Properties>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
@@ -367,20 +367,6 @@
                 </MenuItem>
               </SubComponents>
             </Menu>
-            <MenuItem class="javax.swing.JPopupMenu$Separator" name="jSeparator6">
-              <AuxValues>
-                <AuxValue name="JavaCodeGenerator_VariableLocal" type="java.lang.Boolean" value="true"/>
-                <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
-              </AuxValues>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="planObliqueFeaturesMenuItem">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Plan Oblique Lines&#x2026;"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="planObliqueFeaturesMenuItemActionPerformed"/>
-              </Events>
-            </MenuItem>
           </SubComponents>
         </Menu>
         <Menu class="javax.swing.JMenu" name="editMenu">
@@ -512,6 +498,21 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="infoMenuItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="experimentalMenu">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Experimental"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="planObliqueFeaturesMenuItem">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Plan Oblique Lines&#x2026;"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="planObliqueFeaturesMenuItemActionPerformed"/>
               </Events>
             </MenuItem>
           </SubComponents>

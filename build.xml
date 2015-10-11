@@ -101,8 +101,8 @@
                       identifier="${main.class}"
                       mainclassname="${main.class}"
                       icon="mac/icon.icns"
-                      shortversion="0.1.0"
-                      copyright="© Oregon State University"
+                      shortversion="1.0"
+                      copyright="© Oregon State University 2014–2015"
                       applicationCategory="public.app-category.graphics-design">
             <classpath file="${dist.jar}" />
         </macbundleapp>

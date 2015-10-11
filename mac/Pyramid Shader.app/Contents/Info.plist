@@ -19,13 +19,13 @@
 <key>CFBundlePackageType</key>
 <string>APPL</string>
 <key>CFBundleShortVersionString</key>
-<string>0.1.0</string>
+<string>1.0</string>
 <key>CFBundleSignature</key>
 <string>????</string>
 <key>CFBundleVersion</key>
 <string>1</string>
 <key>NSHumanReadableCopyright</key>
-<string>© Oregon State University</string>
+<string>© Oregon State University 2014–2015</string>
 <key>LSApplicationCategoryType</key>
 <string>public.app-category.graphics-design</string>
 <key>JVMMainClassName</key>

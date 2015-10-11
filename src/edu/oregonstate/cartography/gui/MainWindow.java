@@ -76,6 +76,9 @@ public class MainWindow extends javax.swing.JFrame {
 
         initRecentDocumentsMenu();
         initComponents();
+        
+        // hide menu with experimental features
+        menuBar.remove(experimentalMenu);
 
         // get menu keyboard events from owned dialogs
         DialogUtil.setupDialogActions(menuBar);
@@ -131,8 +134,6 @@ public class MainWindow extends javax.swing.JFrame {
         javax.swing.JMenu saveContoursMenu1 = new javax.swing.JMenu();
         saveTIFFNormalMapMenuItem = new javax.swing.JMenuItem();
         savePNGNormalMapMenuItem = new javax.swing.JMenuItem();
-        javax.swing.JPopupMenu.Separator jSeparator6 = new javax.swing.JPopupMenu.Separator();
-        planObliqueFeaturesMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
         scaleGridMenuItem = new javax.swing.JMenuItem();
         offsetGridMenuItem = new javax.swing.JMenuItem();
@@ -148,6 +149,8 @@ public class MainWindow extends javax.swing.JFrame {
         terrainInfoMenuItem = new javax.swing.JMenuItem();
         javax.swing.JPopupMenu.Separator jSeparator2 = new javax.swing.JPopupMenu.Separator();
         infoMenuItem = new javax.swing.JMenuItem();
+        experimentalMenu = new javax.swing.JMenu();
+        planObliqueFeaturesMenuItem = new javax.swing.JMenuItem();
 
         imageResolutionPanel.setLayout(new java.awt.GridBagLayout());
 
@@ -210,7 +213,7 @@ public class MainWindow extends javax.swing.JFrame {
         voidGridPanel.add(voidGridFormattedTextField, new java.awt.GridBagConstraints());
 
         jLabel13.setFont(jLabel13.getFont().deriveFont(jLabel13.getFont().getSize()-2f));
-        jLabel13.setText("All values in the grid with this value will be set to the void value.");
+        jLabel13.setText("All values in the grid with the selected value will be set to the void value.");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -347,15 +350,6 @@ public class MainWindow extends javax.swing.JFrame {
         saveContoursMenu1.add(savePNGNormalMapMenuItem);
 
         fileMenu.add(saveContoursMenu1);
-        fileMenu.add(jSeparator6);
-
-        planObliqueFeaturesMenuItem.setText("Plan Oblique Lines…");
-        planObliqueFeaturesMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                planObliqueFeaturesMenuItemActionPerformed(evt);
-            }
-        });
-        fileMenu.add(planObliqueFeaturesMenuItem);
 
         menuBar.add(fileMenu);
 
@@ -475,6 +469,18 @@ public class MainWindow extends javax.swing.JFrame {
         infoMenu.add(infoMenuItem);
 
         menuBar.add(infoMenu);
+
+        experimentalMenu.setText("Experimental");
+
+        planObliqueFeaturesMenuItem.setText("Plan Oblique Lines…");
+        planObliqueFeaturesMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                planObliqueFeaturesMenuItemActionPerformed(evt);
+            }
+        });
+        experimentalMenu.add(planObliqueFeaturesMenuItem);
+
+        menuBar.add(experimentalMenu);
 
         setJMenuBar(menuBar);
 
@@ -1180,6 +1186,7 @@ public class MainWindow extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu editMenu;
+    private javax.swing.JMenu experimentalMenu;
     private javax.swing.JPanel imageResolutionPanel;
     private javax.swing.JSpinner imageResolutionSpinner;
     private javax.swing.JMenuItem infoMenuItem;

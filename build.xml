@@ -88,6 +88,11 @@
                  classpath="${launch4j.dir}/launch4j.jar
         :${launch4j.dir}/lib/xstream.jar" />
         <launch4j configFile="win/PyramidShader_32bit.xml" />
+        
+        <!-- Zip the generated exe file -->
+        <zip destfile="win/PyramidShaderWin.zip">
+            <fileset dir="win/" includes="PyramidShader.exe"/>
+        </zip>
     </target>
     
     <taskdef name="macbundleapp"
@@ -106,7 +111,7 @@
                       applicationCategory="public.app-category.graphics-design">
             <classpath file="${dist.jar}" />
         </macbundleapp>
-        <zip destfile="mac/PyramidShader.zip" level="9">
+        <zip destfile="mac/PyramidShaderMac.zip" level="9">
             <zipfileset filemode="755" dir="mac/Pyramid Shader.app" prefix="Pyramid Shader.app" />
         </zip>
     </target>
@@ -126,8 +131,9 @@
     </target>
     
     <target name="-post-clean">
-        <delete file="win/PyramidShader.exe"/>
-        <delete dir="mac/Pyramid Shader.app"/>
+        <delete file="win/PyramidShaderWin.exe"/>
+        <delete file="win/PyramidShaderWin.zip"/>
+        <delete dir="mac/Pyramid ShaderMac.app"/>
         <delete file="mac/PyramidShader.zip"/>
     </target>
     

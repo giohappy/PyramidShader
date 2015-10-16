@@ -664,7 +664,7 @@ public class MainWindow extends javax.swing.JFrame {
                     // create world file for image file
                     String worldFilePath = WorldFileExporter.constructPath(filePath);
                     Grid dem = model.getGeneralizedGrid();
-                    double cellSize = dem.getCellSize();
+                    double cellSize = dem.getCellSize() / scale;
                     double west = dem.getWest() - cellSize / 2;
                     double north = dem.getNorth() + cellSize / 2;
                     WorldFileExporter.writeWorldFile(worldFilePath, cellSize, west, north);

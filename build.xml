@@ -106,7 +106,7 @@
                       identifier="${main.class}"
                       mainclassname="${main.class}"
                       icon="mac/icon.icns"
-                      shortversion="1.0"
+                      shortversion="1.0.1"
                       copyright="© Oregon State University 2014–2015"
                       applicationCategory="public.app-category.graphics-design">
             <classpath file="${dist.jar}" />

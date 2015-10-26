@@ -9,7 +9,7 @@
 <key>CFBundleIconFile</key>
 <string>icon.icns</string>
 <key>CFBundleIdentifier</key>
-<string>edu.oregonstate.cartography.gui.PyramidShader</string>
+<string>edu.oregonstate.cartography.app.Main</string>
 <key>CFBundleDisplayName</key>
 <string>Pyramid Shader</string>
 <key>CFBundleInfoDictionaryVersion</key>
@@ -19,7 +19,7 @@
 <key>CFBundlePackageType</key>
 <string>APPL</string>
 <key>CFBundleShortVersionString</key>
-<string>1.0.1</string>
+<string>1.1</string>
 <key>CFBundleSignature</key>
 <string>????</string>
 <key>CFBundleVersion</key>
@@ -29,9 +29,13 @@
 <key>LSApplicationCategoryType</key>
 <string>public.app-category.graphics-design</string>
 <key>JVMMainClassName</key>
-<string>edu.oregonstate.cartography.gui.PyramidShader</string>
+<string>edu.oregonstate.cartography.app.Main</string>
 <key>JVMOptions</key>
 <array>
+<string>-Dapple.laf.useScreenMenuBar=true</string>
+<string>-Dcom.apple.macos.useScreenMenuBar=true</string>
+<string>-Dapple.awt.application.name=Scree Painter</string>
+<string>-Xmx150m</string>
 </array>
 <key>JVMArguments</key>
 <array>

@@ -1261,7 +1261,7 @@ public class MainWindow extends javax.swing.JFrame {
         }
     }
 
-    ProgressPanel getProgressPanel() {
+    public ProgressPanel getProgressPanel() {
         return progressPanel;
     }
 }

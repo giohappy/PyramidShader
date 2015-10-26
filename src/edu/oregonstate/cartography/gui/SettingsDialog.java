@@ -58,7 +58,7 @@ public class SettingsDialog extends javax.swing.JDialog implements PropertyChang
         settingsPanel.updateGUI();
     }
 
-    void setProgressPanel(ProgressPanel progressPanel) {
+    public void setProgressPanel(ProgressPanel progressPanel) {
         settingsPanel.setProgressPanel(progressPanel);
     }
 

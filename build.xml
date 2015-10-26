@@ -80,14 +80,13 @@
   
     <!-- build Windows exe if launch4j is installed -->
     <target name="run.launch4j" depends="launch4j.dir.check" if="launch4j.dir.exists">
-        <!-- Create a Windows exe file for Windows 32 bit, that can use a 
-        maximum of 1200 mb ram. Using launch4j. -->
+        <!-- Create a Windows exe file for Windows -->
         <property name="launch4j.dir" location="win/launch4j" />
         <taskdef name="launch4j"
                  classname="net.sf.launch4j.ant.Launch4jTask"
                  classpath="${launch4j.dir}/launch4j.jar
         :${launch4j.dir}/lib/xstream.jar" />
-        <launch4j configFile="win/PyramidShader_32bit.xml" />
+        <launch4j configFile="win/PyramidShader.xml" />
         
         <!-- Zip the generated exe file -->
         <zip destfile="win/PyramidShaderWin.zip">
@@ -106,10 +105,14 @@
                       identifier="${main.class}"
                       mainclassname="${main.class}"
                       icon="mac/icon.icns"
-                      shortversion="1.0.1"
+                      shortversion="1.1"
                       copyright="© Oregon State University 2014–2015"
                       applicationCategory="public.app-category.graphics-design">
             <classpath file="${dist.jar}" />
+            <option value="-Dapple.laf.useScreenMenuBar=true"/>
+            <option value="-Dcom.apple.macos.useScreenMenuBar=true"/>
+            <option value="-Dapple.awt.application.name=Scree Painter"/>
+            <option value="-Xmx150m"/>
         </macbundleapp>
         <zip destfile="mac/PyramidShaderMac.zip" level="9">
             <zipfileset filemode="755" dir="mac/Pyramid Shader.app" prefix="Pyramid Shader.app" />

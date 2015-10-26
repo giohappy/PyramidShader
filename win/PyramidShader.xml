@@ -9,17 +9,19 @@
   <chdir></chdir>
   <priority>normal</priority>
   <downloadUrl>http://java.com/download</downloadUrl>
-  <supportUrl>http://www.terraincartography.com</supportUrl>
+  <supportUrl>http://www.terraincartography.com/PyramidShader/</supportUrl>
   <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
   <manifest></manifest>
   <icon>icons.ico</icon>
   <jre>
     <path></path>
     <bundledJre64Bit>false</bundledJre64Bit>
-    <minVersion>1.7.0</minVersion>
+    <bundledJreAsFallback>false</bundledJreAsFallback>
+    <minVersion>1.8.0</minVersion>
     <maxVersion></maxVersion>
     <jdkPreference>preferJre</jdkPreference>
     <runtimeBits>64/32</runtimeBits>
-    <maxHeapSize>1200</maxHeapSize>
+    <maxHeapSize>150</maxHeapSize>
   </jre>
 </launch4jConfig>

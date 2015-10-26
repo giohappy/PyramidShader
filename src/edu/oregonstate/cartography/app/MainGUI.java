@@ -1,6 +1,7 @@
-package edu.oregonstate.cartography.gui;
+package edu.oregonstate.cartography.app;
 
 import edu.oregonstate.cartography.grid.Model;
+import edu.oregonstate.cartography.gui.SettingsDialog;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
@@ -8,18 +9,14 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 /**
- *
- * @author Bernie Jenny, Oregon State University.
+ * Main entry point for GUI version of Terrain Sculptor. This main method is 
+ * launched in a separate JVM to maximize available heap memory.
+ * @author Bernhard Jenny, Cartography and Geovisualization Group, Oregon State
+ * University
  */
-public class PyramidShader {
+public class MainGUI {
 
-    /**
-     * Main method for Pyramid Shader
-     *
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-
+    public static void main(String[] args) {
         // on Mac OS X: take the menu bar out of the window and put it on top
         // of the main screen.
         System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Pyramid Shader");
@@ -36,7 +33,7 @@ public class PyramidShader {
             public void run() {
                 // create model object, main window and settings dialog
                 Model model = new Model();
-                MainWindow mainWindow = new MainWindow(model);
+                edu.oregonstate.cartography.gui.MainWindow mainWindow = new edu.oregonstate.cartography.gui.MainWindow(model);
                 SettingsDialog settingsDialog = new SettingsDialog(mainWindow, false);
                 settingsDialog.setModel(model);
                 mainWindow.getProgressPanel().removeCancelButton();

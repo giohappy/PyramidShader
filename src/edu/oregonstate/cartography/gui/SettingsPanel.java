@@ -351,7 +351,7 @@ public class SettingsPanel extends javax.swing.JPanel {
         contoursShadowedColorButton = new edu.oregonstate.cartography.gui.ColorButton();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
-        spacingPanel = new javax.swing.JPanel();
+        spacingPanel = new TransparentMacPanel();
 
         colorPopupMenu.setLightWeightPopupEnabled(false);
 

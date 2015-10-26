@@ -42,9 +42,9 @@ public class ProcessLauncher {
                 heapSizeMB = (int) (amountOfMemory / 2);
             }
         } else {
-            // reserve one third of total memory or 1 GB for other processes,
+            // reserve one third of total memory or 512 MB for other processes,
             // whatever is smaller.
-            int heapReserve = (int) Math.min(amountOfMemory / 3, ONE_GB);
+            int heapReserve = (int) Math.min(amountOfMemory / 3, ONE_GB / 2);
             heapSizeMB = (int) ((amountOfMemory - heapReserve) / 1024 / 1024);
             if (heapSizeMB <= 500) {
                 heapSizeMB = 1000;

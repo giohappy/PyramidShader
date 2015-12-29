@@ -34,9 +34,7 @@ public class DBFExporter {
     public void exportTable(OutputStream outputStream, Geometry[] geometries, String attributeName)
             throws IOException {
 
-        BufferedOutputStream bos = null;
-        try {
-            bos = new BufferedOutputStream(outputStream);
+        try (BufferedOutputStream bos = new BufferedOutputStream(outputStream)) {
             LittleEndianOutputStream dos = new LittleEndianOutputStream(bos);
 
             // dbf flag
@@ -93,10 +91,6 @@ public class DBFExporter {
             dos.write(0x0D);
 
             this.writeRecords(dos, geometries, attributeName);
-        } finally {
-            if (bos != null) {
-                bos.close();
-            }
         }
     }
 

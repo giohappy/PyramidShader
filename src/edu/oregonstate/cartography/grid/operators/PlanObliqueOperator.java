@@ -31,7 +31,7 @@ public class PlanObliqueOperator implements GridOperator {
         if (grid == null) {
             return null;
         }
-        
+
         // number of rows
         int nRows = grid.getRows();
         // number of columns
@@ -52,7 +52,7 @@ public class PlanObliqueOperator implements GridOperator {
         shearedGrid.setSouth(grid.getSouth());
         shearedGrid.setWest(grid.getWest());
 
-        // fill sheared grid: iteerate over all columns
+        // fill sheared grid: iterate over all columns
         for (int col = 0; col < nCols; col++) {
 
             // keep track of the last vertext of the source grid that has been sheared.
@@ -89,6 +89,13 @@ public class PlanObliqueOperator implements GridOperator {
                     // the elevation for the current vertex
                     double z = grid.getValue(col, r);
                     
+                    // move vertically accross patches of void values
+                    if (Double.isNaN(z)) {
+                        while (--prevRow >= 0 && Float.isNaN(grid.getValue(col, prevRow))) {
+                        }
+                        interpolatedZ = prevZ = Double.NaN;
+                        break;
+                    }
                     // shear the y coordinate
                     double shearedY = north - r * cellSize + (z - refElevation) * elevationScale;
 

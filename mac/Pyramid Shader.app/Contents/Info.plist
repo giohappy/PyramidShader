@@ -34,7 +34,7 @@
 <array>
 <string>-Dapple.laf.useScreenMenuBar=true</string>
 <string>-Dcom.apple.macos.useScreenMenuBar=true</string>
-<string>-Dapple.awt.application.name=Scree Painter</string>
+<string>-Dapple.awt.application.name=Pyramid Shader</string>
 <string>-Xmx150m</string>
 </array>
 <key>JVMArguments</key>

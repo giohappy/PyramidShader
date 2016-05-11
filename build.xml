@@ -111,7 +111,7 @@
             <classpath file="${dist.jar}" />
             <option value="-Dapple.laf.useScreenMenuBar=true"/>
             <option value="-Dcom.apple.macos.useScreenMenuBar=true"/>
-            <option value="-Dapple.awt.application.name=Scree Painter"/>
+            <option value="-Dapple.awt.application.name=Pyramid Shader"/>
             <option value="-Xmx150m"/>
         </macbundleapp>
         <zip destfile="mac/PyramidShaderMac.zip" level="9">

@@ -2,3 +2,8 @@
 /dist/
 /build/
 .DS_Store
+mac/Pyramid Shader.app/Contents/Java/PyramidShader.jar
+mac/PyramidShaderMac.zip
+win/PyramidShader.exe
+win/PyramidShaderWin.zip
+

@@ -15,6 +15,7 @@ import edu.oregonstate.cartography.grid.WorldFileExporter;
 import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
 import edu.oregonstate.cartography.grid.operators.NormalMapOperator;
 import edu.oregonstate.cartography.grid.operators.NormalMapOperator.Channel;
+import edu.oregonstate.cartography.grid.operators.PlanObliqueOperator;
 import edu.oregonstate.cartography.simplefeatures.GeometryCollection;
 import edu.oregonstate.cartography.simplefeatures.LineString;
 import edu.oregonstate.cartography.simplefeatures.PlanObliqueShearing;
@@ -76,7 +77,7 @@ public class MainWindow extends javax.swing.JFrame {
 
         initRecentDocumentsMenu();
         initComponents();
-        
+
         // hide menu with experimental features
         menuBar.remove(experimentalMenu);
 
@@ -151,6 +152,7 @@ public class MainWindow extends javax.swing.JFrame {
         infoMenuItem = new javax.swing.JMenuItem();
         experimentalMenu = new javax.swing.JMenu();
         planObliqueFeaturesMenuItem = new javax.swing.JMenuItem();
+        savePlanObliqueMenuItem = new javax.swing.JMenuItem();
 
         imageResolutionPanel.setLayout(new java.awt.GridBagLayout());
 
@@ -479,6 +481,14 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
         experimentalMenu.add(planObliqueFeaturesMenuItem);
+
+        savePlanObliqueMenuItem.setText("Save Plan Oblique… ");
+        savePlanObliqueMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                savePlanObliqueMenuItemActionPerformed(evt);
+            }
+        });
+        experimentalMenu.add(savePlanObliqueMenuItem);
 
         menuBar.add(experimentalMenu);
 
@@ -1002,7 +1012,7 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_savePNGNormalMapMenuItemActionPerformed
 
     private void voidGridMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_voidGridMenuItemActionPerformed
-                int option = JOptionPane.showOptionDialog(this,
+        int option = JOptionPane.showOptionDialog(this,
                 voidGridPanel,
                 "Void Values",
                 JOptionPane.OK_CANCEL_OPTION,
@@ -1026,6 +1036,16 @@ public class MainWindow extends javax.swing.JFrame {
     private void saveGridMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveGridMenuItemActionPerformed
         saveTerrain(model.getGrid());
     }//GEN-LAST:event_saveGridMenuItemActionPerformed
+
+    private void savePlanObliqueMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savePlanObliqueMenuItemActionPerformed
+        Grid grid = model.getGrid();
+        if (model.planObliqueAngle != 90) {
+            float min = grid.getMinMax()[0];
+            PlanObliqueOperator planObliqueOp = new PlanObliqueOperator(model.planObliqueAngle, min);
+            grid = planObliqueOp.operate(grid);
+        }
+        saveTerrain(grid);
+    }//GEN-LAST:event_savePlanObliqueMenuItemActionPerformed
 
     /**
      * Ask the user for a file to read or write.
@@ -1118,7 +1138,7 @@ public class MainWindow extends javax.swing.JFrame {
 
                 try {
                     initDisplayImage();
-                    
+
                     // this will render the image
                     settingsDialog.modelChanged();
 
@@ -1204,6 +1224,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenuItem savePNGContoursMenuItem;
     private javax.swing.JMenuItem savePNGImageMenuItem;
     private javax.swing.JMenuItem savePNGNormalMapMenuItem;
+    private javax.swing.JMenuItem savePlanObliqueMenuItem;
     private javax.swing.JMenuItem saveTIFFContoursMenuItem;
     private javax.swing.JMenuItem saveTIFFImageMenuItem;
     private javax.swing.JMenuItem saveTIFFNormalMapMenuItem;

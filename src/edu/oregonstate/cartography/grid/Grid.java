@@ -342,7 +342,7 @@ public final class Grid {
         final double n = getValue(col, rowTop);
         final double dx = e - w;
         final double dy = n - s;
-        return (dx == 0d || dy == 0d) ? Double.NaN : Math.atan2(dy, dx);
+        return Math.atan2(dy, dx);
     }
 
     /**

@@ -9,7 +9,7 @@
 <key>CFBundleIconFile</key>
 <string>icon.icns</string>
 <key>CFBundleIdentifier</key>
-<string>edu.oregonstate.cartography.app.Main</string>
+<string>edu.oregonstate.cartography.app.MainGUI</string>
 <key>CFBundleDisplayName</key>
 <string>Pyramid Shader</string>
 <key>CFBundleInfoDictionaryVersion</key>
@@ -29,7 +29,7 @@
 <key>LSApplicationCategoryType</key>
 <string>public.app-category.graphics-design</string>
 <key>JVMMainClassName</key>
-<string>edu.oregonstate.cartography.app.Main</string>
+<string>edu.oregonstate.cartography.app.MainGUI</string>
 <key>JVMOptions</key>
 <array>
 <string>-Dapple.laf.useScreenMenuBar=true</string>

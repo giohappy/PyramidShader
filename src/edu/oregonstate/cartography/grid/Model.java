@@ -40,6 +40,20 @@ public class Model implements Cloneable {
             this.colors = colors;
             this.colorPositions = colorPositions;
         }
+        
+        /**
+         * Copy constructor
+         * @param cr ColorRamp to copy
+         */
+        public ColorRamp(ColorRamp cr) {
+            this.name = cr.name;
+            this.colors = new Color[cr.colors.length];
+            this.colorPositions = new float[cr.colorPositions.length];
+            System.arraycopy( cr.colorPositions, 0, colorPositions, 0, colorPositions.length);
+            for (int i = 0; i < colors.length; i++) {
+                colors[i] = new Color(cr.colors[i].getRGB());
+            }            
+        }
 
         /**
          * Name of color ramp
@@ -272,7 +286,7 @@ public class Model implements Cloneable {
         };
         predefinedColorRamps.add(new ColorRamp("Hypsometric", col, pos));
 
-        colorRamp = predefinedColorRamps.get(0);
+        colorRamp = new ColorRamp(predefinedColorRamps.get(0));
     }
 
     /**
@@ -284,7 +298,7 @@ public class Model implements Cloneable {
     public void selectColorRamp(String name) {
         for (ColorRamp cr : predefinedColorRamps) {
             if (cr.name.equals(name)) {
-                colorRamp = cr;
+                colorRamp = new ColorRamp(cr);
                 break;
             }
         }

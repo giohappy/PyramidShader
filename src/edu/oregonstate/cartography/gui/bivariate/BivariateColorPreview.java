@@ -1,5 +1,6 @@
 package edu.oregonstate.cartography.gui.bivariate;
 
+import edu.oregonstate.cartography.grid.ColorLUT;
 import edu.oregonstate.cartography.gui.CenteredStringRenderer;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -13,11 +14,11 @@ import javax.swing.JComponent;
  * @author Bernhard Jenny, Cartography and Geovisualization Group, Oregon State
  * University
  */
-public class BivariatedColorPreview extends JComponent {
+public class BivariateColorPreview extends JComponent {
 
-    private BivariateColorRenderer renderer = new BivariateColorRenderer();
+    protected ColorLUTInterface renderer = new ColorLUT();
 
-    public BivariatedColorPreview() {
+    public BivariateColorPreview() {
     }
 
     @Override
@@ -35,26 +36,13 @@ public class BivariatedColorPreview extends JComponent {
         }
     }
 
-    public BivariateColorRenderer getBivariateColorRenderer() {
-        return renderer;
-    }
-
     public void setBivariateColorRenderer(BivariateColorRenderer renderer) {
         this.renderer = renderer;
         this.repaint();
     }
 
     protected void paintWarningString(Graphics2D g2d) {
-        String msg = null;
-        if (renderer == null) {
-            msg = "internal errror";
-        } else if (renderer.getAttribute1Grid() == null && renderer.getAttribute2Grid() == null) {
-            msg = "Select two grids.";
-        } else if (renderer.getAttribute1Grid() == null) {
-            msg = "Horizontal grid missing.";
-        } else if (renderer.getAttribute2Grid() == null) {
-            msg = "Vertical grid missing.";
-        }
+        String msg = renderer.getWarning();
         if (msg != null) {
             g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, 
                     RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -65,5 +53,20 @@ public class BivariatedColorPreview extends JComponent {
             g2d.setColor(Color.BLACK);
             CenteredStringRenderer.drawCentered(g2d, msg, x, y, false);
         }
+    }
+
+    /**
+     * @return the renderer
+     */
+    public ColorLUTInterface getRenderer() {
+        return renderer;
+    }
+
+    /**
+     * @param renderer the renderer to set
+     */
+    public void setRenderer(ColorLUTInterface renderer) {
+        this.renderer = renderer;
+        repaint();
     }
 }

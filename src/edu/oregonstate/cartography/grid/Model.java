@@ -14,6 +14,7 @@ import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
 import edu.oregonstate.cartography.grid.operators.PlanObliqueOperator;
 import edu.oregonstate.cartography.gui.bivariate.BivariateColorRenderer;
 import edu.oregonstate.cartography.gui.ProgressIndicator;
+import edu.oregonstate.cartography.gui.bivariate.ColorLUTInterface;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -237,6 +238,11 @@ public class Model implements Cloneable {
      */
     protected final BivariateColorRenderer bivariateColorRender = new BivariateColorRenderer();
 
+    /**
+     * Renderer for 2D LUT
+     */
+    private final ColorLUT  colorLUT = new ColorLUT();
+    
     public Model() {
         predefinedColorRamps = new ArrayList<>();
 
@@ -433,7 +439,7 @@ public class Model implements Cloneable {
 
             // coloring and shading
             ColorizerOperator colorizer = new ColorizerOperator(backgroundVisualization,
-                    bivariateColorRender, progressIndicator);
+                    bivariateColorRender, colorLUT, progressIndicator);
             colorizer.setColors(colorRamp.colors, colorRamp.colorPositions);
 
             final Grid g;
@@ -658,5 +664,20 @@ public class Model implements Cloneable {
      */
     public BivariateColorRenderer getBivariateColorRenderer() {
         return bivariateColorRender;
+    }
+    
+    /**
+     * @return the colorLUT
+     */
+    public ColorLUT getColorLUT() {
+        return colorLUT;
+    }
+    
+    public ColorLUTInterface getColorLUTRenderer(){
+        if (backgroundVisualization == ColorVisualization.EXPOSITION_ELEVATION) {
+            return colorLUT;
+        } else {
+            return bivariateColorRender;
+        }
     }
 }

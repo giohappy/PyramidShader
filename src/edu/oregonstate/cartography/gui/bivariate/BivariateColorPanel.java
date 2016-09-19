@@ -22,7 +22,7 @@ import javax.swing.KeyStroke;
  * @author Bernhard Jenny, Cartography and Geovisualization Group, Oregon State
  * University
  */
-public class BivariateColorPanel extends BivariatedColorPreview {
+public class BivariateColorPanel extends BivariateColorPreview {
 
     private static final int RECT_DIM = 10;
 
@@ -102,7 +102,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
         getActionMap().put("deletePoint", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                getBivariateColorRenderer().removePoint(selectedPoint);
+                getRenderer().removePoint(selectedPoint);
                 selectPoint(null);
                 repaint();
                 firePropertyChange("colorDeleted", null, null);
@@ -114,10 +114,10 @@ public class BivariateColorPanel extends BivariatedColorPreview {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
-        if (getBivariateColorRenderer() != null) {
+        if (getRenderer() != null) {
             //Antialiasing ON
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            ArrayList<BivariateColorPoint> points = getBivariateColorRenderer().getPoints();
+            ArrayList<BivariateColorPoint> points = getRenderer().getPoints();
             for (BivariateColorPoint point : points) {
                 int px = attr1ToPixelX(point.getAttribute1());
                 int py = attr2ToPixelY(point.getAttribute2());
@@ -187,14 +187,14 @@ public class BivariateColorPanel extends BivariatedColorPreview {
         BivariateColorPoint p = new BivariateColorPoint();
         p.setAttribute1(pixelXToAttr1(pixelX));
         p.setAttribute2(pixelYToAttr2(pixelY));
-        Color color = new Color(getBivariateColorRenderer().interpolateValue(p.getAttribute1(), p.getAttribute2()));
+        Color color = new Color(getRenderer().interpolateValue(p.getAttribute1(), p.getAttribute2()));
         p.setColor(color);
-        getBivariateColorRenderer().addPoint(p);
+        getRenderer().addPoint(p);
         return p;
     }
 
     private BivariateColorPoint findPoint(int pixelX, int pixelY) {
-        ArrayList<BivariateColorPoint> points = getBivariateColorRenderer().getPoints();
+        ArrayList<BivariateColorPoint> points = getRenderer().getPoints();
         for (BivariateColorPoint point : points) {
             int px = attr1ToPixelX(point.getAttribute1());
             int py = attr2ToPixelY(point.getAttribute2());
@@ -221,7 +221,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
 
         selectedPoint.setLonLat(Double.NaN, Double.NaN);
 
-        getBivariateColorRenderer().colorPointsChanged();
+        getRenderer().colorPointsChanged();
         repaint();
     }
 
@@ -248,7 +248,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
      * Selects the first point
      */
     public void selectFirstPoint() {
-        ArrayList<BivariateColorPoint> points = getBivariateColorRenderer().getPoints();
+        ArrayList<BivariateColorPoint> points = getRenderer().getPoints();
         if (points.size() > 0) {
             selectPoint(points.get(0));
         }
@@ -256,7 +256,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
 
     public void setSelectedColor(Color color) {
         if (selectedPoint == null) {
-            ArrayList<BivariateColorPoint> points = getBivariateColorRenderer().getPoints();
+            ArrayList<BivariateColorPoint> points = getRenderer().getPoints();
             if (points.size() > 0) {
                 selectedPoint = points.get(0);
             }
@@ -264,6 +264,7 @@ public class BivariateColorPanel extends BivariatedColorPreview {
 
         if (selectedPoint != null) {
             selectedPoint.setColor(color);
+            renderer.colorPointsChanged();
             repaint();
             firePropertyChange("colorChanged", null, null);
         }

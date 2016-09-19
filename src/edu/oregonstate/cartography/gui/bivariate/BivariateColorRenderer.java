@@ -11,7 +11,7 @@ import java.util.ArrayList;
  *
  * @author Jane Darbyshire and Bernie Jenny, Oregon State University
  */
-public class BivariateColorRenderer {
+public class BivariateColorRenderer implements ColorLUTInterface {
 
     public static final int LUT_SIZE = 256;
 
@@ -273,6 +273,7 @@ public class BivariateColorRenderer {
      * @param height Height of the image
      * @return The new image.
      */
+    @Override
     public BufferedImage getDiagramImage(int width, int height) {
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int[] imageBuffer = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
@@ -349,6 +350,19 @@ public class BivariateColorRenderer {
      */
     public float[] getAttribute2MinMax() {
         return attribute2MinMax;
+    }
+
+    @Override
+    public String getWarning() {
+        String msg = null;
+        if (getAttribute1Grid() == null && getAttribute2Grid() == null) {
+            msg = "Select two grids.";
+        } else if (getAttribute1Grid() == null) {
+            msg = "Horizontal grid missing.";
+        } else if (getAttribute2Grid() == null) {
+            msg = "Vertical grid missing.";
+        }
+        return msg;
     }
 
 }

@@ -3,6 +3,7 @@ package edu.oregonstate.cartography.gui;
 import com.bric.swing.MultiThumbSlider;
 import edu.oregonstate.cartography.app.FileUtils;
 import edu.oregonstate.cartography.app.ImageUtils;
+import edu.oregonstate.cartography.grid.ColorLUT;
 import edu.oregonstate.cartography.grid.EsriASCIIGridReader;
 import edu.oregonstate.cartography.grid.Grid;
 import edu.oregonstate.cartography.grid.Model;
@@ -162,25 +163,32 @@ public class SettingsPanel extends javax.swing.JPanel {
         boolean isColored = false;
         boolean isLocal = false;
         boolean isSolidColor = false;
-        boolean isBivariate = false;
+        boolean uses2DLUT = false;
+        boolean isExpositionElevationLUT = model.backgroundVisualization == ColorVisualization.EXPOSITION_ELEVATION;
 
         if (model != null && model.backgroundVisualization != null) {
             isShading = model.backgroundVisualization.isShading();
             isColored = model.backgroundVisualization.isColored();
             isLocal = model.backgroundVisualization.isLocal();
             isSolidColor = model.backgroundVisualization == ColorVisualization.CONTINUOUS;
-            isBivariate = model.backgroundVisualization.isBivariate();
+            uses2DLUT = model.backgroundVisualization.uses2DLUT();
         }
 
         boolean isIlluminatedContours = model != null
                 && model.foregroundVisualization != ForegroundVisualization.NONE;
 
         verticalExaggerationPanel.setVisible(isShading);
-        colorGradientPanel.setVisible(isColored && !isBivariate);
+        colorGradientPanel.setVisible(isColored && !uses2DLUT);
         colorPicker.setVisible(isColored);
         localHypsoPanel.setVisible(isLocal);
         solidColorPanel.setVisible(isSolidColor);
-        bivariateColorGroupPanel.setVisible(isBivariate);
+
+        // GUI for 2D LUT
+        bivariateColorGroupPanel.setVisible(uses2DLUT);
+        bivariateColorPanel.setRenderer(model.getColorLUTRenderer());
+        bivariateHorizontalButton.setVisible(!isExpositionElevationLUT);
+        bivariateVerticalButton.setVisible(!isExpositionElevationLUT);
+
         azimuthSlider.setEnabled(isShading || isIlluminatedContours);
         zenithSlider.setEnabled(isShading);
         ambientLightSlider.setEnabled(isShading);
@@ -193,7 +201,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         contoursBlankBackgroundButton.setEnabled(!isSolidColor);
 
-        if (isBivariate) {
+        if (uses2DLUT) {
             updateColorPickerFromBivariatePanel();
         } else {
             updateColorPickerFromColorGradientSlider();
@@ -2072,23 +2080,26 @@ public class SettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_ambientLightSliderStateChanged
 
     private void idwRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_idwRadioButtonActionPerformed
-        model.getBivariateColorRenderer().setUseIDW(idwRadioButton.isSelected());
+        model.getColorLUTRenderer().setUseIDW(idwRadioButton.isSelected());
         updateImage(REGULAR);
         bivariateColorGroupPanel.repaint();
     }//GEN-LAST:event_idwRadioButtonActionPerformed
 
     private void gaussRadioButtonidwRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gaussRadioButtonidwRadioButtonActionPerformed
-        model.getBivariateColorRenderer().setUseIDW(idwRadioButton.isSelected());
+        model.getColorLUTRenderer().setUseIDW(idwRadioButton.isSelected());
         updateImage(REGULAR);
         bivariateColorGroupPanel.repaint();
     }//GEN-LAST:event_gaussRadioButtonidwRadioButtonActionPerformed
 
     private void idwExponentSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_idwExponentSliderStateChanged
         double exp = idwExponentSlider.getValue() / 10d;
-        model.getBivariateColorRenderer().setExponentP(exp);
+        model.getColorLUTRenderer().setExponentP(exp);
         updateImage(idwExponentSlider.getValueIsAdjusting() ? FAST : REGULAR);
         bivariateColorExponentValueLabel.setText(Double.toString(exp));
         bivariateColorGroupPanel.repaint();
+        if (idwExponentSlider.getValueIsAdjusting() == false) {
+            updateImage(REGULAR);
+        }
     }//GEN-LAST:event_idwExponentSliderStateChanged
 
     private void bivariateColorPanelPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_bivariateColorPanelPropertyChange
@@ -2106,7 +2117,7 @@ public class SettingsPanel extends javax.swing.JPanel {
 
     private void colorPickerPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_colorPickerPropertyChange
         if ("selected color".equals(evt.getPropertyName()) && model != null) {
-            if (model.backgroundVisualization.isBivariate()) {
+            if (model.backgroundVisualization.uses2DLUT()) {
                 bivariateColorPanel.setSelectedColor(colorPicker.getColor());
                 model.getBivariateColorRenderer().colorPointsChanged();
             } else {
@@ -2216,14 +2227,15 @@ public class SettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_bivariateVerticalButtonActionPerformed
 
     /**
-     * user right-clicked on the map. Use the clicked location to add a color point
-     * to the bivariate color panel
+     * user right-clicked on the map. Use the clicked location to add a color
+     * point to the bivariate color panel
+     *
      * @param xPerc
-     * @param yPerc 
+     * @param yPerc
      */
     public void mouseRightClicked(double xPerc, double yPerc) {
         if (model.getBivariateColorRenderer().hasGrids() == false
-                || model.backgroundVisualization.isBivariate() == false) {
+                || model.backgroundVisualization.uses2DLUT() == false) {
             return;
         }
         BivariateColorRenderer bivariateRenderer = model.getBivariateColorRenderer();
@@ -2244,12 +2256,13 @@ public class SettingsPanel extends javax.swing.JPanel {
     /**
      * Mouse pointer was moved over the map. Extract LUT location for the passed
      * location.
+     *
      * @param xPerc Horizontal pointer location in percentage.
      * @param yPerc Vertical pointer location in percentage, from top to bottom.
      */
     public void mouseMoved(double xPerc, double yPerc) {
         if (model.getBivariateColorRenderer().hasGrids() == false
-                || model.backgroundVisualization.isBivariate() == false) {
+                || model.backgroundVisualization.uses2DLUT() == false) {
             return;
         }
         Point pt = model.getBivariateColorRenderer().getLUTCoordinates(xPerc, yPerc);

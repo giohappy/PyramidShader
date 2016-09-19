@@ -4,6 +4,7 @@ import edu.oregonstate.cartography.app.Vector3D;
 import edu.oregonstate.cartography.grid.Grid;
 import edu.oregonstate.cartography.gui.ProgressIndicator;
 import edu.oregonstate.cartography.gui.bivariate.BivariateColorRenderer;
+import edu.oregonstate.cartography.grid.ColorLUT;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -30,6 +31,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
         EXPOSITION("Exposition Color"),
         HYPSOMETRIC_SHADING("Hypsometric Color with Shading"),
         HYPSOMETRIC("Hypsometric Color"),
+        EXPOSITION_ELEVATION("Exposition and Elevation Color Shading"),
         LOCAL_HYPSOMETRIC_SHADING("Local Hypsometric Color with Shading"),
         LOCAL_HYPSOMETRIC("Local Hypsometric Color"),
         BIVARIATE("Bivariate Color"),
@@ -55,11 +57,13 @@ public class ColorizerOperator extends ThreadedGridOperator {
                     || this == EXPOSITION
                     || this == BIVARIATE_SHADING
                     || this == HYPSOMETRIC_SHADING
+                    || this == EXPOSITION_ELEVATION
                     || this == LOCAL_HYPSOMETRIC_SHADING;
         }
 
         public boolean isColored() {
             return this == EXPOSITION
+                    || this == EXPOSITION_ELEVATION
                     || this == BIVARIATE
                     || this == BIVARIATE_SHADING
                     || this == HYPSOMETRIC
@@ -70,9 +74,10 @@ public class ColorizerOperator extends ThreadedGridOperator {
                     || this == ASPECT;
         }
 
-        public boolean isBivariate() {
+        public boolean uses2DLUT() {
             return this == ColorVisualization.BIVARIATE
-                    || this == ColorVisualization.BIVARIATE_SHADING;
+                    || this == ColorVisualization.BIVARIATE_SHADING
+                    || this == EXPOSITION_ELEVATION;
         }
 
         @Override
@@ -107,6 +112,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
     // renderer for bivariate color images
     private final BivariateColorRenderer bivariateColorRenderer;
 
+    // renderer for 2D lookup table
+    private final ColorLUT colorLUT;
+    
     // colored image output
     private BufferedImage dstImage;
 
@@ -123,15 +131,18 @@ public class ColorizerOperator extends ThreadedGridOperator {
      * @param colorVisualization the type of color that is created by this
      * operator
      * @param bivariateColorRenderer Bivariate color renderer
+     * @param colorLUT color lookup table renderer
      * @param progressIndicator Progress indicator that will be periodically
      * updated.
      */
     public ColorizerOperator(ColorVisualization colorVisualization,
             BivariateColorRenderer bivariateColorRenderer,
+            ColorLUT colorLUT,
             ProgressIndicator progressIndicator) {
         this.colorVisualization = colorVisualization;
         this.progressIndicator = progressIndicator;
         this.bivariateColorRenderer = bivariateColorRenderer;
+        this.colorLUT = colorLUT;
     }
 
     /**
@@ -471,6 +482,35 @@ public class ColorizerOperator extends ThreadedGridOperator {
             }
         }
     }
+    
+    private void expositionElevationShading(Grid grid, int startRow, int endRow) {
+        final float[][] gridArray = grid.getGrid();
+        final int nCols = dstImage.getWidth();
+        final int nRows = dstImage.getHeight();
+        final int[] imageBuffer = imageBuffer(dstImage);
+        float[] minMax = grid.getMinMax();
+        final double minVal = minMax[0];
+        final double maxVal = minMax[1];
+        final double range = maxVal - minVal;
+        
+        for (int row = startRow; row < endRow; ++row) {
+            if (!reportProgress(startRow, endRow, row)) {
+                return;
+            }
+            for (int col = 0; col < nCols; ++col) {
+                
+                final double gray = shade(gridArray, col, row, nCols, nRows);
+                if (Double.isNaN(gray)) {
+                    imageBuffer[row * nCols + col] = VOID_COLOR;
+                } else {
+                    final double v = grid.getValue(col, row);
+                    final int argb = colorLUT.renderPixel(gray/255d, (v - minVal) / range);
+                    imageBuffer[row * nCols + col] = argb;
+                }
+                
+            }
+        }
+    }
 
     private void bivariate(int startRow, int endRow) {
         final int nCols = dstImage.getWidth();
@@ -627,6 +667,9 @@ public class ColorizerOperator extends ThreadedGridOperator {
             case EXPOSITION:
                 expositionShading(grid, startRow, endRow);
                 break;
+            case EXPOSITION_ELEVATION:
+                expositionElevationShading(grid, startRow, endRow);
+            break;
             case BIVARIATE:
                 bivariate(startRow, endRow);
                 break;

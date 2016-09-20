@@ -60,16 +60,43 @@ public interface ColorLUTInterface {
      */
     double getExponentP();
 
+    /**
+     * Set the exponent for weight calculations.
+     *
+     * @param exp the exponent
+     */
     public void setExponentP(double exp);
 
     /**
-     * @return the useIDW
+     * Returns true if inverse distance weighting is used. Returns true if a
+     * Gaussian bell curve is used for weighting.
+     *
+     * @return true=IDW, false=Gauss
      */
     boolean isUseIDW();
 
-    public void setUseIDW(boolean selected);
+    /**
+     * Set whether inverse distance weighting or a Gaussian bell curve is used
+     * for weighting.
+     *
+     * @param useIDW true=IDW, false=Gauss
+     */
+    public void setUseIDW(boolean useIDW);
 
+    /**
+     * Renders an image with all possible colors. The image can be used to
+     * display the color look-up table.
+     *
+     * @param width width of the image
+     * @param height height of the image
+     * @return The new image.
+     */
     public BufferedImage getDiagramImage(int width, int height);
 
+    /**
+     * Returns a warning string that can be displayed to the user.
+     *
+     * @return a string warning the user about some illegal condition.
+     */
     public String getWarning();
 }

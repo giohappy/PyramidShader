@@ -14,12 +14,12 @@ import edu.oregonstate.cartography.grid.operators.IlluminatedContoursOperator;
 import edu.oregonstate.cartography.grid.operators.PlanObliqueOperator;
 import edu.oregonstate.cartography.gui.bivariate.BivariateColorRenderer;
 import edu.oregonstate.cartography.gui.ProgressIndicator;
-import edu.oregonstate.cartography.gui.bivariate.ColorLUTInterface;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import edu.oregonstate.cartography.gui.bivariate.ColorLUTInterface;
 
 /**
  *

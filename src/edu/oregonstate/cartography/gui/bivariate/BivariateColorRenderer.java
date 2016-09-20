@@ -222,9 +222,7 @@ public class BivariateColorRenderer implements ColorLUTInterface {
 
         //Point 1: 0 elevation and .01 precip = brown
         BivariateColorPoint point1 = new BivariateColorPoint();
-        point1.setR(131);
-        point1.setG(116);
-        point1.setB(96);
+        point1.setColor(131, 116, 96);
         //Set precipitation grid value
         point1.setAttribute1(0.0);
         //Set elevation grid value
@@ -232,9 +230,7 @@ public class BivariateColorRenderer implements ColorLUTInterface {
 
         //Point 2: 0.0 elevation and 1.0 precip = green
         BivariateColorPoint point2 = new BivariateColorPoint();
-        point2.setR(0);
-        point2.setG(100);
-        point2.setB(0);
+        point2.setColor(0, 100, 0);
         //Set precipitation grid value
         point2.setAttribute1(1.0);
         //Set elevation grid value
@@ -242,9 +238,7 @@ public class BivariateColorRenderer implements ColorLUTInterface {
 
         //Point 3: 1 elevation and 1 precip = white
         BivariateColorPoint point3 = new BivariateColorPoint();
-        point3.setR(255);
-        point3.setG(255);
-        point3.setB(255);
+        point3.setColor(255, 255, 255);
         //Set precipitation grid value
         point3.setAttribute1(1.0);
         //Set elevation grid value
@@ -252,9 +246,7 @@ public class BivariateColorRenderer implements ColorLUTInterface {
 
         //Point 4: 1 elevation and 0 precip = best color?
         BivariateColorPoint point4 = new BivariateColorPoint();
-        point4.setR(0);
-        point4.setG(0);
-        point4.setB(255);
+        point4.setColor(0, 0, 255);
         //Set precipitation grid value
         point4.setAttribute1(0);
         //Set elevation grid value

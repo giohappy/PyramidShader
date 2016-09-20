@@ -1639,9 +1639,9 @@ public class SettingsPanel extends javax.swing.JPanel {
         contoursIlluminatedColorButton.setColor(new Color(model.contoursIlluminatedColor));
         contoursShadowedColorButton.setColor(new Color(model.contoursShadowedColor));
 
-        int exp = (int) Math.round(model.getBivariateColorRenderer().getExponentP() * 10);
+        int exp = (int) Math.round(model.getColorLUTRenderer().getExponentP() * 10);
         idwExponentSlider.setValue(exp);
-        idwRadioButton.setSelected(model.getBivariateColorRenderer().isUseIDW());
+        idwRadioButton.setSelected(model.getColorLUTRenderer().isUseIDW());
 
         updateVisualizationPanelsVisibility();
         updateImage(REGULAR);

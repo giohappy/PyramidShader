@@ -1,15 +1,16 @@
 package edu.oregonstate.cartography.grid;
 
 import edu.oregonstate.cartography.gui.bivariate.BivariateColorPoint;
-import edu.oregonstate.cartography.gui.bivariate.ColorLUTInterface;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
+import edu.oregonstate.cartography.gui.bivariate.ColorLUTInterface;
 
 /**
- * Two-dimensional color look-up table.
- * 
- * @author Bernhard Jenny, School of Science - Geospatial Science, RMIT University, Melbourne
+ * Renderer using a two-dimensional color look-up table.
+ *
+ * @author Bernhard Jenny, School of Science - Geospatial Science, RMIT
+ * University, Melbourne
  */
 public final class ColorLUT implements ColorLUTInterface {
 
@@ -17,22 +18,22 @@ public final class ColorLUT implements ColorLUTInterface {
      * size of look-up table
      */
     public static final int LUT_SIZE = 256;
-    
+
     /**
      * color reference points
      */
     private final ArrayList<BivariateColorPoint> points = new ArrayList<>();
-    
+
     /**
      * exponent value for interpolation
      */
     private double exponentP = 1.3;
-    
+
     /**
      * Use inverse distance weighting or Gaussian bell curve weighting
      */
     private boolean useIDW = false;
-    
+
     /**
      * cached look-up values
      */
@@ -42,37 +43,29 @@ public final class ColorLUT implements ColorLUTInterface {
         initPoints();
     }
 
-    // FIXME hard coded color points for the moment
+    /**
+     * Assign default color reference points.
+     *
+     * TODO select more reasonable default colors.
+     */
     protected final void initPoints() {
-        //Assign point x, y values
-        //Set their r, g, b values (0-255)
-        //Set grid values (normalized 0-1)
-
         BivariateColorPoint point1 = new BivariateColorPoint();
-        point1.setR(255);
-        point1.setG(0);
-        point1.setB(0);
+        point1.setColor(20, 80, 40);
         point1.setAttribute1(0);
         point1.setAttribute2(0);
 
         BivariateColorPoint point2 = new BivariateColorPoint();
-        point2.setR(0);
-        point2.setG(255);
-        point2.setB(0);
+        point2.setColor(50, 255, 80);
         point2.setAttribute1(1);
         point2.setAttribute2(0);
-       
+
         BivariateColorPoint point3 = new BivariateColorPoint();
-        point3.setR(0);
-        point3.setG(0);
-        point3.setB(255);
+        point3.setColor(255, 255, 255);
         point3.setAttribute1(1);
         point3.setAttribute2(1);
 
         BivariateColorPoint point4 = new BivariateColorPoint();
-        point4.setR(0);
-        point4.setG(0);
-        point4.setB(255);
+        point4.setColor(20, 50, 100);
         point4.setAttribute1(0);
         point4.setAttribute2(1);
 
@@ -81,24 +74,28 @@ public final class ColorLUT implements ColorLUTInterface {
         addPoint(point3);
         addPoint(point4);
     }
-    
-     /**
-     * Returns a color for a cell in the grid
-     * @param shade gray value between 0 and 1
-     * @param relativeElevation relative elevation between 0 and 1
-     * @return the color
+
+    /**
+     * Returns a color for a gray scale shaded value and an elevation.
+     *
+     * @param shade gray value between 0 and 1. An index along the horizontal
+     * axis of the look-up table.
+     * @param relativeElevation relative elevation between 0 and 1. An index
+     * along the vertical axis of the look-up table.
+     * @return the RGB color
      */
-    public final int renderPixel(double shade, double relativeElevation) {
+    public final int getColor(double shade, double relativeElevation) {
         assert (shade >= 0d && shade <= 1d);
         assert (relativeElevation >= 0d && relativeElevation <= 1d);
-        
+
         int lutCol = (int) Math.round((ColorLUT.LUT_SIZE - 1) * shade);
         int lutRow = (int) Math.round((ColorLUT.LUT_SIZE - 1) * relativeElevation);
         return lut[lutRow][lutCol];
     }
-    
+
     /**
-     * Renders an image with all possible colors.
+     * Renders an image with all possible colors. The image can be used to
+     * display the color look-up table.
      *
      * @param width Width of the image
      * @param height Height of the image
@@ -119,10 +116,11 @@ public final class ColorLUT implements ColorLUTInterface {
         }
         return img;
     }
-    
+
     /**
-     * Updates the color look-up table. Needs to be called after any point or
-     * the exponent change.
+     * Updates the cached values of the color look-up table. Needs to be called
+     * after a point or any attribute that changes the colors in the look-up
+     * table has been altered.
      */
     @Override
     public void colorPointsChanged() {
@@ -135,100 +133,157 @@ public final class ColorLUT implements ColorLUTInterface {
             }
         }
     }
-    
+
+    /**
+     * Interpolates a color for a particular location in the look-up table from
+     * all color reference points.
+     *
+     * @param h the horizontal coordinate of the location in the
+     * look-up table between 0 and 1.
+     * @param v the vertical coordinate of the location in the
+     * look-up table between 0 and 1.
+     * @return
+     */
     @Override
-    public int interpolateValue(double attr1AtPixel, double attr2AtPixel) {
+    public int interpolateValue(double h, double v) {
         double wTot = 0;
         double weightedSumR = 0;
         double weightedSumG = 0;
         double weightedSumB = 0;
-        /* loop over all points. For each point, compute distance */
+
         for (BivariateColorPoint point : points) {
             double attr1Point = point.getAttribute1();
             double attr2Point = point.getAttribute2();
-            double d1 = attr1Point - attr1AtPixel;
-            double d2 = attr2Point - attr2AtPixel;
-            double distance = Math.sqrt(d1 * d1 + d2 * d2);
-            double w = weight(distance);
+
+            // distance in the color look-up table.
+            double d1 = attr1Point - h;
+            double d2 = attr2Point - v;
+            double d = Math.sqrt(d1 * d1 + d2 * d2);
+
+            // IDW or Gaussian weigh
+            double w = useIDW ? inverseDistanceWeight(d) : gaussianWeight(d);
             weightedSumR += point.getR() * w;
             weightedSumG += point.getG() * w;
             weightedSumB += point.getB() * w;
             wTot += w;
         }
-        weightedSumR = Math.min(255, Math.max(0, weightedSumR / wTot));
-        weightedSumG = Math.min(255, Math.max(0, weightedSumG / wTot));
-        weightedSumB = Math.min(255, Math.max(0, weightedSumB / wTot));
-        //Encode r, g, & b values into a single int value using shifting
-        return ((int) weightedSumB) | (((int) weightedSumG) << 8) | (((int) weightedSumR) << 16) | (255 << 24);
+        int r = (int) Math.min(255, Math.max(0, weightedSumR / wTot));
+        int g = (int) Math.min(255, Math.max(0, weightedSumG / wTot));
+        int b = (int) Math.min(255, Math.max(0, weightedSumB / wTot));
+        // encode as ARGB
+        return b | (g << 8) | (r << 16) | 0xFF000000;
     }
 
     /**
+     * Returns the color reference points.
+     *
      * @return the points
      */
+    @Override
     public ArrayList<BivariateColorPoint> getPoints() {
         return points;
     }
 
+    /**
+     * Add a color reference point.
+     *
+     * @param p color reference point to add.
+     */
+    @Override
     public void addPoint(BivariateColorPoint p) {
         points.add(p);
         colorPointsChanged();
     }
 
-    public void removePoint(BivariateColorPoint selectedPoint) {
-        points.remove(selectedPoint);
-        colorPointsChanged();
-    }
-
-    protected double gaussianWeight(double d) {
-        double K = exponentP / 10000 /*0.0002*/ * 255 * 255 / 3;
-        return Math.exp(-K * d * d);
-    }
-
-    protected double inverseDistanceWeight(double d) {
-        return 1. / Math.pow(d, exponentP);
-    }
-
-    protected double weight(double d) {
-        return useIDW ? inverseDistanceWeight(d) : gaussianWeight(d);
-    }
-
-    public int getLUTColor(int lutCol, int lutRow) {
-        return lut[LUT_SIZE - 1 - lutRow][lutCol];
+    /**
+     * Remove a point from the color reference points. Will not remove the point
+     * if it is the only point.
+     *
+     * @param point point to remove.
+     */
+    @Override
+    public void removePoint(BivariateColorPoint point) {
+        if (points.size() > 1) {
+            points.remove(point);
+            colorPointsChanged();
+        }
     }
 
     /**
-     * @return the exponentP
+     * Gaussian bell curve.
+     *
+     * @param d horizontal value for which a vertical Gaussian bell curve value
+     * is computed.
+     * @return the Gaussian bell curve value
      */
+    private double gaussianWeight(double d) {
+        // empirical scaling of exponent
+        // this makes it possible to use the same exponentP for IDW and Gaussian curve weighting
+        double K = exponentP / 10000 * LUT_SIZE * LUT_SIZE / 3;
+        return Math.exp(-K * d * d);
+    }
+
+    /**
+     * Inverse distance weight after Shepard.
+     *
+     * @param d distance for which a weight is computed.
+     * @return the weight for d
+     */
+    private double inverseDistanceWeight(double d) {
+        return 1. / Math.pow(d, exponentP);
+    }
+
+    /**
+     * Returns the exponent for weight calculations.
+     *
+     * @return the exponent
+     */
+    @Override
     public double getExponentP() {
         return exponentP;
     }
 
     /**
-     * @param exponentP the exponentP to set
+     * Set the exponent for weight calculations.
+     *
+     * @param exponentP the exponent
      */
+    @Override
     public void setExponentP(double exponentP) {
         this.exponentP = exponentP;
         colorPointsChanged();
     }
 
     /**
-     * @return the useIDW
+     * Returns true if inverse distance weighting is used. Returns true if a
+     * Gaussian bell curve is used for weighting.
+     *
+     * @return true=IDW, false=Gauss
      */
+    @Override
     public boolean isUseIDW() {
         return useIDW;
     }
 
     /**
-     * @param useIDW the useIDW to set
+     * Set whether inverse distance weighting or a Gaussian bell curve is used
+     * for weighting.
+     *
+     * @param useIDW true=IDW, false=Gauss
      */
+    @Override
     public void setUseIDW(boolean useIDW) {
         this.useIDW = useIDW;
         colorPointsChanged();
     }
 
+    /**
+     * Returns a warning string that can be displayed to the user.
+     *
+     * @return a string warning the user about some illegal condition.
+     */
     @Override
     public String getWarning() {
         return null;
     }
-
 }

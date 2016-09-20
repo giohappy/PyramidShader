@@ -10,7 +10,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.JComponent;
 
 /**
- *
+ * A non-interactive panel displaying a two-dimensional color look-up table.
  * @author Bernhard Jenny, Cartography and Geovisualization Group, Oregon State
  * University
  */

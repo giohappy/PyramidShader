@@ -504,7 +504,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
                     imageBuffer[row * nCols + col] = VOID_COLOR;
                 } else {
                     final double v = grid.getValue(col, row);
-                    final int argb = colorLUT.renderPixel(gray/255d, (v - minVal) / range);
+                    final int argb = colorLUT.getColor(gray/255d, (v - minVal) / range);
                     imageBuffer[row * nCols + col] = argb;
                 }
                 

@@ -34,21 +34,24 @@ public class BivariateColorPoint {
         return lon + " " + lat + " " + r + " " + g + " " + b + " " + attribute1 + " " + attribute2;
     }
     
-
+    /**
+     * Set red, green and blue color component.
+     * @param r red
+     * @param g green
+     * @param b blue
+     */
+    public void setColor (int r, int g, int b) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+    }
+    
     /**
      * Returns the red value.
      * @return the red value
      */
     public int getR() {
         return r;
-    }
-
-    /**
-     * Set the red value.
-     * @param r the red to set
-     */
-    public void setR(int r) {
-        this.r = r;
     }
 
     /**
@@ -60,27 +63,11 @@ public class BivariateColorPoint {
     }
 
     /**
-     * Set the green value.
-     * @param g the green to set
-     */
-    public void setG(int g) {
-        this.g = g;
-    }
-
-    /**
      * Returns the blue value.
      * @return the b
      */
     public int getB() {
         return b;
-    }
-
-    /**
-     * Set blue value.
-     * @param b the blue to set
-     */
-    public void setB(int b) {
-        this.b = b;
     }
 
     /**

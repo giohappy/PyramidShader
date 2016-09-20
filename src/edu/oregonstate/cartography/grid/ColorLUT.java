@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
 import edu.oregonstate.cartography.gui.bivariate.ColorLUTInterface;
+import ij.process.ColorSpaceConverter;
 
 /**
  * Renderer using a two-dimensional color look-up table.
@@ -27,7 +28,7 @@ public final class ColorLUT implements ColorLUTInterface {
     /**
      * exponent value for interpolation
      */
-    private double exponentP = 1.3;
+    private double exponentP = 2;
 
     /**
      * Use inverse distance weighting or Gaussian bell curve weighting
@@ -45,36 +46,26 @@ public final class ColorLUT implements ColorLUTInterface {
 
     /**
      * Assign default color reference points.
-     *
-     * TODO select more reasonable default colors.
      */
     protected final void initPoints() {
-        BivariateColorPoint point1 = new BivariateColorPoint();
-        point1.setColor(20, 80, 40);
-        point1.setAttribute1(0);
-        point1.setAttribute2(0);
-
-        BivariateColorPoint point2 = new BivariateColorPoint();
-        point2.setColor(50, 255, 80);
-        point2.setAttribute1(1);
-        point2.setAttribute2(0);
-
-        BivariateColorPoint point3 = new BivariateColorPoint();
-        point3.setColor(255, 255, 255);
-        point3.setAttribute1(1);
-        point3.setAttribute2(1);
-
-        BivariateColorPoint point4 = new BivariateColorPoint();
-        point4.setColor(20, 50, 100);
-        point4.setAttribute1(0);
-        point4.setAttribute2(1);
-
-        addPoint(point1);
-        addPoint(point2);
-        addPoint(point3);
-        addPoint(point4);
+        addPoint(231, 252, 253, 0.5, 0.0);
+        addPoint(226, 254, 255, 1.0, 0.0);
+        addPoint(252, 252, 252, 1.0, 0.35);        
+        addPoint(247, 255, 233, 1.0, 0.65);
+        addPoint(255, 255, 192, 0.95, 0.8);
+        addPoint(255, 255, 192, 0.9, 0.9);
+        addPoint(196, 207, 255, 0.7, 0.6);
+        addPoint(056, 125, 254, 0.7, 0.9);
     }
 
+    private void addPoint(int r, int g, int b, double x, double y) {
+        BivariateColorPoint p = new BivariateColorPoint();
+        p.setColor(r, g, b);
+        p.setAttribute1(x);
+        p.setAttribute2(y);
+        addPoint(p);
+    }
+    
     /**
      * Returns a color for a gray scale shaded value and an elevation.
      *
@@ -129,7 +120,7 @@ public final class ColorLUT implements ColorLUTInterface {
             double y = r / (LUT_SIZE - 1d);
             for (int c = 0; c < LUT_SIZE; c++) {
                 double x = c / (LUT_SIZE - 1d);
-                lut[r][c] = interpolateValue(x, y);
+                lut[r][c] = interpolateColor(x, y);
             }
         }
     }
@@ -138,18 +129,26 @@ public final class ColorLUT implements ColorLUTInterface {
      * Interpolates a color for a particular location in the look-up table from
      * all color reference points.
      *
-     * @param h the horizontal coordinate of the location in the
-     * look-up table between 0 and 1.
-     * @param v the vertical coordinate of the location in the
-     * look-up table between 0 and 1.
+     * @param h the horizontal coordinate of the location in the look-up table
+     * between 0 and 1.
+     * @param v the vertical coordinate of the location in the look-up table
+     * between 0 and 1.
      * @return
      */
     @Override
-    public int interpolateValue(double h, double v) {
+    public int interpolateColor(double h, double v) {
+
+        final boolean useLAB = true;
+
+        ColorSpaceConverter colorConverter = new ColorSpaceConverter();
+
         double wTot = 0;
         double weightedSumR = 0;
         double weightedSumG = 0;
         double weightedSumB = 0;
+        double weightedSumLabL = 0;
+        double weightedSumLabA = 0;
+        double weightedSumLabB = 0;
 
         for (BivariateColorPoint point : points) {
             double attr1Point = point.getAttribute1();
@@ -162,16 +161,35 @@ public final class ColorLUT implements ColorLUTInterface {
 
             // IDW or Gaussian weigh
             double w = useIDW ? inverseDistanceWeight(d) : gaussianWeight(d);
-            weightedSumR += point.getR() * w;
-            weightedSumG += point.getG() * w;
-            weightedSumB += point.getB() * w;
+
+            if (useLAB) {
+                // Lab mix
+                // mixing with Lab tends to create slightly more saturated colors than with RGB
+                weightedSumLabL += point.getLabL() * w;
+                weightedSumLabA += point.getLabA() * w;
+                weightedSumLabB += point.getLabB() * w;
+            } else {
+                // RGB mix
+                weightedSumR += point.getR() * w;
+                weightedSumG += point.getG() * w;
+                weightedSumB += point.getB() * w;
+            }
             wTot += w;
         }
-        int r = (int) Math.min(255, Math.max(0, weightedSumR / wTot));
-        int g = (int) Math.min(255, Math.max(0, weightedSumG / wTot));
-        int b = (int) Math.min(255, Math.max(0, weightedSumB / wTot));
-        // encode as ARGB
-        return b | (g << 8) | (r << 16) | 0xFF000000;
+
+        if (useLAB) {
+            double L = Math.min(ColorSpaceConverter.LAB_MAX_L, Math.max(ColorSpaceConverter.LAB_MIN_L, weightedSumLabL / wTot));
+            double a = Math.min(ColorSpaceConverter.LAB_MAX_A, Math.max(ColorSpaceConverter.LAB_MIN_A, weightedSumLabA / wTot));
+            double b = Math.min(ColorSpaceConverter.LAB_MAX_B, Math.max(ColorSpaceConverter.LAB_MIN_B, weightedSumLabB / wTot));
+            int[] rgb = colorConverter.LABtoRGB(L, a, b);
+            return rgb[2] | (rgb[1] << 8) | (rgb[0] << 16) | 0xFF000000;
+        } else {
+            int r = (int) Math.min(255, Math.max(0, weightedSumR / wTot));
+            int g = (int) Math.min(255, Math.max(0, weightedSumG / wTot));
+            int b = (int) Math.min(255, Math.max(0, weightedSumB / wTot));
+            return b | (g << 8) | (r << 16) | 0xFF000000;
+        }
+
     }
 
     /**
@@ -219,7 +237,7 @@ public final class ColorLUT implements ColorLUTInterface {
     private double gaussianWeight(double d) {
         // empirical scaling of exponent
         // this makes it possible to use the same exponentP for IDW and Gaussian curve weighting
-        double K = exponentP / 10000 * LUT_SIZE * LUT_SIZE / 3;
+        double K = exponentP / 10000 * LUT_SIZE * LUT_SIZE;
         return Math.exp(-K * d * d);
     }
 

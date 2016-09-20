@@ -1,5 +1,6 @@
 package edu.oregonstate.cartography.gui.bivariate;
 
+import ij.process.ColorSpaceConverter;
 import java.awt.Color;
 
 /**
@@ -12,42 +13,74 @@ public class BivariateColorPoint {
     private int r;
     private int g;
     private int b;
-    
+
+    // Lab color (identical to RGB)
+    private double labL;
+    private double labA;
+    private double labB;
+
     // first attribute
     private double attribute1; //ex: precipitation
-    
+
     // second attribute
     private double attribute2; //ex: elevation
 
     // longitude of the point
     private double lon = Double.NaN;
-    
+
     // latitude of the point
     private double lat = Double.NaN;
 
     /**
      * Returns a string description with lon/lat, RGB, and the two attributes.
+     *
      * @return The description.
      */
     @Override
     public String toString() {
         return lon + " " + lat + " " + r + " " + g + " " + b + " " + attribute1 + " " + attribute2;
     }
-    
+
+    /**
+     * Returns the current RGB color as a Color object.
+     *
+     * @return a new color object
+     */
+    public Color getColor() {
+        return new Color(r, g, b);
+    }
+
+    /**
+     * The the RGB color.
+     *
+     * @param rgb
+     */
+    public void setColor(Color rgb) {
+        setColor(rgb.getRed(), rgb.getGreen(), rgb.getBlue());
+    }
+
     /**
      * Set red, green and blue color component.
+     *
      * @param r red
      * @param g green
      * @param b blue
      */
-    public void setColor (int r, int g, int b) {
+    public void setColor(int r, int g, int b) {
         this.r = r;
         this.g = g;
         this.b = b;
+
+        ColorSpaceConverter colorConverter = new ColorSpaceConverter();
+        double[] lab = colorConverter.RGBtoLAB(new int[]{r, g, b});
+        labL = lab[0];
+        labA = lab[1];
+        labB = lab[2];
     }
-    
+
     /**
      * Returns the red value.
+     *
      * @return the red value
      */
     public int getR() {
@@ -56,6 +89,7 @@ public class BivariateColorPoint {
 
     /**
      * Returns the green value
+     *
      * @return the green value
      */
     public int getG() {
@@ -64,6 +98,7 @@ public class BivariateColorPoint {
 
     /**
      * Returns the blue value.
+     *
      * @return the b
      */
     public int getB() {
@@ -71,21 +106,30 @@ public class BivariateColorPoint {
     }
 
     /**
-     * Returns the current RGB color as a Color object.
-     * @return 
+     * Returns the Lab L component.
+     *
+     * @return the Lab L component
      */
-    public Color getColor() {
-        return new Color(r, g, b);
+    public double getLabL() {
+        return labL;
     }
 
     /**
-     * The the RGB color.
-     * @param rgb 
+     * Returns the Lab A component.
+     *
+     * @return the Lab A component
      */
-    public void setColor(Color rgb) {
-        this.r = rgb.getRed();
-        this.g = rgb.getGreen();
-        this.b = rgb.getBlue();
+    public double getLabA() {
+        return labA;
+    }
+
+    /**
+     * Returns the Lab B component.
+     *
+     * @return the Lab B component
+     */
+    public double getLabB() {
+        return labB;
     }
 
     /**
@@ -118,6 +162,7 @@ public class BivariateColorPoint {
 
     /**
      * Set longitude and latitude of the point.
+     *
      * @param lon Longitude
      * @param lat Latitude
      */
@@ -142,6 +187,7 @@ public class BivariateColorPoint {
 
     /**
      * Returns true if the longitude and latitude values are defined.
+     *
      * @return True if longitude and latitude are defined, false otherwise.
      */
     public boolean isLonLatDefined() {

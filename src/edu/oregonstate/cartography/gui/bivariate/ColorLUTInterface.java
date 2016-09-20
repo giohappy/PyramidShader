@@ -44,7 +44,7 @@ public interface ColorLUTInterface {
      * between 0 and 1.
      * @return
      */
-    public int interpolateValue(double h, double v);
+    public int interpolateColor(double h, double v);
 
     /**
      * Updates the cached values of the color look-up table. Needs to be called

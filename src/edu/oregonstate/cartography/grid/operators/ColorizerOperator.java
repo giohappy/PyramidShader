@@ -114,7 +114,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
 
     // renderer for 2D lookup table
     private final ColorLUT colorLUT;
-    
+
     // colored image output
     private BufferedImage dstImage;
 
@@ -482,7 +482,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
             }
         }
     }
-    
+
     private void expositionElevationShading(Grid grid, int startRow, int endRow) {
         final float[][] gridArray = grid.getGrid();
         final int nCols = dstImage.getWidth();
@@ -492,22 +492,29 @@ public class ColorizerOperator extends ThreadedGridOperator {
         final double minVal = minMax[0];
         final double maxVal = minMax[1];
         final double range = maxVal - minVal;
-        
+        float[] hsb = new float[3];
+
         for (int row = startRow; row < endRow; ++row) {
             if (!reportProgress(startRow, endRow, row)) {
                 return;
             }
             for (int col = 0; col < nCols; ++col) {
-                
+
                 final double gray = shade(gridArray, col, row, nCols, nRows);
                 if (Double.isNaN(gray)) {
                     imageBuffer[row * nCols + col] = VOID_COLOR;
                 } else {
                     final double v = grid.getValue(col, row);
-                    final int argb = colorLUT.getColor(gray/255d, (v - minVal) / range);
+                    int argb = colorLUT.getColor(gray / 255d, (v - minVal) / range);
+                    // TODO experimental always use gray value of shading for brightness; ignor brightness of color look-up table
+                    int red = (argb >> 16) & 0xFF;
+                    int green = (argb >> 8) & 0xFF;
+                    int blue = argb & 0xFF;
+                    Color.RGBtoHSB(red, green, blue, hsb);
+                    argb = Color.HSBtoRGB(hsb[0], hsb[1], (float) (gray / 255d));
                     imageBuffer[row * nCols + col] = argb;
                 }
-                
+
             }
         }
     }
@@ -669,7 +676,7 @@ public class ColorizerOperator extends ThreadedGridOperator {
                 break;
             case EXPOSITION_ELEVATION:
                 expositionElevationShading(grid, startRow, endRow);
-            break;
+                break;
             case BIVARIATE:
                 bivariate(startRow, endRow);
                 break;

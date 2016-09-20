@@ -41,7 +41,7 @@ public class BivariateColorRenderer implements ColorLUTInterface {
             double y = r / (LUT_SIZE - 1d);
             for (int c = 0; c < LUT_SIZE; c++) {
                 double x = c / (LUT_SIZE - 1d);
-                lut[r][c] = interpolateValue(x, y);
+                lut[r][c] = interpolateColor(x, y);
             }
         }
     }
@@ -162,7 +162,7 @@ public class BivariateColorRenderer implements ColorLUTInterface {
         return 1. / Math.pow(d, exponentP);
     }
 
-    public int interpolateValue(double attr1AtPixel, double attr2AtPixel) {
+    public int interpolateColor(double attr1AtPixel, double attr2AtPixel) {
 
         double wTot = 0;
         double weightedSumR = 0;

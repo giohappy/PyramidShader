@@ -187,7 +187,7 @@ public class BivariateColorPanel extends BivariateColorPreview {
         BivariateColorPoint p = new BivariateColorPoint();
         p.setAttribute1(pixelXToAttr1(pixelX));
         p.setAttribute2(pixelYToAttr2(pixelY));
-        Color color = new Color(getRenderer().interpolateValue(p.getAttribute1(), p.getAttribute2()));
+        Color color = new Color(getRenderer().interpolateColor(p.getAttribute1(), p.getAttribute2()));
         p.setColor(color);
         getRenderer().addPoint(p);
         return p;
@@ -255,13 +255,6 @@ public class BivariateColorPanel extends BivariateColorPreview {
     }
 
     public void setSelectedColor(Color color) {
-        if (selectedPoint == null) {
-            ArrayList<BivariateColorPoint> points = getRenderer().getPoints();
-            if (points.size() > 0) {
-                selectedPoint = points.get(0);
-            }
-        }
-
         if (selectedPoint != null) {
             selectedPoint.setColor(color);
             renderer.colorPointsChanged();
